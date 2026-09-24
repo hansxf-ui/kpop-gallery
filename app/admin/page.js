@@ -10,7 +10,7 @@ export default function Admin() {
   const [items, setItems] = useState([])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
-  const [f, setF] = useState({ idol: '', title: '', yt: '', file: null })
+  const [f, setF] = useState({ idol: '', title: '', group: '', yt: '', file: null })
 
   const load = () => sb.from('items').select('*').order('created_at', { ascending: false }).then(({ data }) => setItems(data || []))
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function Admin() {
     if (!f.idol.trim()) return setMsg('Isi nama idol dulu.')
     if (!f.file && !ytId(f.yt)) return setMsg('Pilih file, atau tempel link YouTube yang valid.')
     setBusy(true); setMsg('Menyimpan…')
-    let row = { idol: f.idol.trim(), title: f.title.trim() }
+    let row = { idol: f.idol.trim(), title: f.title.trim(), group_name: f.group.trim() || null }
     if (f.file) {
       const path = `${Date.now()}-${f.file.name.replace(/[^\w.-]/g, '_')}`
       const up = await sb.storage.from('gallery').upload(path, f.file)
@@ -43,7 +43,7 @@ export default function Admin() {
     const { error } = await sb.from('items').insert(row)
     setBusy(false)
     if (error) return setMsg('Gagal: ' + error.message)
-    setF({ ...f, title: '', yt: '', file: null }); form.querySelector('input[type=file]').value = ''; setMsg('Tersimpan ✓'); load()
+    setF({ ...f, title: '', group: '', yt: '', file: null }); form.querySelector('input[type=file]').value = ''; setMsg('Tersimpan ✓'); load()
   }
 
   async function del(it) {
@@ -68,6 +68,7 @@ export default function Admin() {
           <form onSubmit={add} className="space-y-3 rounded-3xl bg-white/70 p-5 border border-rose/40">
             <input placeholder="Nama idol (mis. Karina)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
             <input placeholder="Judul (opsional)" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={box} />
+            <input placeholder="Grup (opsional, mis. aespa)" value={f.group} onChange={(e) => setF({ ...f, group: e.target.value })} className={box} />
             <input type="file" accept="image/*,video/*" onChange={(e) => setF({ ...f, file: e.target.files[0] })} className={box} />
             <p className="text-center text-sm text-plum/60">atau</p>
             <input placeholder="Link YouTube" value={f.yt} onChange={(e) => setF({ ...f, yt: e.target.value })} className={box} />
@@ -78,7 +79,7 @@ export default function Admin() {
           <ul className="mt-8 space-y-2">
             {items.map((it) => (
               <li key={it.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/70 px-4 py-2.5">
-                <span className="truncate"><b>{it.idol}</b> · {it.title || it.type}</span>
+                <span className="truncate"><b>{it.idol}</b>{it.group_name ? ` (${it.group_name})` : ''} · {it.title || it.type}</span>
                 <button onClick={() => del(it)} className="text-sm text-rose font-bold">Hapus</button>
               </li>
             ))}
