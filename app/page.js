@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { sb, ytId } from '../lib/supabase'
 
 const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/hqdefault.jpg` : it.url)
@@ -26,7 +27,7 @@ export default function Home() {
     <main className="mx-auto max-w-6xl px-4 pb-20">
       <header className="py-14 text-center">
         <p className="text-gold text-2xl" aria-hidden>✦ ✧ ✦</p>
-        <h1 className="font-display text-5xl sm:text-7xl text-plum mt-2">Stardust Gallery</h1>
+        <h1 className="font-display text-5xl sm:text-7xl text-plum mt-2">Hearts2Hearts Gallery</h1>
         <p className="mt-3 text-plum/70 font-bold">Koleksi foto & video idol favoritku</p>
       </header>
 
@@ -39,23 +40,33 @@ export default function Home() {
         ))}
       </div>
 
+      {idol !== 'Semua' && (
+        <p className="text-center -mt-6 mb-8">
+          <Link href={`/idol/${encodeURIComponent(idol)}`} className="text-sm font-bold text-gold underline underline-offset-4">
+            Buka album {idol} sendiri →
+          </Link>
+        </p>
+      )}
+
       {items === null && <p className="text-center text-plum/60">Memuat koleksi…</p>}
       {items && shown.length === 0 && <p className="text-center text-plum/60">Belum ada koleksi. Tambahkan lewat halaman admin.</p>}
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {shown.map((it) => (
-          <button key={it.id} onClick={() => setOpen(it)} className="card mb-4 block w-full text-left break-inside-avoid">
-            <div className="relative overflow-hidden rounded-2xl">
-              {it.type === 'video'
-                ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
-                : <img src={thumb(it)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
-              {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
-            </div>
-            <div className="px-2 py-2.5">
-              <p className="font-bold text-sm truncate">{it.title || it.idol}</p>
-              <p className="text-xs text-gold font-bold">{it.idol}</p>
-            </div>
-          </button>
+          <div key={it.id} className="card mb-4 w-full break-inside-avoid">
+            <button onClick={() => setOpen(it)} className="block w-full text-left">
+              <div className="relative overflow-hidden rounded-2xl">
+                {it.type === 'video'
+                  ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
+                  : <img src={thumb(it)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
+                {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
+              </div>
+              <p className="font-bold text-sm truncate px-2 pt-2.5">{it.title || it.idol}</p>
+            </button>
+            <Link href={`/idol/${encodeURIComponent(it.idol)}`} className="block px-2 pb-2.5 text-xs text-gold font-bold hover:underline w-fit">
+              {it.idol}
+            </Link>
+          </div>
         ))}
       </div>
 

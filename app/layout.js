@@ -1,5 +1,5 @@
 import './globals.css'
-export const metadata = { title: 'Stardust Gallery', description: 'Koleksi foto & video idol kpop favorit' }
+export const metadata = { title: 'Hearts2Hearts Gallery', description: 'Koleksi foto & video idol kpop favorit' }
 export default function RootLayout({ children }) {
   return (
     <html lang="id">
