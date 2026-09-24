@@ -50,8 +50,9 @@ export default function Home() {
         <h1 className="font-display text-5xl sm:text-7xl text-plum dark:text-milk mt-2">Hearts2Hearts Gallery</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Koleksi foto & video idol favoritku</p>
         <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{fotoCount} foto · {videoCount} video</p>
-        <p className="mt-4">
-          <Link href="/favorit" className="text-sm font-bold text-gold underline underline-offset-4">♥ Lihat favoritku ({favs.length})</Link>
+        <p className="mt-4 flex justify-center gap-5 text-sm font-bold text-gold">
+          <Link href="/favorit" className="underline underline-offset-4">♥ Favoritku ({favs.length})</Link>
+          <Link href="/tentang" className="underline underline-offset-4">✦ Tentang</Link>
         </p>
       </header>
 

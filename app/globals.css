@@ -9,3 +9,19 @@ body { background: radial-gradient(circle at 15% 0%, #FFE0EC 0, transparent 45%)
 
 html.dark body { background: radial-gradient(circle at 15% 0%, #3a1f42 0, transparent 45%), radial-gradient(circle at 90% 10%, #241333 0, transparent 40%), #1B0F22; color: #F5E9FF; }
 html.dark .card { background: #2A1830; box-shadow: 0 10px 30px -12px rgba(0,0,0,.6); outline-color: rgba(201,162,75,.4); }
+
+/* Background bergerak */
+main { position: relative; z-index: 1; }
+.bg-layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.orb { position: absolute; border-radius: 9999px; filter: blur(80px); opacity: .4; animation: drift 26s ease-in-out infinite alternate; }
+html.dark .orb { opacity: .2; }
+.float { position: absolute; bottom: -40px; left: var(--l); font-size: var(--s); color: var(--c); opacity: 0; animation: rise var(--d) linear var(--dl) infinite; }
+@keyframes rise {
+  0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+  10% { opacity: .55; }
+  50% { transform: translate(18px, -55vh) rotate(20deg); }
+  90% { opacity: .4; }
+  100% { transform: translate(-14px, -115vh) rotate(-15deg); opacity: 0; }
+}
+@keyframes drift { to { transform: translate(70px, 50px) scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .orb { animation: none; } .float { animation: none; opacity: .3; bottom: auto; top: calc(var(--l) * .9); } }

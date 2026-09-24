@@ -1,4 +1,5 @@
 import './globals.css'
+import Background from './components/Background'
 export const metadata = { title: 'Hearts2Hearts Gallery', description: 'Koleksi foto & video idol kpop favorit' }
 export default function RootLayout({ children }) {
   return (
@@ -8,7 +9,10 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet" />
       </head>
-      <body>{children}</body>
+      <body>
+        <Background />
+        {children}
+      </body>
     </html>
   )
 }
