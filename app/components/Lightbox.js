@@ -10,8 +10,34 @@ function Media({ it }) {
 
 export default function Lightbox({ items, index, onIndexChange, onClose, autoplay = false }) {
   const [playing, setPlaying] = useState(autoplay)
+  const [making, setMaking] = useState(false)
   const timer = useRef(null)
   const it = items[index]
+
+  async function makeWallpaper() {
+    setMaking(true)
+    try {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = it.url })
+      const W = 1080, H = 1920
+      const canvas = document.createElement('canvas')
+      canvas.width = W; canvas.height = H
+      const ctx = canvas.getContext('2d')
+      const g = ctx.createLinearGradient(0, 0, 0, H)
+      g.addColorStop(0, '#3B2140'); g.addColorStop(1, '#1B0F22')
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
+      const scale = Math.max(W / img.width, H / img.height)
+      const w = img.width * scale, h = img.height * scale
+      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h)
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = 'wallpaper-h2h.jpg'; a.click()
+      URL.revokeObjectURL(url)
+    } catch { /* gambar dari sumber luar mungkin memblokir unduhan langsung */ }
+    setMaking(false)
+  }
 
   useEffect(() => {
     if (!playing || items.length < 2) return
@@ -48,6 +74,11 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             <a href={it.url} download className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ Unduh</a>
           ) : (
             <a href={it.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">Buka di YouTube</a>
+          )}
+          {it.type === 'photo' && (
+            <button onClick={makeWallpaper} disabled={making} className="px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
+              {making ? 'Membuat…' : '🖼 Wallpaper HP'}
+            </button>
           )}
         </div>
         <button onClick={onClose} aria-label="Tutup" className="absolute -top-3 -right-3 h-9 w-9 rounded-full bg-white text-plum font-bold shadow">✕</button>
