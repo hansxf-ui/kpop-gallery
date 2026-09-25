@@ -1,5 +1,6 @@
 import './globals.css'
 import Background from './components/Background'
+import ConfettiHearts from './components/ConfettiHearts'
 export const metadata = {
   metadataBase: new URL(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
   title: 'Hearts2Hearts Gallery',
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <Background />
+        <ConfettiHearts />
         {children}
       </body>
     </html>

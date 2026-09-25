@@ -37,3 +37,24 @@ html.dark .skeleton { background: #3a2440; }
 html.dark .skeleton::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent); }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 @media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
+/* Confetti hati saat favorit */
+.confetti-heart {
+  position: fixed; transform: translate(-50%, -50%); font-size: 20px; color: #F7A8C8;
+  animation: confetti-pop .85s ease-out forwards; pointer-events: none; z-index: 60;
+}
+@keyframes confetti-pop {
+  0% { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(var(--rot)); opacity: 0; }
+}
+
+/* Transisi halaman halus */
+.page-fade-in { animation: page-fade .45s ease both; }
+@keyframes page-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .confetti-heart, .page-fade-in { animation: none; } }
+
+/* Featured banner & badge kecil */
+.featured-card { background: linear-gradient(135deg, rgba(247,168,200,.25), rgba(205,184,245,.25)); border: 1px solid rgba(201,162,75,.4); border-radius: 26px; padding: 10px 10px 0; }
+html.dark .featured-card { background: linear-gradient(135deg, rgba(247,168,200,.08), rgba(205,184,245,.1)); }
+.count-badge { font-size: 10px; background: rgba(59,33,64,.12); border-radius: 999px; padding: 1px 6px; }
+html.dark .count-badge { background: rgba(255,255,255,.12); }
