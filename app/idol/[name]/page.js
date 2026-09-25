@@ -14,19 +14,25 @@ export default function IdolAlbum() {
   const { name } = useParams()
   const idol = decodeURIComponent(name)
   const [items, setItems] = useState(null)
+  const [total, setTotal] = useState(null)
   const [q, setQ] = useState('')
   const [sort, setSort] = useState('terbaru')
+  const [era, setEra] = useState('Semua')
   const [favs, setFavs] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
   const [autoplay, setAutoplay] = useState(false)
 
   useEffect(() => {
     sb.from('items').select('*').eq('idol', idol).order('created_at', { ascending: false }).then(({ data }) => setItems(data || []))
+    sb.from('items').select('id', { count: 'exact', head: true }).then(({ count }) => setTotal(count ?? null))
     setFavs(getFavorites())
   }, [idol])
 
+  const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
+
   const shown = useMemo(() => {
     let list = items || []
+    if (era !== 'Semua') list = list.filter((i) => i.era === era)
     if (q.trim()) {
       const s = q.trim().toLowerCase()
       list = list.filter((i) => (i.title || '').toLowerCase().includes(s))
@@ -35,13 +41,21 @@ export default function IdolAlbum() {
     if (sort === 'terlama') list.reverse()
     if (sort === 'acak') list.sort(() => Math.random() - 0.5)
     return list
-  }, [items, q, sort])
+  }, [items, q, sort, era])
 
   const fotoCount = shown.filter((i) => i.type === 'photo').length
   const videoCount = shown.length - fotoCount
+  const pct = total && items ? Math.round((items.length / total) * 100) : null
+
+  function onFav(it, e) {
+    e.stopPropagation(); e.preventDefault()
+    const wasFav = favs.includes(it.id)
+    setFavs(toggleFavorite(it.id))
+    if (!wasFav) window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x: e.clientX, y: e.clientY } }))
+  }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-20">
+    <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
       <ThemeToggle />
       <header className="py-14 text-center">
         <Link href="/" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Semua idol</Link>
@@ -49,9 +63,17 @@ export default function IdolAlbum() {
         <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{idol}</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Album khusus {idol}</p>
         <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{fotoCount} foto · {videoCount} video</p>
+        {pct !== null && (
+          <div className="mx-auto mt-3 max-w-xs">
+            <div className="h-1.5 rounded-full bg-rose/20 dark:bg-white/10 overflow-hidden">
+              <div className="h-full bg-gold rounded-full" style={{ width: `${pct}%` }} />
+            </div>
+            <p className="text-[11px] text-plum/50 dark:text-milk/50 mt-1">{pct}% dari seluruh koleksi galeri</p>
+          </div>
+        )}
       </header>
 
-      <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+      <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul…"
           className="w-full max-w-xs rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-4 py-2 text-sm" />
         <select value={sort} onChange={(e) => setSort(e.target.value)}
@@ -65,6 +87,17 @@ export default function IdolAlbum() {
         )}
       </div>
 
+      {eras.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2 mb-10">
+          {['Semua', ...eras].map((n) => (
+            <button key={n} onClick={() => setEra(n)}
+              className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
+              {n}
+            </button>
+          ))}
+        </div>
+      )}
+
       {items === null && <Skeleton />}
       {items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
 
@@ -76,8 +109,8 @@ export default function IdolAlbum() {
                 ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
                 : <img src={thumb(it)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
               {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
-              <span onClick={(e) => { e.stopPropagation(); e.preventDefault(); setFavs(toggleFavorite(it.id)) }}
-                role="button" aria-label="Favoritkan" className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
+              <span onClick={(e) => onFav(it, e)} role="button" aria-label="Favoritkan"
+                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
                 {favs.includes(it.id) ? '❤️' : '🤍'}
               </span>
             </div>
