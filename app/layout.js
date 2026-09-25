@@ -1,6 +1,27 @@
 import './globals.css'
 import Background from './components/Background'
-export const metadata = { title: 'Hearts2Hearts Gallery', description: 'Koleksi foto & video idol kpop favorit' }
+export const metadata = {
+  metadataBase: new URL(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
+  title: 'Hearts2Hearts Gallery',
+  description: 'Koleksi foto & video idol Hearts2Hearts (H2H) — Jiwoo, Carmen, Yuha, Stella, Juun, A-na, Ian, dan Ye-on.',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFF3F7' },
+    { media: '(prefers-color-scheme: dark)', color: '#1B0F22' },
+  ],
+  manifest: '/manifest.json',
+  openGraph: {
+    title: 'Hearts2Hearts Gallery',
+    description: 'Koleksi foto & video idol Hearts2Hearts (H2H) favoritku.',
+    type: 'website',
+    images: ['/og-image.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Hearts2Hearts Gallery',
+    description: 'Koleksi foto & video idol Hearts2Hearts (H2H) favoritku.',
+    images: ['/og-image.png'],
+  },
+}
 export default function RootLayout({ children }) {
   return (
     <html lang="id">
