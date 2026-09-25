@@ -5,6 +5,7 @@ import { sb, ytId } from '../../lib/supabase'
 import { getFavorites, toggleFavorite } from '../../lib/favorites'
 import ThemeToggle from '../components/ThemeToggle'
 import Lightbox from '../components/Lightbox'
+import Skeleton from '../components/Skeleton'
 
 const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/hqdefault.jpg` : it.url)
 
@@ -24,6 +25,7 @@ export default function Favorit() {
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20">
       <ThemeToggle />
+      {ids === null && <Skeleton />}
       <header className="py-14 text-center">
         <Link href="/" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Semua koleksi</Link>
         <p className="text-gold text-2xl mt-4" aria-hidden>♥ ♥ ♥</p>
