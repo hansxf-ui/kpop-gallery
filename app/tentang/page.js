@@ -29,7 +29,7 @@ const p = 'leading-relaxed text-plum/80 dark:text-milk/80 max-w-prose'
 
 export default function Tentang() {
   return (
-    <main className="mx-auto max-w-4xl px-4 pb-24">
+    <main className="mx-auto max-w-4xl px-4 pb-24 page-fade-in">
       <ThemeToggle />
       <header className="py-14 text-center">
         <Link href="/" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Kembali ke galeri</Link>
@@ -78,6 +78,7 @@ export default function Tentang() {
           ))}
         </ol>
         <p className="text-xs text-plum/50 dark:text-milk/50 mt-3">Data per September 2026. Bisa jadi sudah ada rilisan terbaru.</p>
+        <p className="text-xs text-plum/50 dark:text-milk/50 mt-1">Tandai foto/video dengan nama era (mis. "Focus") lewat halaman admin, supaya bisa difilter per era di galeri.</p>
       </section>
 
       <section>
