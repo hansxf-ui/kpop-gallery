@@ -1,8 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { sb, ytId } from '../../lib/supabase'
+import { compressImage } from '../../lib/compress'
+import ThemeToggle from '../components/ThemeToggle'
 
-const box = 'w-full rounded-xl border border-rose/60 bg-white px-3 py-2.5'
+const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
 
 export default function Admin() {
@@ -35,10 +38,16 @@ export default function Admin() {
     setBusy(true); setMsg('Menyimpan…')
     let row = { idol: f.idol.trim(), title: f.title.trim(), group_name: f.group.trim() || null }
     if (f.file) {
-      const path = `${Date.now()}-${f.file.name.replace(/[^\w.-]/g, '_')}`
-      const up = await sb.storage.from('gallery').upload(path, f.file)
+      let uploadFile = f.file
+      if (f.file.type.startsWith('image/')) {
+        setMsg('Mengecilkan ukuran foto…')
+        try { uploadFile = await compressImage(f.file) } catch { uploadFile = f.file }
+      }
+      setMsg('Mengunggah…')
+      const path = `${Date.now()}-${uploadFile.name.replace(/[^\w.-]/g, '_')}`
+      const up = await sb.storage.from('gallery').upload(path, uploadFile)
       if (up.error) { setBusy(false); return setMsg('Upload gagal: ' + up.error.message) }
-      row = { ...row, path, type: f.file.type.startsWith('video') ? 'video' : 'photo', url: sb.storage.from('gallery').getPublicUrl(path).data.publicUrl }
+      row = { ...row, path, type: uploadFile.type.startsWith('video') ? 'video' : 'photo', url: sb.storage.from('gallery').getPublicUrl(path).data.publicUrl }
     } else row = { ...row, type: 'youtube', url: f.yt.trim() }
     const { error } = await sb.from('items').insert(row)
     setBusy(false)
@@ -53,10 +62,22 @@ export default function Admin() {
     load()
   }
 
+  function exportData() {
+    const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `hearts2hearts-gallery-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (user === undefined) return null
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="font-display text-4xl mb-6">Admin ✦</h1>
+      <ThemeToggle />
+      <Link href="/" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Kembali ke galeri</Link>
+      <h1 className="font-display text-4xl mb-6 mt-3 text-plum dark:text-milk">Admin ✦</h1>
       {!user ? (
         <form onSubmit={login} className="space-y-3">
           <input name="email" type="email" placeholder="Email" required className={box} />
@@ -65,28 +86,34 @@ export default function Admin() {
         </form>
       ) : (
         <>
-          <form onSubmit={add} className="space-y-3 rounded-3xl bg-white/70 p-5 border border-rose/40">
+          <form onSubmit={add} className="space-y-3 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
             <input placeholder="Nama idol (mis. Karina)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
             <input placeholder="Judul (opsional)" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={box} />
             <input placeholder="Grup (opsional, mis. aespa)" value={f.group} onChange={(e) => setF({ ...f, group: e.target.value })} className={box} />
             <input type="file" accept="image/*,video/*" onChange={(e) => setF({ ...f, file: e.target.files[0] })} className={box} />
-            <p className="text-center text-sm text-plum/60">atau</p>
+            <p className="text-xs text-plum/50 dark:text-milk/50 -mt-1">Foto otomatis dikecilkan ukurannya, kualitas dijaga tetap tajam.</p>
+            <p className="text-center text-sm text-plum/60 dark:text-milk/60">atau</p>
             <input placeholder="Link YouTube" value={f.yt} onChange={(e) => setF({ ...f, yt: e.target.value })} className={box} />
             <button disabled={busy} className={btn}>Tambah ke galeri</button>
-            <button type="button" onClick={() => sb.auth.signOut()} className="ml-3 text-sm underline">Keluar</button>
+            <button type="button" onClick={() => sb.auth.signOut()} className="ml-3 text-sm underline dark:text-milk">Keluar</button>
           </form>
-          {msg && <p className="mt-3 font-bold" role="status">{msg}</p>}
-          <ul className="mt-8 space-y-2">
+          {msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
+
+          <div className="mt-8 flex items-center justify-between">
+            <h2 className="font-display text-2xl text-plum dark:text-milk">Semua item ({items.length})</h2>
+            <button onClick={exportData} className="text-sm font-bold text-gold underline underline-offset-4">⬇ Ekspor backup (.json)</button>
+          </div>
+          <ul className="mt-3 space-y-2">
             {items.map((it) => (
-              <li key={it.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/70 px-4 py-2.5">
+              <li key={it.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/70 dark:bg-white/5 dark:text-milk px-4 py-2.5">
                 <span className="truncate"><b>{it.idol}</b>{it.group_name ? ` (${it.group_name})` : ''} · {it.title || it.type}</span>
-                <button onClick={() => del(it)} className="text-sm text-rose font-bold">Hapus</button>
+                <button onClick={() => del(it)} className="text-sm text-rose font-bold shrink-0">Hapus</button>
               </li>
             ))}
           </ul>
         </>
       )}
-      {!user && msg && <p className="mt-3 font-bold" role="status">{msg}</p>}
+      {!user && msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
     </main>
   )
 }
