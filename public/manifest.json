@@ -1,0 +1,12 @@
+{
+  "name": "Hearts2Hearts Gallery",
+  "short_name": "H2H Gallery",
+  "description": "Koleksi foto & video idol Hearts2Hearts favoritku",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF3F7",
+  "theme_color": "#3B2140",
+  "icons": [
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
