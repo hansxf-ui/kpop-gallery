@@ -6,6 +6,7 @@ import { sb, ytId } from '../../../lib/supabase'
 import { getFavorites, toggleFavorite } from '../../../lib/favorites'
 import ThemeToggle from '../../components/ThemeToggle'
 import Lightbox from '../../components/Lightbox'
+import Skeleton from '../../components/Skeleton'
 
 const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/hqdefault.jpg` : it.url)
 
@@ -64,7 +65,7 @@ export default function IdolAlbum() {
         )}
       </div>
 
-      {items === null && <p className="text-center text-plum/60 dark:text-milk/60">Memuat album…</p>}
+      {items === null && <Skeleton />}
       {items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
