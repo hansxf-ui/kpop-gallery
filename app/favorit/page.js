@@ -23,7 +23,7 @@ export default function Favorit() {
   }, [ids])
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-20">
+    <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
       <ThemeToggle />
       {ids === null && <Skeleton />}
       <header className="py-14 text-center">
