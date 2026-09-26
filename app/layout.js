@@ -2,8 +2,13 @@ import './globals.css'
 import Background from './components/Background'
 import ConfettiHearts from './components/ConfettiHearts'
 import TopBanner from './components/TopBanner'
+import Footer from './components/Footer'
+
+const SITE_URL = 'https://kpop-gallery-coral.vercel.app'
+
 export const metadata = {
-  metadataBase: new URL(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: '/' },
   title: 'Hearts2Hearts Gallery',
   description: 'Koleksi foto & video idol Hearts2Hearts (H2H) — Jiwoo, Carmen, Yuha, Stella, Juun, A-na, Ian, dan Ye-on.',
   themeColor: [
@@ -37,6 +42,7 @@ export default function RootLayout({ children }) {
         <Background />
         <ConfettiHearts />
         {children}
+        <Footer />
       </body>
     </html>
   )
