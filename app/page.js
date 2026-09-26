@@ -9,6 +9,24 @@ import Skeleton from './components/Skeleton'
 
 const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/hqdefault.jpg` : it.url)
 
+function CameraIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  )
+}
+
+function FilmIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="2.18" />
+      <path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5" />
+    </svg>
+  )
+}
+
 function weekNumber(d) {
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
   const day = t.getUTCDay() || 7
@@ -151,10 +169,10 @@ export default function Home() {
       </div>
 
       <div className="flex flex-wrap justify-center gap-2 mb-3">
-        {[['semua', 'Semua'], ['foto', '📷 Foto'], ['video', '🎬 Video']].map(([v, label]) => (
+        {[['semua', 'Semua', null], ['foto', 'Foto', CameraIcon], ['video', 'Video', FilmIcon]].map(([v, label, Icon]) => (
           <button key={v} onClick={() => setMediaType(v)}
-            className={`px-3 py-1 rounded-full text-xs font-bold border ${mediaType === v ? 'bg-rose text-plum border-rose' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
-            {label}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${mediaType === v ? 'bg-rose text-plum border-rose' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
+            {Icon && <Icon />}{label}
           </button>
         ))}
       </div>
@@ -183,7 +201,7 @@ export default function Home() {
       )}
 
       {eras.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
           {['Semua', ...eras].map((n) => (
             <button key={n} onClick={() => setEra(n)}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
@@ -194,7 +212,7 @@ export default function Home() {
       )}
 
       {idol !== 'Semua' && (
-        <p className="text-center -mt-6 mb-8">
+        <p className="text-center mt-2 mb-8">
           <Link href={`/idol/${encodeURIComponent(idol)}`} className="text-sm font-bold text-gold underline underline-offset-4">
             Buka album {idol} sendiri →
           </Link>
