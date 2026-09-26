@@ -94,6 +94,9 @@ export default function Tentang() {
           Situs ini dibuat oleh penggemar dan tidak berafiliasi dengan SM Entertainment maupun Hearts2Hearts.
           Hak cipta foto dan video tetap milik pemilik aslinya.
         </p>
+        <p className="mt-8 text-center text-xs text-plum/40 dark:text-milk/40">
+          © 2026 Hearts2Hearts Gallery · Dibuat dengan ♥ untuk S2U
+        </p>
       </section>
     </main>
   )
