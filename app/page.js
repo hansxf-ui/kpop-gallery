@@ -28,6 +28,7 @@ export default function Home() {
   const [openIndex, setOpenIndex] = useState(null)
   const [autoplay, setAutoplay] = useState(false)
   const [spot, setSpot] = useState(null) // { items:[it], index:0 } untuk sorotan/on-this-day
+  const [visibleCount, setVisibleCount] = useState(40)
 
   useEffect(() => {
     sb.from('items').select('*').order('created_at', { ascending: false }).then(({ data }) => setItems(data || []))
@@ -75,6 +76,9 @@ export default function Home() {
 
   const fotoCount = shown.filter((i) => i.type === 'photo').length
   const videoCount = shown.length - fotoCount
+  const visible = shown.slice(0, visibleCount)
+
+  useEffect(() => { setVisibleCount(40) }, [idol, group, era, q, sort])
 
   function onFav(it, e) {
     e.stopPropagation(); e.preventDefault()
@@ -181,9 +185,9 @@ export default function Home() {
       {items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-        {shown.map((it, i) => (
+        {visible.map((it) => (
           <div key={it.id} className="card mb-4 w-full break-inside-avoid">
-            <button onClick={() => { setOpenIndex(i); setAutoplay(false) }} className="block w-full text-left">
+            <button onClick={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }} className="block w-full text-left">
               <div className="relative overflow-hidden rounded-2xl">
                 {it.type === 'video'
                   ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
@@ -202,6 +206,14 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      {shown.length > visible.length && (
+        <p className="text-center mt-6">
+          <button onClick={() => setVisibleCount((c) => c + 40)} className="rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 dark:border-rose/20 font-bold px-5 py-2 text-sm">
+            Muat lebih banyak ({shown.length - visible.length} lagi)
+          </button>
+        </p>
+      )}
 
       {openIndex !== null && (
         <Lightbox items={shown} index={openIndex} onIndexChange={setOpenIndex}

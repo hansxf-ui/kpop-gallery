@@ -1,6 +1,7 @@
 import './globals.css'
 import Background from './components/Background'
 import ConfettiHearts from './components/ConfettiHearts'
+import TopBanner from './components/TopBanner'
 export const metadata = {
   metadataBase: new URL(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
   title: 'Hearts2Hearts Gallery',
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet" />
       </head>
       <body>
+        <TopBanner />
         <Background />
         <ConfettiHearts />
         {children}

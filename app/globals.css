@@ -58,3 +58,10 @@ html.dark .skeleton::after { background: linear-gradient(90deg, transparent, rgb
 html.dark .featured-card { background: linear-gradient(135deg, rgba(247,168,200,.08), rgba(205,184,245,.1)); }
 .count-badge { font-size: 10px; background: rgba(59,33,64,.12); border-radius: 999px; padding: 1px 6px; }
 html.dark .count-badge { background: rgba(255,255,255,.12); }
+
+/* Tema hari spesial (ulang tahun member / debut) */
+html.party body { background: radial-gradient(circle at 15% 0%, #FFE7B8 0, transparent 45%), radial-gradient(circle at 90% 10%, #FFD1E4 0, transparent 45%), #FFF8ED; }
+html.party.dark body { background: radial-gradient(circle at 15% 0%, #4a3418 0, transparent 45%), radial-gradient(circle at 90% 10%, #3a1f2e 0, transparent 45%), #201408; }
+html.party .card { outline-color: rgba(201,162,75,.9); box-shadow: 0 10px 34px -12px rgba(201,162,75,.6); }
+html.party .orb { opacity: .55; }
+html.party.dark .orb { opacity: .3; }
