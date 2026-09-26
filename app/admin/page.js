@@ -61,10 +61,10 @@ export default function Admin() {
     e.preventDefault()
     const ytLinks = f.yt.split('\n').map((s) => s.trim()).filter(Boolean)
     const validYt = ytLinks.filter((l) => ytId(l))
-    if (!f.idol.trim()) return setMsg('Isi nama idol dulu.')
+    const idolName = f.idol.trim() || f.group.trim() || 'Hearts2Hearts'
     if (queue.length === 0 && validYt.length === 0) return setMsg('Pilih foto/video, atau tempel link YouTube yang valid.')
     setBusy(true)
-    const baseRow = { idol: f.idol.trim(), group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
+    const baseRow = { idol: idolName, group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
 
     if (queue.length === 0) {
       let ok = 0
@@ -125,7 +125,7 @@ export default function Admin() {
   }
   async function saveEdit(id) {
     const { error } = await sb.from('items').update({
-      idol: editVal.idol.trim(), title: editVal.title.trim() || null,
+      idol: editVal.idol.trim() || editVal.group.trim() || 'Hearts2Hearts', title: editVal.title.trim() || null,
       group_name: editVal.group.trim() || null, era: editVal.era.trim() || null, note: editVal.note.trim() || null,
     }).eq('id', id)
     if (error) return setMsg('Gagal menyimpan perubahan: ' + error.message)
@@ -162,7 +162,7 @@ export default function Admin() {
       ) : (
         <>
           <form onSubmit={add} className="space-y-3 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
-            <input placeholder="Nama idol (mis. Karina)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
+            <input placeholder="Nama idol (opsional, mis. Karina)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
             <input placeholder="Judul (opsional, dipakai untuk semua file di batch ini)" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={box} />
             <div className="grid grid-cols-2 gap-3">
               <input placeholder="Grup (opsional)" value={f.group} onChange={(e) => setF({ ...f, group: e.target.value })} className={box} />
@@ -243,7 +243,7 @@ export default function Admin() {
               <li key={it.id} className="rounded-xl bg-white/70 dark:bg-white/5 dark:text-milk px-4 py-2.5">
                 {editing === it.id ? (
                   <div className="space-y-2">
-                    <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder="Idol" className={box} />
+                    <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder="Idol (opsional)" className={box} />
                     <input value={editVal.title} onChange={(e) => setEditVal({ ...editVal, title: e.target.value })} placeholder="Judul" className={box} />
                     <div className="grid grid-cols-2 gap-2">
                       <input value={editVal.group} onChange={(e) => setEditVal({ ...editVal, group: e.target.value })} placeholder="Grup" className={box} />
