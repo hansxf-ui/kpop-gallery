@@ -15,6 +15,7 @@ export default function Favorit() {
   const [openIndex, setOpenIndex] = useState(null)
 
   useEffect(() => { setIds(getFavorites()) }, [])
+  useEffect(() => { document.title = 'Favoritku · Hearts2Hearts Gallery' }, [])
 
   useEffect(() => {
     if (ids === null) return
