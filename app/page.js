@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { sb, ytId } from '../lib/supabase'
 import { getFavorites, toggleFavorite } from '../lib/favorites'
@@ -27,6 +27,8 @@ function FilmIcon() {
   )
 }
 
+const sorts = [['terbaru', 'Terbaru'], ['terlama', 'Terlama'], ['acak', 'Acak']]
+
 function weekNumber(d) {
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
   const day = t.getUTCDay() || 7
@@ -42,6 +44,8 @@ export default function Home() {
   const [era, setEra] = useState('Semua')
   const [q, setQ] = useState('')
   const [sort, setSort] = useState('terbaru')
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortRef = useRef(null)
   const [mediaType, setMediaType] = useState('semua') // 'semua' | 'foto' | 'video'
   const [favs, setFavs] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
@@ -100,6 +104,15 @@ export default function Home() {
 
   useEffect(() => { setVisibleCount(40) }, [idol, group, era, q, sort, mediaType])
 
+  useEffect(() => {
+    if (!sortOpen) return
+    const close = (e) => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setSortOpen(false) }
+    document.addEventListener('mousedown', close)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', close); window.removeEventListener('keydown', onKey) }
+  }, [sortOpen])
+
   function onFav(it, e) {
     e.stopPropagation(); e.preventDefault()
     const wasFav = favs.includes(it.id)
@@ -157,12 +170,28 @@ export default function Home() {
               className="absolute right-2.5 top-1/2 -translate-y-1/2 font-bold text-plum/50 dark:text-milk/50 hover:text-plum dark:hover:text-milk">✕</button>
           )}
         </div>
-        <select value={sort} onChange={(e) => setSort(e.target.value)}
-          className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold">
-          <option value="terbaru">Terbaru</option>
-          <option value="terlama">Terlama</option>
-          <option value="acak">Acak</option>
-        </select>
+        <div ref={sortRef} className="relative">
+          <button onClick={() => setSortOpen((o) => !o)} aria-haspopup="listbox" aria-expanded={sortOpen}
+            className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold inline-flex items-center gap-1.5">
+            {sorts.find((s) => s[0] === sort)[1]}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition ${sortOpen ? 'rotate-180' : ''}`}><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+          {sortOpen && (
+            <ul role="listbox" aria-label="Urutkan"
+              className="absolute z-30 mt-2 left-0 w-36 overflow-hidden rounded-2xl border border-rose/50 dark:border-rose/25 bg-milk dark:bg-plum shadow-xl page-fade-in">
+              {sorts.map(([v, label]) => (
+                <li key={v}>
+                  <button role="option" aria-selected={sort === v}
+                    onClick={() => { setSort(v); setSortOpen(false) }}
+                    className={`w-full px-4 py-2.5 text-left text-sm font-bold flex items-center justify-between ${sort === v ? 'text-plum dark:text-milk bg-rose/25 dark:bg-white/10' : 'text-plum/70 dark:text-milk/70 hover:bg-rose/10 dark:hover:bg-white/5'}`}>
+                    {label}
+                    {sort === v && <span className="text-gold">✓</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         {shown.length > 1 && (
           <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ Putar semua</button>
         )}
