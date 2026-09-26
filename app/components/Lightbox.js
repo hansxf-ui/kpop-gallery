@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { ytId } from '../../lib/supabase'
+import Reactions from './Reactions'
 
 function Media({ it }) {
   if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} className="max-h-[70vh] rounded-2xl mx-auto" />
@@ -62,13 +63,13 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
         <Media it={it} />
         <div className="flex flex-wrap items-center justify-center gap-2">
           {items.length > 1 && (
-            <button onClick={() => onIndexChange((index - 1 + items.length) % items.length)} className="px-3 py-1.5 rounded-full bg-white/90 font-bold text-sm">← Sebelumnya</button>
+            <button onClick={() => onIndexChange((index - 1 + items.length) % items.length)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">← Sebelumnya</button>
           )}
           {items.length > 1 && (
-            <button onClick={() => setPlaying((p) => !p)} className="px-3 py-1.5 rounded-full bg-white/90 font-bold text-sm">{playing ? '⏸ Jeda' : '▶ Putar semua'}</button>
+            <button onClick={() => setPlaying((p) => !p)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">{playing ? '⏸ Jeda' : '▶ Putar semua'}</button>
           )}
           {items.length > 1 && (
-            <button onClick={() => onIndexChange((index + 1) % items.length)} className="px-3 py-1.5 rounded-full bg-white/90 font-bold text-sm">Berikutnya →</button>
+            <button onClick={() => onIndexChange((index + 1) % items.length)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">Berikutnya →</button>
           )}
           {it.type !== 'youtube' ? (
             <a href={it.url} download className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ Unduh</a>
@@ -76,11 +77,17 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             <a href={it.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">Buka di YouTube</a>
           )}
           {it.type === 'photo' && (
-            <button onClick={makeWallpaper} disabled={making} className="px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
-              {making ? 'Membuat…' : '🖼 Wallpaper HP'}
+            <button onClick={makeWallpaper} disabled={making} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="9" r="1.5" />
+                <path d="M21 15l-5-5-9 9" />
+              </svg>
+              {making ? 'Membuat…' : 'Wallpaper HP'}
             </button>
           )}
         </div>
+        <Reactions key={it.id} itemId={it.id} />
         <button onClick={onClose} aria-label="Tutup" className="absolute -top-3 -right-3 h-9 w-9 rounded-full bg-white text-plum font-bold shadow">✕</button>
       </div>
     </div>
