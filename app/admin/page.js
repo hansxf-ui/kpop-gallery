@@ -5,6 +5,7 @@ import { sb, ytId } from '../../lib/supabase'
 import { compressImage } from '../../lib/compress'
 import { rotateImageFile } from '../../lib/rotate'
 import ThemeToggle from '../components/ThemeToggle'
+import ConfirmModal from '../components/ConfirmModal'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
@@ -20,6 +21,7 @@ export default function Admin() {
   const [dragOver, setDragOver] = useState(false)
   const [editing, setEditing] = useState(null) // item id being edited
   const [editVal, setEditVal] = useState({})
+  const [pendingDelete, setPendingDelete] = useState(null) // item yang menunggu konfirmasi hapus
   const [announcement, setAnnouncement] = useState('')
   const fileInput = useRef(null)
 
@@ -111,9 +113,9 @@ export default function Admin() {
   }
 
   async function del(it) {
-    if (!confirm('Hapus item ini?')) return
     if (it.path) await sb.storage.from('gallery').remove([it.path])
     await sb.from('items').delete().eq('id', it.id)
+    setPendingDelete(null)
     load()
   }
 
@@ -261,7 +263,7 @@ export default function Admin() {
                     </div>
                     <div className="flex gap-3 shrink-0">
                       <button onClick={() => startEdit(it)} className="text-sm font-bold text-gold">Ubah</button>
-                      <button onClick={() => del(it)} className="text-sm text-rose font-bold">Hapus</button>
+                      <button onClick={() => setPendingDelete(it)} className="text-sm text-rose font-bold">Hapus</button>
                     </div>
                   </div>
                 )}
@@ -271,6 +273,14 @@ export default function Admin() {
         </>
       )}
       {!user && msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
+      <ConfirmModal
+        open={!!pendingDelete}
+        title="Hapus item ini?"
+        message={pendingDelete ? `${pendingDelete.idol}${pendingDelete.title ? ` · ${pendingDelete.title}` : ''}` : ''}
+        confirmLabel="Ya, hapus"
+        onConfirm={() => del(pendingDelete)}
+        onCancel={() => setPendingDelete(null)}
+      />
     </main>
   )
 }
