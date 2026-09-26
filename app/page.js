@@ -24,6 +24,7 @@ export default function Home() {
   const [era, setEra] = useState('Semua')
   const [q, setQ] = useState('')
   const [sort, setSort] = useState('terbaru')
+  const [mediaType, setMediaType] = useState('semua') // 'semua' | 'foto' | 'video'
   const [favs, setFavs] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
   const [autoplay, setAutoplay] = useState(false)
@@ -62,6 +63,7 @@ export default function Home() {
 
   const shown = useMemo(() => {
     let list = (items || []).filter((i) => idol === 'Semua' || i.idol === idol)
+    if (mediaType !== 'semua') list = list.filter((i) => (mediaType === 'foto' ? i.type === 'photo' : i.type !== 'photo'))
     if (group !== 'Semua') list = list.filter((i) => i.group_name === group)
     if (era !== 'Semua') list = list.filter((i) => i.era === era)
     if (q.trim()) {
@@ -72,13 +74,13 @@ export default function Home() {
     if (sort === 'terlama') list.reverse()
     if (sort === 'acak') list.sort(() => Math.random() - 0.5)
     return list
-  }, [items, idol, group, era, q, sort])
+  }, [items, idol, group, era, q, sort, mediaType])
 
   const fotoCount = shown.filter((i) => i.type === 'photo').length
   const videoCount = shown.length - fotoCount
   const visible = shown.slice(0, visibleCount)
 
-  useEffect(() => { setVisibleCount(40) }, [idol, group, era, q, sort])
+  useEffect(() => { setVisibleCount(40) }, [idol, group, era, q, sort, mediaType])
 
   function onFav(it, e) {
     e.stopPropagation(); e.preventDefault()
@@ -126,8 +128,14 @@ export default function Home() {
       )}
 
       <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul atau nama idol…"
-          className="w-full max-w-xs rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-4 py-2 text-sm" />
+        <div className="relative w-full max-w-xs">
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul atau nama idol…"
+            className="w-full rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-4 py-2 pr-9 text-sm" />
+          {q && (
+            <button onClick={() => setQ('')} aria-label="Hapus pencarian"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 font-bold text-plum/50 dark:text-milk/50 hover:text-plum dark:hover:text-milk">✕</button>
+          )}
+        </div>
         <select value={sort} onChange={(e) => setSort(e.target.value)}
           className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold">
           <option value="terbaru">Terbaru</option>
@@ -137,6 +145,15 @@ export default function Home() {
         {shown.length > 1 && (
           <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ Putar semua</button>
         )}
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-2 mb-3">
+        {[['semua', 'Semua'], ['foto', '📷 Foto'], ['video', '🎬 Video']].map(([v, label]) => (
+          <button key={v} onClick={() => setMediaType(v)}
+            className={`px-3 py-1 rounded-full text-xs font-bold border ${mediaType === v ? 'bg-rose text-plum border-rose' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-wrap justify-center gap-2 mb-3">
