@@ -21,6 +21,7 @@ export default function IdolAlbum() {
   const [favs, setFavs] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
   const [autoplay, setAutoplay] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(40)
 
   useEffect(() => {
     sb.from('items').select('*').eq('idol', idol).order('created_at', { ascending: false }).then(({ data }) => setItems(data || []))
@@ -46,6 +47,9 @@ export default function IdolAlbum() {
   const fotoCount = shown.filter((i) => i.type === 'photo').length
   const videoCount = shown.length - fotoCount
   const pct = total && items ? Math.round((items.length / total) * 100) : null
+  const visible = shown.slice(0, visibleCount)
+
+  useEffect(() => { setVisibleCount(40) }, [q, sort, era])
 
   function onFav(it, e) {
     e.stopPropagation(); e.preventDefault()
@@ -102,8 +106,8 @@ export default function IdolAlbum() {
       {items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-        {shown.map((it, i) => (
-          <button key={it.id} onClick={() => { setOpenIndex(i); setAutoplay(false) }} className="card mb-4 block w-full text-left break-inside-avoid">
+        {visible.map((it) => (
+          <button key={it.id} onClick={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }} className="card mb-4 block w-full text-left break-inside-avoid">
             <div className="relative overflow-hidden rounded-2xl">
               {it.type === 'video'
                 ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
@@ -118,6 +122,14 @@ export default function IdolAlbum() {
           </button>
         ))}
       </div>
+
+      {shown.length > visible.length && (
+        <p className="text-center mt-6">
+          <button onClick={() => setVisibleCount((c) => c + 40)} className="rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 dark:border-rose/20 font-bold px-5 py-2 text-sm">
+            Muat lebih banyak ({shown.length - visible.length} lagi)
+          </button>
+        </p>
+      )}
 
       {openIndex !== null && (
         <Lightbox items={shown} index={openIndex} onIndexChange={setOpenIndex}
