@@ -26,7 +26,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
       canvas.width = W; canvas.height = H
       const ctx = canvas.getContext('2d')
       const g = ctx.createLinearGradient(0, 0, 0, H)
-      g.addColorStop(0, '#3B2140'); g.addColorStop(1, '#1B0F22')
+      g.addColorStop(0, '#173A56'); g.addColorStop(1, '#0D1D31')
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
       const scale = Math.max(W / img.width, H / img.height)
       const w = img.width * scale, h = img.height * scale
