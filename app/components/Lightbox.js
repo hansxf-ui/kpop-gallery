@@ -61,6 +61,10 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     <div onClick={onClose} className="fixed inset-0 z-50 grid place-items-center bg-plum/85 backdrop-blur-sm p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
         <Media it={it} />
+        <div className="text-center px-4">
+          <p className="font-bold text-milk">{it.title || it.idol}</p>
+          <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
+        </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {items.length > 1 && (
             <button onClick={() => onIndexChange((index - 1 + items.length) % items.length)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">← Sebelumnya</button>
