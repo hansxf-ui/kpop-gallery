@@ -20,6 +20,7 @@ export default function Admin() {
   const [dragOver, setDragOver] = useState(false)
   const [editing, setEditing] = useState(null) // item id being edited
   const [editVal, setEditVal] = useState({})
+  const [announcement, setAnnouncement] = useState('')
   const fileInput = useRef(null)
 
   const load = () => sb.from('items').select('*').order('created_at', { ascending: false }).then(({ data }) => setItems(data || []))
@@ -27,8 +28,14 @@ export default function Admin() {
     sb.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
     const { data } = sb.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null))
     load()
+    sb.from('settings').select('value').eq('key', 'announcement').maybeSingle().then(({ data }) => setAnnouncement(data?.value || ''))
     return () => data.subscription.unsubscribe()
   }, [])
+
+  async function saveAnnouncement(text) {
+    setAnnouncement(text)
+    await sb.from('settings').upsert({ key: 'announcement', value: text })
+  }
 
   async function login(e) {
     e.preventDefault()
@@ -50,17 +57,25 @@ export default function Admin() {
 
   async function add(e) {
     e.preventDefault()
+    const ytLinks = f.yt.split('\n').map((s) => s.trim()).filter(Boolean)
+    const validYt = ytLinks.filter((l) => ytId(l))
     if (!f.idol.trim()) return setMsg('Isi nama idol dulu.')
-    if (queue.length === 0 && !ytId(f.yt)) return setMsg('Pilih foto/video, atau tempel link YouTube yang valid.')
+    if (queue.length === 0 && validYt.length === 0) return setMsg('Pilih foto/video, atau tempel link YouTube yang valid.')
     setBusy(true)
     const baseRow = { idol: f.idol.trim(), group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
 
     if (queue.length === 0) {
-      setMsg('Menyimpan…')
-      const { error } = await sb.from('items').insert({ ...baseRow, title: f.title.trim(), type: 'youtube', url: f.yt.trim() })
+      let ok = 0
+      for (const link of validYt) {
+        setMsg(`Menyimpan… ${ok}/${validYt.length}`)
+        const { error } = await sb.from('items').insert({ ...baseRow, title: f.title.trim(), type: 'youtube', url: link })
+        if (!error) ok++
+      }
       setBusy(false)
-      if (error) return setMsg('Gagal: ' + error.message)
-      setF({ ...f, title: '', yt: '' }); setMsg('Tersimpan ✓'); load()
+      if (ok === 0) return setMsg('Gagal menyimpan link YouTube.')
+      setF({ ...f, title: '', yt: '' })
+      setMsg(validYt.length > 1 ? `Selesai: ${ok}/${validYt.length} link tersimpan ✓` : 'Tersimpan ✓')
+      load()
       return
     }
 
@@ -181,12 +196,24 @@ export default function Admin() {
               </ul>
             )}
 
-            <p className="text-center text-sm text-plum/60 dark:text-milk/60">atau, kalau tanpa file di atas</p>
-            <input placeholder="Link YouTube" value={f.yt} onChange={(e) => setF({ ...f, yt: e.target.value })} className={box} />
-            <button disabled={busy} className={btn}>{queue.length > 1 ? `Tambah ${queue.length} item ke galeri` : 'Tambah ke galeri'}</button>
+            <p className="text-center text-sm text-plum/60 dark:text-milk/60">atau, kalau tanpa file di atas — tempel link YouTube (boleh banyak, satu per baris)</p>
+            <textarea placeholder={'https://youtu.be/...\nhttps://youtu.be/...'} value={f.yt}
+              onChange={(e) => setF({ ...f, yt: e.target.value })} rows={3} className={box} />
+            <button disabled={busy} className={btn}>
+              {queue.length > 1 ? `Tambah ${queue.length} item ke galeri` : f.yt.trim().includes('\n') || (f.yt.match(/youtu/g) || []).length > 1 ? 'Tambah semua link YouTube' : 'Tambah ke galeri'}
+            </button>
             <button type="button" onClick={() => sb.auth.signOut()} className="ml-3 text-sm underline dark:text-milk">Keluar</button>
           </form>
           {msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
+
+          <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
+            <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 Pengumuman comeback</h2>
+            <p className="text-xs text-plum/50 dark:text-milk/50 mb-2">Muncul sebagai banner di atas beranda. Kosongkan lalu simpan untuk mematikannya.</p>
+            <div className="flex gap-2">
+              <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} placeholder="mis. Comeback baru: Lemon Tang! 🍋" className={box} />
+              <button onClick={() => saveAnnouncement(announcement)} className="rounded-full bg-gold text-plum font-bold px-4 shrink-0 text-sm">Simpan</button>
+            </div>
+          </div>
 
           {stats.length > 0 && (
             <div className="mt-10">
