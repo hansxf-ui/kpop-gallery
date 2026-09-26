@@ -12,8 +12,8 @@ export const metadata = {
   title: 'Hearts2Hearts Gallery',
   description: 'Koleksi foto & video idol Hearts2Hearts (H2H) — Jiwoo, Carmen, Yuha, Stella, Juun, A-na, Ian, dan Ye-on.',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FFF3F7' },
-    { media: '(prefers-color-scheme: dark)', color: '#1B0F22' },
+    { media: '(prefers-color-scheme: light)', color: '#F5FAFE' },
+    { media: '(prefers-color-scheme: dark)', color: '#0D1D31' },
   ],
   manifest: '/manifest.json',
   openGraph: {
