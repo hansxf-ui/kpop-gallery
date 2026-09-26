@@ -2,7 +2,6 @@ import './globals.css'
 import Background from './components/Background'
 import ConfettiHearts from './components/ConfettiHearts'
 import TopBanner from './components/TopBanner'
-import FooterWrapper from './components/FooterWrapper'
 
 const SITE_URL = 'https://kpop-gallery-coral.vercel.app'
 
@@ -42,7 +41,6 @@ export default function RootLayout({ children }) {
         <Background />
         <ConfettiHearts />
         {children}
-        <FooterWrapper />
       </body>
     </html>
   )
