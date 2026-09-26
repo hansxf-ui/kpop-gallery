@@ -170,15 +170,20 @@ export default function Admin() {
             </div>
             <input placeholder="Catatan pribadi (opsional, cuma kamu yang lihat)" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className={box} />
 
-            <label
-              htmlFor="galeri-file-input"
+            <div
               onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
               onDragLeave={() => setDragOver(false)}
               onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files) }}
+              onClick={() => fileInput.current?.click()}
               className={`rounded-xl border-2 border-dashed px-4 py-6 text-center cursor-pointer text-sm font-bold transition ${dragOver ? 'border-gold bg-gold/10' : 'border-rose/50 dark:border-rose/25 text-plum/60 dark:text-milk/60'}`}>
               📸 Seret & lepas foto/video di sini, atau ketuk untuk memilih (boleh banyak sekaligus)
-              <input id="galeri-file-input" ref={fileInput} type="file" accept="image/*,video/*" multiple onChange={(e) => addFiles(e.target.files)} className="hidden" />
-            </label>
+              <input ref={fileInput} type="file" accept="image/*,video/*" multiple onChange={(e) => addFiles(e.target.files)} className="hidden" />
+              <div className="mt-3">
+                <button type="button" onClick={(e) => { e.stopPropagation(); fileInput.current?.click() }} className="rounded-full bg-plum text-milk text-xs font-bold px-4 py-2">
+                  📁 Pilih file
+                </button>
+              </div>
+            </div>
 
             {queue.length > 0 && (
               <ul className="space-y-2">
