@@ -54,7 +54,7 @@ export default function Tentang() {
         <h2 className={h2}>Member</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {members.map(([n, r]) => (
-            <div key={n} className="card pb-3 px-3 pt-4 text-center">
+            <div key={n} className="card px-3 pt-4 text-center" style={{ paddingBottom: 16 }}>
               <p className="font-display text-xl text-plum dark:text-milk">{n}</p>
               <p className="text-xs text-gold font-bold mt-1">{r}</p>
             </div>
