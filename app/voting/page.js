@@ -28,6 +28,14 @@ function statusVote(v) {
   return 'buka'
 }
 
+// target hitung mundur: yg buka -> jam tutup, yg segera -> jam buka, yg tunggu -> paling bawah
+function targetVote(v) {
+  const st = statusVote(v)
+  if (st === 'buka') return new Date(v.selesai).getTime()
+  if (st === 'segera') return new Date(v.mulai).getTime()
+  return Infinity
+}
+
 function UnitCountdown({ angka, label }) {
   return (
     <div className="flex flex-col items-center bg-plum/5 dark:bg-milk/10 rounded-xl px-3 py-2 min-w-[64px]">
@@ -98,11 +106,9 @@ export default function VotingPage() {
     return () => clearInterval(t)
   }, [])
 
-  const buka = VOTING.filter(v => statusVote(v) === 'buka')
-    .sort((a, b) => new Date(a.selesai) - new Date(b.selesai))
-  const segera = VOTING.filter(v => statusVote(v) === 'segera')
-    .sort((a, b) => new Date(a.mulai) - new Date(b.mulai))
-  const tunggu = VOTING.filter(v => statusVote(v) === 'tunggu')
+  // satu list urut countdown terkecil dulu (target terdekat); yg tutup disembunyikan
+  const semua = VOTING.filter(v => statusVote(v) !== 'tutup')
+    .sort((a, b) => targetVote(a) - targetVote(b))
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-20 page-fade-in">
@@ -121,24 +127,9 @@ export default function VotingPage() {
       </header>
 
       <section className="space-y-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-gold">🔴 Sedang berlangsung</p>
-        {buka.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">Belum ada voting yang buka saat ini.</p>}
-        {buka.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
+        {semua.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">Belum ada info voting saat ini.</p>}
+        {semua.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
       </section>
-
-      {segera.length > 0 && (
-        <section className="space-y-4 mt-10">
-          <p className="text-xs font-bold uppercase tracking-widest text-gold">🟡 Segera</p>
-          {segera.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
-        </section>
-      )}
-
-      {tunggu.length > 0 && (
-        <section className="space-y-4 mt-10">
-          <p className="text-xs font-bold uppercase tracking-widest text-gold">⚪ Belum diumumkan</p>
-          {tunggu.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
-        </section>
-      )}
 
       <section className="mt-10">
         <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">💗 Voting Carmen</p>
