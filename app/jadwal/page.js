@@ -108,8 +108,9 @@ export default function JadwalPage() {
         </p>
         <h1 className="font-display text-4xl sm:text-6xl text-plum dark:text-milk mt-2">Jadwal Hearts2Hearts</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Comeback, rilisan & acara — khusus H2H</p>
-        <p className="mt-4">
+        <p className="mt-4 flex justify-center gap-5">
           <Link href="/" className="text-sm font-bold text-gold underline underline-offset-4">← Kembali ke galeri</Link>
+          <Link href="/voting" className="text-sm font-bold text-gold underline underline-offset-4">Voting →</Link>
         </p>
       </header>
 
