@@ -2,6 +2,7 @@ import './globals.css'
 import Background from './components/Background'
 import ConfettiHearts from './components/ConfettiHearts'
 import TopBanner from './components/TopBanner'
+import Footer from './components/Footer'
 
 const SITE_URL = 'https://kpop-gallery-coral.vercel.app'
 
@@ -11,8 +12,8 @@ export const metadata = {
   title: 'Hearts2Hearts Gallery',
   description: 'Koleksi foto & video idol Hearts2Hearts (H2H) — Jiwoo, Carmen, Yuha, Stella, Juun, A-na, Ian, dan Ye-on.',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F5FAFE' },
-    { media: '(prefers-color-scheme: dark)', color: '#0D1D31' },
+    { media: '(prefers-color-scheme: light)', color: '#FFF3F7' },
+    { media: '(prefers-color-scheme: dark)', color: '#1B0F22' },
   ],
   manifest: '/manifest.json',
   openGraph: {
@@ -41,6 +42,7 @@ export default function RootLayout({ children }) {
         <Background />
         <ConfettiHearts />
         {children}
+        <Footer />
       </body>
     </html>
   )
