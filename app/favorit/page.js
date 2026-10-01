@@ -7,7 +7,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import Lightbox from '../components/Lightbox'
 import Skeleton from '../components/Skeleton'
 
-const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/mqdefault.jpg` : it.url)
+const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/hqdefault.jpg` : it.url)
 
 export default function Favorit() {
   const [ids, setIds] = useState(null)
@@ -15,7 +15,6 @@ export default function Favorit() {
   const [openIndex, setOpenIndex] = useState(null)
 
   useEffect(() => { setIds(getFavorites()) }, [])
-  useEffect(() => { document.title = 'Favoritku · Hearts2Hearts Gallery' }, [])
 
   useEffect(() => {
     if (ids === null) return
