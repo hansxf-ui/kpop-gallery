@@ -134,6 +134,7 @@ export default function Home() {
         <p className="mt-4 flex justify-center gap-5 text-sm font-bold text-gold">
           <Link href="/favorit" className="underline underline-offset-4">♥ Favoritku ({favs.length})</Link>
           <Link href="/jadwal" className="underline underline-offset-4">✦ Jadwal</Link>
+          <Link href="/voting" className="underline underline-offset-4">✦ Voting</Link>
           <Link href="/tentang" className="underline underline-offset-4">✦ Tentang</Link>
         </p>
       </header>
