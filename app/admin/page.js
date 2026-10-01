@@ -5,7 +5,6 @@ import { sb, ytId } from '../../lib/supabase'
 import { compressImage } from '../../lib/compress'
 import { rotateImageFile } from '../../lib/rotate'
 import ThemeToggle from '../components/ThemeToggle'
-import ConfirmModal from '../components/ConfirmModal'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
@@ -21,7 +20,6 @@ export default function Admin() {
   const [dragOver, setDragOver] = useState(false)
   const [editing, setEditing] = useState(null) // item id being edited
   const [editVal, setEditVal] = useState({})
-  const [pendingDelete, setPendingDelete] = useState(null) // item yang menunggu konfirmasi hapus
   const [announcement, setAnnouncement] = useState('')
   const fileInput = useRef(null)
 
@@ -61,10 +59,10 @@ export default function Admin() {
     e.preventDefault()
     const ytLinks = f.yt.split('\n').map((s) => s.trim()).filter(Boolean)
     const validYt = ytLinks.filter((l) => ytId(l))
-    const idolName = f.idol.trim() || f.group.trim() || 'Hearts2Hearts'
+    if (!f.idol.trim()) return setMsg('Isi nama idol dulu.')
     if (queue.length === 0 && validYt.length === 0) return setMsg('Pilih foto/video, atau tempel link YouTube yang valid.')
     setBusy(true)
-    const baseRow = { idol: idolName, group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
+    const baseRow = { idol: f.idol.trim(), group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
 
     if (queue.length === 0) {
       let ok = 0
@@ -113,9 +111,9 @@ export default function Admin() {
   }
 
   async function del(it) {
+    if (!confirm('Hapus item ini?')) return
     if (it.path) await sb.storage.from('gallery').remove([it.path])
     await sb.from('items').delete().eq('id', it.id)
-    setPendingDelete(null)
     load()
   }
 
@@ -125,7 +123,7 @@ export default function Admin() {
   }
   async function saveEdit(id) {
     const { error } = await sb.from('items').update({
-      idol: editVal.idol.trim() || editVal.group.trim() || 'Hearts2Hearts', title: editVal.title.trim() || null,
+      idol: editVal.idol.trim(), title: editVal.title.trim() || null,
       group_name: editVal.group.trim() || null, era: editVal.era.trim() || null, note: editVal.note.trim() || null,
     }).eq('id', id)
     if (error) return setMsg('Gagal menyimpan perubahan: ' + error.message)
@@ -162,7 +160,7 @@ export default function Admin() {
       ) : (
         <>
           <form onSubmit={add} className="space-y-3 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
-            <input placeholder="Nama idol (opsional, mis. Karina)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
+            <input placeholder="Nama idol (mis. Karina)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
             <input placeholder="Judul (opsional, dipakai untuk semua file di batch ini)" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={box} />
             <div className="grid grid-cols-2 gap-3">
               <input placeholder="Grup (opsional)" value={f.group} onChange={(e) => setF({ ...f, group: e.target.value })} className={box} />
@@ -178,11 +176,6 @@ export default function Admin() {
               className={`rounded-xl border-2 border-dashed px-4 py-6 text-center cursor-pointer text-sm font-bold transition ${dragOver ? 'border-gold bg-gold/10' : 'border-rose/50 dark:border-rose/25 text-plum/60 dark:text-milk/60'}`}>
               📸 Seret & lepas foto/video di sini, atau ketuk untuk memilih (boleh banyak sekaligus)
               <input ref={fileInput} type="file" accept="image/*,video/*" multiple onChange={(e) => addFiles(e.target.files)} className="hidden" />
-              <div className="mt-3">
-                <button type="button" onClick={(e) => { e.stopPropagation(); fileInput.current?.click() }} className="rounded-full bg-plum text-milk text-xs font-bold px-4 py-2">
-                  📁 Pilih file
-                </button>
-              </div>
             </div>
 
             {queue.length > 0 && (
@@ -248,7 +241,7 @@ export default function Admin() {
               <li key={it.id} className="rounded-xl bg-white/70 dark:bg-white/5 dark:text-milk px-4 py-2.5">
                 {editing === it.id ? (
                   <div className="space-y-2">
-                    <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder="Idol (opsional)" className={box} />
+                    <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder="Idol" className={box} />
                     <input value={editVal.title} onChange={(e) => setEditVal({ ...editVal, title: e.target.value })} placeholder="Judul" className={box} />
                     <div className="grid grid-cols-2 gap-2">
                       <input value={editVal.group} onChange={(e) => setEditVal({ ...editVal, group: e.target.value })} placeholder="Grup" className={box} />
@@ -268,7 +261,7 @@ export default function Admin() {
                     </div>
                     <div className="flex gap-3 shrink-0">
                       <button onClick={() => startEdit(it)} className="text-sm font-bold text-gold">Ubah</button>
-                      <button onClick={() => setPendingDelete(it)} className="text-sm text-rose font-bold">Hapus</button>
+                      <button onClick={() => del(it)} className="text-sm text-rose font-bold">Hapus</button>
                     </div>
                   </div>
                 )}
@@ -278,14 +271,6 @@ export default function Admin() {
         </>
       )}
       {!user && msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
-      <ConfirmModal
-        open={!!pendingDelete}
-        title="Hapus item ini?"
-        message={pendingDelete ? `${pendingDelete.idol}${pendingDelete.title ? ` · ${pendingDelete.title}` : ''}` : ''}
-        confirmLabel="Ya, hapus"
-        onConfirm={() => del(pendingDelete)}
-        onCancel={() => setPendingDelete(null)}
-      />
     </main>
   )
 }
