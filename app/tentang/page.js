@@ -33,10 +33,7 @@ export default function Tentang() {
       <ThemeToggle />
       <header className="py-14 text-center">
         <Link href="/" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Kembali ke galeri</Link>
-        <p className="flex justify-center items-center mt-4" aria-hidden="true">
-          <svg width="30" height="30" viewBox="0 0 24 24" className="text-rose" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-          <svg width="30" height="30" viewBox="0 0 24 24" className="text-gold -ml-3 mt-2.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-        </p>
+        <p className="text-gold text-2xl mt-4" aria-hidden>✦ ✧ ✦</p>
         <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">Tentang</h1>
       </header>
 
@@ -57,7 +54,7 @@ export default function Tentang() {
         <h2 className={h2}>Member</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {members.map(([n, r]) => (
-            <div key={n} className="card px-3 pt-4 text-center" style={{ paddingBottom: 16 }}>
+            <div key={n} className="card pb-3 px-3 pt-4 text-center">
               <p className="font-display text-xl text-plum dark:text-milk">{n}</p>
               <p className="text-xs text-gold font-bold mt-1">{r}</p>
             </div>
@@ -93,9 +90,6 @@ export default function Tentang() {
         <p className={`${p} mt-3`}>
           Situs ini dibuat oleh penggemar dan tidak berafiliasi dengan SM Entertainment maupun Hearts2Hearts.
           Hak cipta foto dan video tetap milik pemilik aslinya.
-        </p>
-        <p className="mt-8 text-center text-xs text-plum/40 dark:text-milk/40">
-          © 2026 Hearts2Hearts Gallery · Dibuat dengan ♥ untuk S2U
         </p>
       </section>
     </main>
