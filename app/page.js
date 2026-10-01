@@ -131,11 +131,23 @@ export default function Home() {
         <h1 className="font-display text-5xl sm:text-7xl text-plum dark:text-milk mt-2">Hearts2Hearts Gallery</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Koleksi foto & video idol favoritku</p>
         <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{fotoCount} foto · {videoCount} video</p>
-        <p className="mt-4 flex justify-center gap-5 text-sm font-bold text-gold">
-          <Link href="/favorit" className="underline underline-offset-4">♥ Favoritku ({favs.length})</Link>
-          <Link href="/jadwal" className="underline underline-offset-4">✦ Jadwal</Link>
-          <Link href="/voting" className="underline underline-offset-4">✦ Voting</Link>
-          <Link href="/tentang" className="underline underline-offset-4">✦ Tentang</Link>
+        <p className="mt-4 flex justify-center gap-6 text-sm font-bold text-gold">
+          <Link href="/favorit" className="flex flex-col items-center">
+            <span aria-hidden="true">♥</span>
+            <span className="underline underline-offset-4 whitespace-nowrap">Favoritku ({favs.length})</span>
+          </Link>
+          <Link href="/jadwal" className="flex flex-col items-center">
+            <span aria-hidden="true">✦</span>
+            <span className="underline underline-offset-4">Jadwal</span>
+          </Link>
+          <Link href="/voting" className="flex flex-col items-center">
+            <span aria-hidden="true">✦</span>
+            <span className="underline underline-offset-4">Voting</span>
+          </Link>
+          <Link href="/tentang" className="flex flex-col items-center">
+            <span aria-hidden="true">✦</span>
+            <span className="underline underline-offset-4">Tentang</span>
+          </Link>
         </p>
       </header>
 
