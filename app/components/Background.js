@@ -1,5 +1,5 @@
 const SHAPES = ['♥', '✦', '♡', '✧']
-const COLORS = ['#F7A8C8', '#C9A24B', '#F7A8C8', '#CDB8F5']
+const COLORS = ['#7FC4E8', '#EA93BB', '#7FC4E8', '#C9E6F7']
 
 export default function Background() {
   const bits = Array.from({ length: 18 }, (_, i) => ({
@@ -12,8 +12,8 @@ export default function Background() {
   }))
   return (
     <div className="bg-layer" aria-hidden>
-      <div className="orb" style={{ width: 340, height: 340, top: '-90px', left: '-90px', background: '#F7A8C8' }} />
-      <div className="orb" style={{ width: 380, height: 380, bottom: '-120px', right: '-100px', background: '#CDB8F5', animationDelay: '-9s' }} />
+      <div className="orb" style={{ width: 340, height: 340, top: '-90px', left: '-90px', background: '#7FC4E8' }} />
+      <div className="orb" style={{ width: 380, height: 380, bottom: '-120px', right: '-100px', background: '#F0A6C6', animationDelay: '-9s' }} />
       {bits.map((b, i) => (
         <span key={i} className="float"
           style={{ '--l': `${b.left}%`, '--s': `${b.size}px`, '--d': `${b.dur}s`, '--dl': `${b.delay}s`, '--c': b.color }}>
