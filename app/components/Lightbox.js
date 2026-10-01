@@ -26,7 +26,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
       canvas.width = W; canvas.height = H
       const ctx = canvas.getContext('2d')
       const g = ctx.createLinearGradient(0, 0, 0, H)
-      g.addColorStop(0, '#173A56'); g.addColorStop(1, '#0D1D31')
+      g.addColorStop(0, '#3B2140'); g.addColorStop(1, '#1B0F22')
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
       const scale = Math.max(W / img.width, H / img.height)
       const w = img.width * scale, h = img.height * scale
@@ -61,10 +61,6 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     <div onClick={onClose} className="fixed inset-0 z-50 grid place-items-center bg-plum/85 backdrop-blur-sm p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
         <Media it={it} />
-        <div className="text-center px-4">
-          <p className="font-bold text-milk">{it.title || it.idol}</p>
-          <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
-        </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {items.length > 1 && (
             <button onClick={() => onIndexChange((index - 1 + items.length) % items.length)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">← Sebelumnya</button>
