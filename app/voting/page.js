@@ -99,7 +99,9 @@ function KartuVoting({ v }) {
 
 export default function VotingPage() {
   const buka = VOTING.filter(v => statusVote(v) === 'buka')
+    .sort((a, b) => new Date(a.selesai) - new Date(b.selesai))
   const segera = VOTING.filter(v => statusVote(v) === 'segera')
+    .sort((a, b) => new Date(a.mulai) - new Date(b.mulai))
   const tunggu = VOTING.filter(v => statusVote(v) === 'tunggu')
 
   return (
