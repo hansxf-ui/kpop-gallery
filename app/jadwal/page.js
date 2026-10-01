@@ -96,7 +96,9 @@ function KartuEvent({ event }) {
 
 export default function JadwalPage() {
   const upcoming = JADWAL.filter(e => !sudahLewat(e.tanggal))
+    .sort((a, b) => (a.tanggal || '9999') > (b.tanggal || '9999') ? 1 : -1)
   const lewat = JADWAL.filter(e => sudahLewat(e.tanggal))
+    .sort((a, b) => a.tanggal > b.tanggal ? 1 : -1)
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-20 page-fade-in">
