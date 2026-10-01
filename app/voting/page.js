@@ -37,14 +37,7 @@ function UnitCountdown({ angka, label }) {
   )
 }
 
-function KartuVoting({ v }) {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(t)
-  }, [])
-  void now
-
+function KartuVoting({ v, now }) {
   const st = statusVote(v)
   const target = st === 'buka' ? v.selesai : st === 'segera' ? v.mulai : null
   const cd = target ? hitungMundur(target) : null
@@ -98,11 +91,19 @@ function KartuVoting({ v }) {
 }
 
 export default function VotingPage() {
+  // satu timer untuk semua kartu biar detiknya sinkron
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
   const buka = VOTING.filter(v => statusVote(v) === 'buka')
     .sort((a, b) => new Date(a.selesai) - new Date(b.selesai))
   const segera = VOTING.filter(v => statusVote(v) === 'segera')
     .sort((a, b) => new Date(a.mulai) - new Date(b.mulai))
   const tunggu = VOTING.filter(v => statusVote(v) === 'tunggu')
+  void now
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-20 page-fade-in">
@@ -123,20 +124,20 @@ export default function VotingPage() {
       <section className="space-y-4">
         <p className="text-xs font-bold uppercase tracking-widest text-gold">🔴 Sedang berlangsung</p>
         {buka.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">Belum ada voting yang buka saat ini.</p>}
-        {buka.map(v => <KartuVoting key={v.id} v={v} />)}
+        {buka.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
       </section>
 
       {segera.length > 0 && (
         <section className="space-y-4 mt-10">
           <p className="text-xs font-bold uppercase tracking-widest text-gold">🟡 Segera</p>
-          {segera.map(v => <KartuVoting key={v.id} v={v} />)}
+          {segera.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
         </section>
       )}
 
       {tunggu.length > 0 && (
         <section className="space-y-4 mt-10">
           <p className="text-xs font-bold uppercase tracking-widest text-gold">⚪ Belum diumumkan</p>
-          {tunggu.map(v => <KartuVoting key={v.id} v={v} />)}
+          {tunggu.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
         </section>
       )}
 
