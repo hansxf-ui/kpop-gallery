@@ -102,8 +102,11 @@ export default function JadwalPage() {
     <main className="mx-auto max-w-3xl px-4 pb-20 page-fade-in">
       <ThemeToggle />
       <header className="py-12 text-center">
-        <p className="text-gold text-2xl" aria-hidden>✦ ✧ ✦</p>
-        <h1 className="font-display text-4xl sm:text-6xl text-plum dark:text-milk mt-2">📅 Jadwal Hearts2Hearts</h1>
+        <p className="flex justify-center items-center" aria-hidden="true">
+          <svg width="30" height="30" viewBox="0 0 24 24" className="text-rose" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+          <svg width="30" height="30" viewBox="0 0 24 24" className="text-gold -ml-3 mt-2.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+        </p>
+        <h1 className="font-display text-4xl sm:text-6xl text-plum dark:text-milk mt-2">Jadwal Hearts2Hearts</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Comeback, rilisan & acara — khusus H2H</p>
         <p className="mt-4">
           <Link href="/" className="text-sm font-bold text-gold underline underline-offset-4">← Kembali ke galeri</Link>
