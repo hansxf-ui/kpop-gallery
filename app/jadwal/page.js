@@ -45,44 +45,6 @@ function UnitCountdown({ angka, label }) {
   )
 }
 
-// ikon tipe event — SVG presisi, ukuran & gaya konsisten
-function IkonTipe({ tipe }) {
-  const isi = {
-    konser: (<>
-      <rect x="9" y="2.5" width="6" height="11" rx="3" />
-      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0" />
-      <path d="M12 18v3.5" />
-    </>),
-    rilis: (<>
-      <path d="M9 17.5V6l10-2.2V14" />
-      <circle cx="6.5" cy="17.5" r="2.5" />
-      <circle cx="16.5" cy="14" r="2.5" />
-    </>),
-    award: (<>
-      <path d="M7 4h10v4.5a5 5 0 0 1-10 0V4z" />
-      <path d="M7 5.5H4.2A.7.7 0 0 0 3.5 6c0 2.6 2 4.7 4.6 4.9" />
-      <path d="M17 5.5h2.8a.7.7 0 0 1 .7.5c0 2.6-2 4.7-4.6 4.9" />
-      <path d="M12 13.5V17" />
-      <path d="M9 20.5h6" />
-      <path d="M10 17h4" />
-    </>),
-    fanmeeting: (<>
-      <circle cx="9" cy="8" r="3.2" />
-      <path d="M3.5 19.5a5.5 5.5 0 0 1 11 0" />
-      <path d="M15.5 5.2a3.2 3.2 0 0 1 0 5.9" />
-      <path d="M17.3 14.3a5.5 5.5 0 0 1 3.2 5.2" />
-    </>),
-  }[tipe]
-  if (!isi) return null
-  return (
-    <span className="shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gold/15 text-gold" aria-hidden>
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        {isi}
-      </svg>
-    </span>
-  )
-}
-
 function KartuEvent({ event }) {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -98,15 +60,12 @@ function KartuEvent({ event }) {
   return (
     <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/70 dark:bg-plum/40 backdrop-blur p-5 sm:p-6">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose via-gold to-lilac" aria-hidden />
-      <div className="flex items-start gap-4">
-        <IkonTipe tipe={event.tipe} />
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-gold">{TIPE_LABEL[event.tipe] || event.tipe}</p>
-          <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-1">{event.judul}</h2>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-gold">{TIPE_LABEL[event.tipe] || event.tipe}</p>
+        <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-1">{event.emoji} {event.judul}</h2>
           <p className="mt-1 text-sm font-bold text-plum/70 dark:text-milk/70">{formatTanggal(event.tanggal)}</p>
           {event.lokasi && <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5">📍 {event.lokasi}</p>}
           {event.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">{event.catatan}</p>}
-        </div>
       </div>
       <div className="mt-4">
         {isHariIni ? (
