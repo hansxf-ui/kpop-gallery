@@ -95,8 +95,8 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
           )}
         </div>
         <Reactions key={it.id} itemId={it.id} />
-        <button onClick={onClose} aria-label="Tutup" className="absolute -top-3 -right-3 h-9 w-9 rounded-full bg-white text-plum font-bold shadow">✕</button>
       </div>
+      <button onClick={onClose} aria-label="Tutup" className="absolute right-4 top-4 z-10 grid h-11 w-11 place-items-center rounded-full bg-white text-lg font-bold text-plum shadow-lg">✕</button>
     </div>,
     document.body
   )
