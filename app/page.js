@@ -157,12 +157,12 @@ export default function Home() {
           <button onClick={() => setSpot({ items: [featured], index: 0 })} className="featured-card block w-full max-w-xl mx-auto overflow-hidden">
             <div className="relative overflow-hidden rounded-2xl">
               {featured.type === 'video'
-                ? <video src={featured.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full max-h-80 object-cover" />
+                ? <video src={featured.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full max-h-80 object-cover object-[center_22%]" />
                 : featured.type === 'youtube'
                   ? <img src={`https://img.youtube.com/vi/${ytId(featured.url)}/maxresdefault.jpg`}
                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = thumb(featured) }}
                       alt={featured.title || featured.idol} className="w-full aspect-video object-cover" />
-                  : <img src={thumb(featured)} alt={featured.title || featured.idol} className="w-full max-h-80 object-cover" />}
+                  : <img src={thumb(featured)} alt={featured.title || featured.idol} className="w-full max-h-80 object-cover object-[center_22%]" />}
               {featured.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>}
             </div>
             <p className="px-3 py-3 font-bold dark:text-milk">{featured.title || featured.idol} <span className="text-gold text-sm">· {featured.idol}</span></p>
