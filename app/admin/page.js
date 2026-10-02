@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { sb, ytId } from '../../lib/supabase'
+import { sb, ytId, fetchAllItems } from '../../lib/supabase'
 import { compressImage } from '../../lib/compress'
 import { rotateImageFile } from '../../lib/rotate'
 import ThemeToggle from '../components/ThemeToggle'
@@ -25,7 +25,7 @@ export default function Admin() {
   const [announcement, setAnnouncement] = useState('')
   const fileInput = useRef(null)
 
-  const load = () => sb.from('items').select('*').order('created_at', { ascending: false }).then(({ data }) => setItems(data || []))
+  const load = () => fetchAllItems().then(setItems).catch(() => setItems([]))
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
     const { data } = sb.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null))
