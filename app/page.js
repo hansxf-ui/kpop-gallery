@@ -9,6 +9,11 @@ import Skeleton from './components/Skeleton'
 
 const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/mqdefault.jpg` : it.url)
 
+// 8 member H2H — filter galeri per member, bukan per kombinasi unit
+const MEMBERS = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON']
+// Pecah string idol item jadi nama member: "JUUN & CARMEN" / "CARMEN, YUHA" -> ['JUUN', 'CARMEN']
+const namesOf = (it) => (it.idol || '').toUpperCase().split(/[,&]/).map((s) => s.trim()).filter(Boolean)
+
 function CameraIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -58,13 +63,21 @@ export default function Home() {
     setFavs(getFavorites())
   }, [])
 
-  const idols = ['Semua', ...new Set((items || []).map((i) => i.idol))]
+  const idols = ['Semua', ...MEMBERS, 'Hearts2Hearts']
   const groups = [...new Set((items || []).map((i) => i.group_name).filter(Boolean))]
   const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
 
   const idolCover = useMemo(() => {
     const map = {}
-    for (const it of items || []) if (!map[it.idol] && it.type !== 'youtube') map[it.idol] = thumb(it)
+    const photos = (items || []).filter((it) => it.type !== 'youtube')
+    // Pass 1: utamakan foto solo member / foto grup persis buat avatar chip
+    for (const it of photos) {
+      const names = namesOf(it)
+      if (names.length === 1 && !map[names[0]]) map[names[0]] = thumb(it)
+      if (it.idol === 'Hearts2Hearts' && !map['Hearts2Hearts']) map['Hearts2Hearts'] = thumb(it)
+    }
+    // Pass 2: fallback — foto unit apa pun yang memuat membernya
+    for (const it of photos) for (const n of namesOf(it)) if (!map[n]) map[n] = thumb(it)
     return map
   }, [items])
 
@@ -84,7 +97,11 @@ export default function Home() {
   }, [items])
 
   const shown = useMemo(() => {
-    let list = (items || []).filter((i) => idol === 'Semua' || i.idol === idol)
+    let list = (items || []).filter((i) => {
+      if (idol === 'Semua') return true
+      if (idol === 'Hearts2Hearts') return i.idol === 'Hearts2Hearts'
+      return namesOf(i).includes(idol) // member: cocokkan solo maupun unit yang memuat dia
+    })
     if (mediaType !== 'semua') list = list.filter((i) => (mediaType === 'foto' ? i.type === 'photo' : i.type !== 'photo'))
     if (group !== 'Semua') list = list.filter((i) => i.group_name === group)
     if (era !== 'Semua') list = list.filter((i) => i.era === era)
