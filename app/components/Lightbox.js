@@ -63,7 +63,10 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   return createPortal(
     <div onClick={onClose} className="fixed inset-0 z-50 grid place-items-center bg-plum/85 backdrop-blur-sm p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
-        <Media it={it} />
+        <div className="relative">
+          <Media it={it} />
+          <button onClick={onClose} aria-label="Tutup" className="absolute right-3 top-3 z-10 rounded-full bg-plum/70 px-4 py-2 text-sm font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+        </div>
         <div className="text-center px-4">
           <p className="font-bold text-milk">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
@@ -96,7 +99,6 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
         </div>
         <Reactions key={it.id} itemId={it.id} />
       </div>
-      <button onClick={onClose} aria-label="Tutup" className="absolute right-4 top-4 z-10 grid h-11 w-11 place-items-center rounded-full bg-white text-lg font-bold text-plum shadow-lg">✕</button>
     </div>,
     document.body
   )
