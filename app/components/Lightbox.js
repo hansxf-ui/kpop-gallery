@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ytId } from '../../lib/supabase'
 import Reactions from './Reactions'
 
@@ -57,7 +58,9 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   }, [index, items, onIndexChange, onClose])
 
   if (!it) return null
-  return (
+  // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
+  // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
+  return createPortal(
     <div onClick={onClose} className="fixed inset-0 z-50 grid place-items-center bg-plum/85 backdrop-blur-sm p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
         <Media it={it} />
@@ -94,6 +97,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
         <Reactions key={it.id} itemId={it.id} />
         <button onClick={onClose} aria-label="Tutup" className="absolute -top-3 -right-3 h-9 w-9 rounded-full bg-white text-plum font-bold shadow">✕</button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
