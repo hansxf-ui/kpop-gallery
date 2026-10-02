@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { sb, ytId } from '../lib/supabase'
+import { sb, ytId, fetchAllItems } from '../lib/supabase'
 import { getFavorites, toggleFavorite } from '../lib/favorites'
 import ThemeToggle from './components/ThemeToggle'
 import Lightbox from './components/Lightbox'
@@ -54,7 +54,7 @@ export default function Home() {
   const [visibleCount, setVisibleCount] = useState(40)
 
   useEffect(() => {
-    sb.from('items').select('*').order('created_at', { ascending: false }).then(({ data }) => setItems(data || []))
+    fetchAllItems().then(setItems).catch(() => setItems([]))
     setFavs(getFavorites())
   }, [])
 
