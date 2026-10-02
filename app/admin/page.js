@@ -16,7 +16,7 @@ export default function Admin() {
   const [items, setItems] = useState([])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
-  const [f, setF] = useState({ idol: '', title: '', group: '', era: '', note: '', yt: '' })
+  const [f, setF] = useState({ idol: '', title: '', group: '', era: '', note: '', yt: '', date: '' })
   const [queue, setQueue] = useState([]) // {id, file, url, rotation, status}
   const [dragOver, setDragOver] = useState(false)
   const [editing, setEditing] = useState(null) // item id being edited
@@ -65,12 +65,16 @@ export default function Admin() {
     if (queue.length === 0 && validYt.length === 0) return setMsg('Pilih foto/video, atau tempel link YouTube yang valid.')
     setBusy(true)
     const baseRow = { idol: idolName, group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
+    // Tanggal manual (opsional): buat memasukkan foto lama agar urut di kategori terlama.
+    // Per item digeser +1 menit supaya urutan dalam batch tetap terjaga.
+    const baseTime = f.date ? new Date(`${f.date}T00:00:00`).getTime() : null
+    const backdate = (i) => (baseTime ? { created_at: new Date(baseTime + i * 60000).toISOString() } : {})
 
     if (queue.length === 0) {
       let ok = 0
       for (const link of validYt) {
         setMsg(`Menyimpan… ${ok}/${validYt.length}`)
-        const { error } = await sb.from('items').insert({ ...baseRow, title: f.title.trim(), type: 'youtube', url: link })
+        const { error } = await sb.from('items').insert({ ...baseRow, title: f.title.trim(), type: 'youtube', url: link, ...backdate(ok) })
         if (!error) ok++
       }
       setBusy(false)
@@ -82,6 +86,7 @@ export default function Admin() {
     }
 
     let ok = 0
+    let seq = 0
     for (const q of queue) {
       setQueue((cur) => cur.map((it) => (it.id === q.id ? { ...it, status: 'memproses' } : it)))
       try {
@@ -92,9 +97,17 @@ export default function Admin() {
         const up = await sb.storage.from('gallery').upload(path, file)
         if (up.error) throw up.error
         const url = sb.storage.from('gallery').getPublicUrl(path).data.publicUrl
+        // Judul dari nama file boleh diawali "NAMA IDOL | " untuk idol per foto.
+        let rowIdol = idolName
+        let rowTitle = (f.title || q.file.name.replace(/\.\w+$/, '')).trim()
+        if (!f.title && rowTitle.includes(' | ')) {
+          const cut = rowTitle.indexOf(' | ')
+          rowIdol = rowTitle.slice(0, cut).trim() || idolName
+          rowTitle = rowTitle.slice(cut + 3).trim()
+        }
         const { error } = await sb.from('items').insert({
-          ...baseRow, title: (f.title || q.file.name.replace(/\.\w+$/, '')).trim(),
-          path, type: file.type.startsWith('video') ? 'video' : 'photo', url,
+          ...baseRow, idol: rowIdol, title: rowTitle,
+          path, type: file.type.startsWith('video') ? 'video' : 'photo', url, ...backdate(seq++),
         })
         if (error) throw error
         ok++
@@ -169,6 +182,10 @@ export default function Admin() {
               <input placeholder="Era (opsional, mis. Focus)" value={f.era} onChange={(e) => setF({ ...f, era: e.target.value })} className={box} />
             </div>
             <input placeholder="Catatan pribadi (opsional, cuma kamu yang lihat)" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className={box} />
+            <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
+              Tanggal tayang (opsional — isi buat foto lama supaya masuk kategori terlama)
+              <input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} className={`${box} mt-1`} />
+            </label>
 
             <div
               onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
