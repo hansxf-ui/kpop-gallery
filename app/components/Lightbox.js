@@ -63,10 +63,17 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   return createPortal(
     <div onClick={onClose} className="fixed inset-0 z-50 grid place-items-center bg-plum/85 backdrop-blur-sm p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
-        <div className="relative">
-          <Media it={it} />
-          <button onClick={onClose} aria-label="Tutup" className="absolute right-3 top-3 z-10 rounded-full bg-plum/70 px-4 py-2 text-sm font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
-        </div>
+        {it.type === 'photo' ? (
+          <div className="relative">
+            <Media it={it} />
+            <button onClick={onClose} aria-label="Tutup" className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            <button onClick={onClose} aria-label="Tutup" className="mb-2 self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+            <Media it={it} />
+          </div>
+        )}
         <div className="text-center px-4">
           <p className="font-bold text-milk">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
