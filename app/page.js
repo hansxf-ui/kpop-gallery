@@ -179,7 +179,7 @@ export default function Home() {
                   ? <img src={`https://img.youtube.com/vi/${ytId(featured.url)}/maxresdefault.jpg`}
                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = thumb(featured) }}
                       alt={featured.title || featured.idol} className="w-full aspect-video object-cover" />
-                  : <img src={imgOpt(thumb(featured), 900)} alt={featured.title || featured.idol} className="w-full max-h-80 object-cover object-[center_22%]" />}
+                  : <img src={imgOpt(thumb(featured), 1200)} alt={featured.title || featured.idol} className="w-full max-h-80 object-cover object-[center_22%]" />}
               {featured.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>}
             </div>
             <p className="px-3 py-3 font-bold dark:text-milk">{featured.title || featured.idol} <span className="text-gold text-sm">· {featured.idol}</span></p>
@@ -293,7 +293,7 @@ export default function Home() {
               <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
                 {it.type === 'video'
                   ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
-                  : <img src={imgOpt(thumb(it), 500)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
+                  : <img src={imgOpt(thumb(it), 800)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
                 {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
                 <span onClick={(e) => onFav(it, e)} role="button" aria-label="Favoritkan"
                   className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
