@@ -77,6 +77,9 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
         <div className="text-center px-4">
           <p className="font-bold text-milk">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
+          {it.note && it.note.trim().startsWith('📷') && (
+            <p className="text-[11px] text-milk/60 mt-1">{it.note.trim()}</p>
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {items.length > 1 && (
