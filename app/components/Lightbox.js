@@ -5,8 +5,8 @@ import { ytId } from '../../lib/supabase'
 import Reactions from './Reactions'
 
 function Media({ it }) {
-  if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} className="max-h-[70vh] rounded-2xl mx-auto" />
-  if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[70vh] rounded-2xl mx-auto" />
+  if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} className="max-h-[46dvh] sm:max-h-[70dvh] rounded-2xl mx-auto" />
+  if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[46dvh] sm:max-h-[70dvh] rounded-2xl mx-auto" />
   return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-[90vw] max-w-3xl aspect-video rounded-2xl mx-auto" />
 }
 
@@ -61,7 +61,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
-    <div onClick={onClose} className="fixed inset-0 z-50 grid place-items-center bg-plum/85 backdrop-blur-sm p-4">
+    <div onClick={onClose} className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-plum/85 backdrop-blur-sm p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
         {it.type === 'photo' ? (
           <div className="relative">
