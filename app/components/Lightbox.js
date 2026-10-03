@@ -5,9 +5,9 @@ import { ytId } from '../../lib/supabase'
 import Reactions from './Reactions'
 
 function Media({ it }) {
-  if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} className="max-h-[46dvh] sm:max-h-[70dvh] rounded-2xl mx-auto" />
-  if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[46dvh] sm:max-h-[70dvh] rounded-2xl mx-auto" />
-  return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-[90vw] max-w-3xl aspect-video rounded-2xl mx-auto" />
+  if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} className="block h-full w-auto max-w-full object-contain rounded-2xl" />
+  if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-full max-w-full rounded-2xl mx-auto block" />
+  return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-[90vw] max-w-3xl max-h-full aspect-video rounded-2xl mx-auto" />
 }
 
 export default function Lightbox({ items, index, onIndexChange, onClose, autoplay = false }) {
@@ -61,27 +61,31 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
-    <div onClick={onClose} className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-plum/85 backdrop-blur-sm p-4">
-      <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
+    <div onClick={onClose} className="fixed inset-0 z-50 grid h-dvh place-items-center overflow-y-auto bg-plum/85 backdrop-blur-sm p-4">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full h-full flex flex-col items-center gap-3">
         {it.type === 'photo' ? (
-          <div className="relative">
-            <Media it={it} />
-            <button onClick={onClose} aria-label="Tutup" className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+          <div className="min-h-0 w-full flex-1 flex items-center justify-center">
+            <div className="relative h-full max-h-full max-w-full">
+              <Media it={it} />
+              <button onClick={onClose} aria-label="Tutup" className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+            </div>
           </div>
         ) : (
-          <div className="flex flex-col">
-            <button onClick={onClose} aria-label="Tutup" className="mb-2 self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
-            <Media it={it} />
+          <div className="min-h-0 w-full flex-1 flex flex-col">
+            <button onClick={onClose} aria-label="Tutup" className="mb-2 flex-none self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+            <div className="min-h-0 flex-1 flex items-center justify-center">
+              <Media it={it} />
+            </div>
           </div>
         )}
-        <div className="text-center px-4">
+        <div className="flex-none text-center px-4">
           <p className="font-bold text-milk">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
           {it.note && it.note.trim().startsWith('📷') && (
             <p className="text-[11px] text-milk/60 mt-1">{it.note.trim()}</p>
           )}
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex-none flex flex-wrap items-center justify-center gap-2">
           {items.length > 1 && (
             <button onClick={() => onIndexChange((index - 1 + items.length) % items.length)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">← Sebelumnya</button>
           )}
