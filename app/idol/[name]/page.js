@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { sb, ytId } from '../../../lib/supabase'
+import { sb, ytId, imgOpt } from '../../../lib/supabase'
 import { getFavorites, toggleFavorite } from '../../../lib/favorites'
 import ThemeToggle from '../../components/ThemeToggle'
 import Lightbox from '../../components/Lightbox'
@@ -108,10 +108,10 @@ export default function IdolAlbum() {
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (
           <button key={it.id} onClick={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }} className="card mb-4 block w-full text-left break-inside-avoid">
-            <div className="relative overflow-hidden rounded-2xl">
+            <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
               {it.type === 'video'
                 ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
-                : <img src={thumb(it)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
+                : <img src={imgOpt(thumb(it), 500)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
               {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
               <span onClick={(e) => onFav(it, e)} role="button" aria-label="Favoritkan"
                 className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
