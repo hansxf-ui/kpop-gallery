@@ -5,8 +5,8 @@ import { ytId } from '../../lib/supabase'
 import Reactions from './Reactions'
 
 function Media({ it }) {
-  if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} className="max-h-[max(140px,calc(100dvh-390px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
-  if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-390px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
+  if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
+  if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
   return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-[90vw] max-w-3xl max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
 }
 
