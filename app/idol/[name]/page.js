@@ -111,7 +111,7 @@ export default function IdolAlbum() {
             <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
               {it.type === 'video'
                 ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
-                : <img src={imgOpt(thumb(it), 500)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
+                : <img src={imgOpt(thumb(it), 800)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
               {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
               <span onClick={(e) => onFav(it, e)} role="button" aria-label="Favoritkan"
                 className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
