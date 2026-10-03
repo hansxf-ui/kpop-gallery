@@ -92,7 +92,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             <button onClick={() => onIndexChange((index + 1) % items.length)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">Berikutnya →</button>
           )}
           {it.type !== 'youtube' ? (
-            <a href={it.url} download className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ Unduh</a>
+            <a href={`${it.url}?download=${encodeURIComponent(it.url.split('/').pop() || 'hearts2hearts')}`} className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ Unduh</a>
           ) : (
             <a href={it.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">Buka di YouTube</a>
           )}
