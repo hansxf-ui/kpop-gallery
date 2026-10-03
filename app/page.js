@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { sb, ytId, fetchAllItems } from '../lib/supabase'
+import { sb, ytId, fetchAllItems, imgOpt } from '../lib/supabase'
 import { getFavorites, toggleFavorite } from '../lib/favorites'
 import ThemeToggle from './components/ThemeToggle'
 import Lightbox from './components/Lightbox'
@@ -73,11 +73,11 @@ export default function Home() {
     // Pass 1: utamakan foto solo member / foto grup persis buat avatar chip
     for (const it of photos) {
       const names = namesOf(it)
-      if (names.length === 1 && !map[names[0]]) map[names[0]] = thumb(it)
-      if (it.idol === 'Hearts2Hearts' && !map['Hearts2Hearts']) map['Hearts2Hearts'] = thumb(it)
+      if (names.length === 1 && !map[names[0]]) map[names[0]] = imgOpt(thumb(it), 100)
+      if (it.idol === 'Hearts2Hearts' && !map['Hearts2Hearts']) map['Hearts2Hearts'] = imgOpt(thumb(it), 100)
     }
     // Pass 2: fallback — foto unit apa pun yang memuat membernya
-    for (const it of photos) for (const n of namesOf(it)) if (!map[n]) map[n] = thumb(it)
+    for (const it of photos) for (const n of namesOf(it)) if (!map[n]) map[n] = imgOpt(thumb(it), 100)
     return map
   }, [items])
 
@@ -172,14 +172,14 @@ export default function Home() {
         <section className="mb-10">
           <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ Sorotan Minggu Ini</p>
           <button onClick={() => setSpot({ items: [featured], index: 0 })} className="featured-card block w-full max-w-xl mx-auto overflow-hidden">
-            <div className="relative overflow-hidden rounded-2xl">
+            <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
               {featured.type === 'video'
                 ? <video src={featured.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full max-h-80 object-cover object-[center_22%]" />
                 : featured.type === 'youtube'
                   ? <img src={`https://img.youtube.com/vi/${ytId(featured.url)}/maxresdefault.jpg`}
                       onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = thumb(featured) }}
                       alt={featured.title || featured.idol} className="w-full aspect-video object-cover" />
-                  : <img src={thumb(featured)} alt={featured.title || featured.idol} className="w-full max-h-80 object-cover object-[center_22%]" />}
+                  : <img src={imgOpt(thumb(featured), 900)} alt={featured.title || featured.idol} className="w-full max-h-80 object-cover object-[center_22%]" />}
               {featured.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>}
             </div>
             <p className="px-3 py-3 font-bold dark:text-milk">{featured.title || featured.idol} <span className="text-gold text-sm">· {featured.idol}</span></p>
@@ -290,10 +290,10 @@ export default function Home() {
         {visible.map((it) => (
           <div key={it.id} className="card mb-4 w-full break-inside-avoid">
             <button onClick={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }} className="block w-full text-left">
-              <div className="relative overflow-hidden rounded-2xl">
+              <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
                 {it.type === 'video'
                   ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
-                  : <img src={thumb(it)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
+                  : <img src={imgOpt(thumb(it), 500)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
                 {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
                 <span onClick={(e) => onFav(it, e)} role="button" aria-label="Favoritkan"
                   className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
