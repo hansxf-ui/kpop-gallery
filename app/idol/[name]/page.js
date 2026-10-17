@@ -78,8 +78,10 @@ export default function IdolAlbum() {
       </header>
 
       <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul…"
-          className="w-full max-w-xs rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-4 py-2 text-sm" />
+        <div className="search-group w-full max-w-xs">
+          <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul…" type="search" className="search-input" />
+        </div>
         <select value={sort} onChange={(e) => setSort(e.target.value)}
           className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold">
           <option value="terbaru">Terbaru</option>
