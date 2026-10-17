@@ -197,12 +197,12 @@ export default function Home() {
       )}
 
       <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-        <div className="relative w-full max-w-xs">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul atau nama idol…"
-            className="w-full rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-4 py-2 pr-9 text-sm" />
+        <div className="search-group w-full max-w-xs">
+          <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul atau nama idol…" type="search" className="search-input" />
           {q && (
             <button onClick={() => setQ('')} aria-label="Hapus pencarian"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 font-bold text-plum/50 dark:text-milk/50 hover:text-plum dark:hover:text-milk">✕</button>
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 font-bold text-plum/50 dark:text-milk/50 hover:text-plum dark:hover:text-milk">✕</button>
           )}
         </div>
         <div ref={sortRef} className="relative">
