@@ -150,3 +150,57 @@ label.switch {
   z-index: 40;
 }
 label.switch .slider { box-shadow: 0 2px 10px rgba(13, 29, 49, .35); }
+
+/* Kolom pencarian — desain dari Uiverse.io by alexruix (dikirim Ryan, dipasang 18 Okt 2026).
+   Nama kelas diberi awalan search- supaya tidak tabrakan dengan kelas generik situs lain. */
+.search-group {
+  display: flex;
+  line-height: 28px;
+  align-items: center;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  height: 40px;
+  line-height: 28px;
+  padding: 0 1rem;
+  padding-left: 2.5rem;
+  padding-right: 2.2rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  outline: none;
+  background-color: #f3f3f4;
+  color: #0d0c22;
+  transition: .3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.search-input::-webkit-search-cancel-button { display: none; }
+
+.search-input::placeholder {
+  color: #9e9ea7;
+}
+
+.search-input:focus, .search-input:hover {
+  outline: none;
+  border-color: rgba(234, 76, 137, 0.4);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgb(234 76 137 / 10%);
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  fill: #9e9ea7;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+}
+
+/* Mode gelap: kolom ikut gelap, ring fokus pink-nya dipertahankan */
+html.dark .search-input { background-color: rgba(255, 255, 255, .08); color: #EAF3FA; }
+html.dark .search-input::placeholder { color: rgba(234, 243, 250, .45); }
+html.dark .search-input:focus, html.dark .search-input:hover { background-color: rgba(255, 255, 255, .12); }
+html.dark .search-icon { fill: rgba(234, 243, 250, .5); }
