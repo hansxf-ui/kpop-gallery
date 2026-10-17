@@ -12,10 +12,14 @@ export default function ThemeToggle() {
     localStorage.theme = next ? 'dark' : 'light'
   }
 
+  // Switch Uiverse (juanpabl0svn), dipasang atas kiriman Ryan 18 Okt 2026:
+  // tercentang = siang (matahari + awan, tema terang), tak tercentang = malam (bulan + bintang, tema gelap).
   return (
-    <button onClick={toggle} aria-label={dark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-      className="fixed top-4 right-4 z-40 h-10 w-10 rounded-full bg-white/85 dark:bg-white/10 backdrop-blur border border-rose/40 dark:border-rose/20 grid place-items-center text-lg shadow">
-      {dark ? '☀️' : '🌙'}
-    </button>
+    <label htmlFor="switch" className="switch fixed top-4 right-4 z-40">
+      <input id="switch" type="checkbox" checked={!dark} onChange={toggle}
+        aria-label={dark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'} />
+      <span className="slider"></span>
+      <span className="decoration"></span>
+    </label>
   )
 }
