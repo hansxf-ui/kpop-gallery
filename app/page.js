@@ -5,6 +5,7 @@ import { sb, ytId, fetchAllItems, imgOpt } from '../lib/supabase'
 import { getFavorites, toggleFavorite } from '../lib/favorites'
 import ThemeToggle from './components/ThemeToggle'
 import Lightbox from './components/Lightbox'
+import FeaturedCarousel from './components/FeaturedCarousel'
 import Skeleton from './components/Skeleton'
 
 const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/mqdefault.jpg` : it.url)
@@ -81,10 +82,15 @@ export default function Home() {
     return map
   }, [items])
 
-  const featured = useMemo(() => {
-    if (!items || items.length === 0) return null
-    const idx = weekNumber(new Date()) % items.length
-    return items[idx]
+  // Sorotan minggu ini: 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
+  const featuredList = useMemo(() => {
+    if (!items || items.length === 0) return []
+    const n = Math.min(5, items.length)
+    const step = Math.max(1, Math.floor(items.length / n))
+    const start = weekNumber(new Date()) % items.length
+    const out = []
+    for (let i = 0; i < n; i++) out.push(items[(start + i * step) % items.length])
+    return out
   }, [items])
 
   const onThisDay = useMemo(() => {
@@ -168,22 +174,10 @@ export default function Home() {
         </p>
       </header>
 
-      {featured && (
+      {featuredList.length > 0 && (
         <section className="mb-10">
           <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ Sorotan Minggu Ini</p>
-          <button onClick={() => setSpot({ items: [featured], index: 0 })} className="featured-card block w-full max-w-xl mx-auto overflow-hidden">
-            <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
-              {featured.type === 'video'
-                ? <video src={featured.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full max-h-80 object-cover object-[center_22%]" />
-                : featured.type === 'youtube'
-                  ? <img src={`https://img.youtube.com/vi/${ytId(featured.url)}/maxresdefault.jpg`}
-                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = thumb(featured) }}
-                      alt={featured.title || featured.idol} className="w-full aspect-video object-cover" />
-                  : <img src={imgOpt(thumb(featured), 1200)} alt={featured.title || featured.idol} className="w-full max-h-80 object-cover object-[center_22%]" />}
-              {featured.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>}
-            </div>
-            <p className="px-3 py-3 font-bold dark:text-milk">{featured.title || featured.idol} <span className="text-gold text-sm">· {featured.idol}</span></p>
-          </button>
+          <FeaturedCarousel items={featuredList} onOpen={(i) => setSpot({ items: featuredList, index: i })} />
         </section>
       )}
 
