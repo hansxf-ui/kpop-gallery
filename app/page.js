@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { imgOpt } from '../lib/supabase'
+import ThemeToggle from './components/ThemeToggle'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
 // Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
@@ -93,6 +94,7 @@ function Kartu({ m, i }) {
 export default function Landing() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-8 sm:px-8">
+      <ThemeToggle />
       <style>{`
         .lc-hang{ position:relative; width:min(240px,44vw); padding-top:58px; }
         .lc-string{ position:absolute; left:50%; top:0; width:1.5px; height:58px; transform:translateX(-50%); background:linear-gradient(#9db8cc,#c8d9e6); }
