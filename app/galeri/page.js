@@ -59,9 +59,16 @@ export default function Home() {
   const [spot, setSpot] = useState(null) // { items:[it], index:0 } untuk sorotan/on-this-day
   const [visibleCount, setVisibleCount] = useState(40)
 
+  const [loadError, setLoadError] = useState(false)
+  function loadItems() {
+    setLoadError(false)
+    setItems(null)
+    fetchAllItems().then(setItems).catch(() => { setItems([]); setLoadError(true) })
+  }
   useEffect(() => {
-    fetchAllItems().then(setItems).catch(() => setItems([]))
+    loadItems()
     setFavs(getFavorites())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const idols = ['Semua', ...MEMBERS, 'Hearts2Hearts']
@@ -278,7 +285,14 @@ export default function Home() {
       )}
 
       {items === null && <Skeleton />}
-      {items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
+      {loadError && (
+        <div className="py-10 text-center">
+          <p className="font-bold text-plum dark:text-milk">Gagal memuat koleksi.</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Periksa koneksimu, lalu coba lagi.</p>
+          <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Coba lagi</button>
+        </div>
+      )}
+      {items && !loadError && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (
