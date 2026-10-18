@@ -41,7 +41,10 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const startT = useRef(0)
   const dragXRef = useRef(0)
   const busy = useRef(false)
+  const commitRef = useRef(null)
+  const live = useRef({})
   const it = items[index]
+  live.current = { it, index, controlsOn, onIndexChange, items }
   const multi = items.length > 1
 
   // Jendela 3 slot di sekitar item aktif: [sebelum, aktif, sesudah] — navigasi melingkar seperti sebelumnya.
@@ -65,60 +68,73 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
 
   // Pindah item dengan animasi geser penuh, lalu rel ditata ulang ke tengah.
   function lompat(dir) {
-    const w = lebar()
-    if (!w) {
-      onIndexChange((index + dir + items.length) % items.length)
-      return
-    }
-    busy.current = true
-    setDrag(-dir * w, true)
-    clearTimeout(commitTimer.current)
-    commitTimer.current = setTimeout(() => {
-      onIndexChange((index + dir + items.length) % items.length)
-      setDrag(0, false)
-      busy.current = false
-    }, 310)
+    if (commitRef.current) { commitRef.current(dir); return }
+    onIndexChange((index + dir + items.length) % items.length)
   }
 
   function maju(dir) {
     if (!busy.current) lompat(dir)
   }
 
-  // --- Seretan (pointer: sentuh + mouse satu jalur) ---
+  // --- Mesin geser: listener nempel di window, BUKAN pointer capture di rel ---
+  // Pointer capture di rel me-retarget klik ke rel, bikin tombol di dalamnya (Tutup, ⇄ Geser) tidak bisa diklik.
+  useEffect(() => {
+    function w() { return viewRef.current?.clientWidth || 0 }
+    function commit(dir) {
+      const cur = live.current
+      const width = w()
+      if (!width) { cur.onIndexChange((cur.index + dir + cur.items.length) % cur.items.length); return }
+      busy.current = true
+      setDrag(-dir * width, true)
+      clearTimeout(commitTimer.current)
+      commitTimer.current = setTimeout(() => {
+        const c = live.current
+        c.onIndexChange((c.index + dir + c.items.length) % c.items.length)
+        setDrag(0, false)
+        busy.current = false
+      }, 310)
+    }
+    commitRef.current = commit
+    function move(e) {
+      if (startX.current === null || busy.current) return
+      const width = w()
+      if (!width) return
+      const dx = e.clientX - startX.current
+      setDrag(Math.max(-width, Math.min(width, dx)), false)
+    }
+    function up() {
+      if (startX.current === null) return
+      const dx = dragXRef.current
+      const dt = Date.now() - startT.current
+      startX.current = null
+      if (Math.abs(dx) > 60) { commit(dx < 0 ? 1 : -1); return }
+      setDrag(0, true)
+      // Ketukan pelan di video YouTube = serahkan permukaan ke kontrol pemutarnya
+      const cur = live.current
+      if (Math.abs(dx) < 8 && dt < 400 && cur.it && cur.it.type === 'youtube' && !cur.controlsOn) setControlsOn(true)
+    }
+    function cancel() {
+      if (startX.current === null) return
+      startX.current = null
+      setDrag(0, true)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', cancel)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', cancel)
+    }
+  }, [])
+
   function onPD(e) {
     if (busy.current || !multi) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    // Seretan tidak pernah dimulai dari tombol/tautan — klik mereka harus murni.
+    if (e.target && e.target.closest && e.target.closest('button, a')) return
     startX.current = e.clientX
     startT.current = Date.now()
-    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* abaikan */ }
-  }
-
-  function onPM(e) {
-    if (startX.current === null || busy.current) return
-    const w = lebar()
-    if (!w) return
-    const dx = e.clientX - startX.current
-    setDrag(Math.max(-w, Math.min(w, dx)), false)
-  }
-
-  function onPU() {
-    if (startX.current === null) return
-    const dx = dragXRef.current
-    const dt = Date.now() - startT.current
-    startX.current = null
-    if (Math.abs(dx) > 60) {
-      lompat(dx < 0 ? 1 : -1)
-      return
-    }
-    setDrag(0, true)
-    // Ketukan pelan di video YouTube = serahkan permukaan ke kontrol pemutarnya
-    if (Math.abs(dx) < 8 && dt < 400 && it.type === 'youtube' && !controlsOn) setControlsOn(true)
-  }
-
-  function onPC() {
-    if (startX.current === null) return
-    startX.current = null
-    setDrag(0, true)
   }
 
   // Ganti item = mode geser lagi (lapisan penangkap geseran di video YouTube dipasang ulang)
@@ -179,7 +195,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
           <div
             className={`flex w-full select-none ${multi ? 'cursor-grab touch-pan-y active:cursor-grabbing' : ''}`}
             style={multi ? { transform: `translateX(calc(-100% + ${dragX}px))`, transition: anim ? 'transform 300ms ease' : 'none' } : undefined}
-            onPointerDown={onPD} onPointerMove={onPM} onPointerUp={onPU} onPointerCancel={onPC}>
+            onPointerDown={onPD}>
             {slots.map((s, i) => (
               <div key={`${s.it.id}-${s.active ? 'aktif' : 'tepi' + i}`} className="w-full shrink-0 flex items-start justify-center">
                 {s.it.type === 'photo' ? (
