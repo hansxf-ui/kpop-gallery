@@ -95,6 +95,7 @@ export default function VotingPage() {
   // satu timer untuk semua kartu biar detiknya sinkron; null sebelum mount supaya
   // angka countdown tidak dirender server (cegah hydration mismatch).
   const [now, setNow] = useState(null)
+  useEffect(() => { document.title = 'Voting · Hearts2Hearts Gallery' }, [])
   useEffect(() => {
     setNow(Date.now())
     const t = setInterval(() => setNow(Date.now()), 1000)
@@ -186,7 +187,7 @@ export default function VotingPage() {
       </section>
 
       <p className="mt-10 text-center text-xs text-plum/40 dark:text-milk/40">
-        Data diverifikasi dari pengumuman resmi &amp; media · terakhir dicek 2 Okt 2026
+        Data diverifikasi dari pengumuman resmi &amp; media · terakhir dicek 16 Okt 2026
       </p>
     </main>
   )
