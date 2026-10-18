@@ -6,15 +6,16 @@ import ThemeToggle from './components/ThemeToggle'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
 // Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
+// Foto seragam sekolah era 'FOCUS' — satu set seragam (abu + kemeja putih + dasi), pose tegak serius.
 const MEMBERS = [
-  { key: 'JIWOO', name: 'Jiwoo', pos: 'Leader', count: 128, file: '1790949259942-q7eqd-JIWOO___Foto_konsep__ICONIC_HEART__14__rilisan_jaket_album.png', obj: '32% 30%' },
-  { key: 'CARMEN', name: 'Carmen', pos: 'Main Vocal', count: 140, file: '1790467840892-qgtmr-photo-17-carmen.jpg', obj: '50% 22%' },
-  { key: 'YUHA', name: 'Yuha', pos: 'Main Vocal · Lead Dancer', count: 127, file: '1790445197510-g2sub-photo-13-yuha.jpg', obj: '50% 20%' },
-  { key: 'STELLA', name: 'Stella', pos: 'Lead Vocal', count: 131, file: '1790952337890-t4x7d-Etoile_0618_2105995654464249880_1.jpg', obj: '50% 18%' },
-  { key: 'JUUN', name: 'Juun', pos: 'Main Dancer · Main Rapper', count: 139, file: '1790468034206-elqqc-photo-25-juun.jpg', obj: '50% 16%' },
-  { key: 'A-NA', name: 'A-na', pos: 'Lead Rapper · Visual', count: 125, file: '1790467918158-zvyo8-photo-20-ana.jpg', obj: '50% 20%' },
-  { key: 'IAN', name: 'Ian', pos: 'Main Dancer · Center', count: 129, file: '1790949262559-on6pj-IAN___Foto_konsep__ICONIC_HEART__14__rilisan_jaket_album.png', obj: '26% 32%' },
-  { key: 'YE-ON', name: 'Ye-on', pos: 'Lead Vocal · Maknae', count: 122, file: '1790445024076-psxb5-photo-08-yeon.jpg', obj: '50% 18%' },
+  { key: 'JIWOO', name: 'Jiwoo', pos: 'Leader', count: 128, file: '1790941317262-jawyk-JIWOO___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '50% 25%' },
+  { key: 'CARMEN', name: 'Carmen', pos: 'Main Vocal', count: 140, file: '1790941299261-pxqrr-CARMEN___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '30% 25%' },
+  { key: 'YUHA', name: 'Yuha', pos: 'Main Vocal · Lead Dancer', count: 127, file: '1790941364347-hhwiy-YUHA___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '60% 20%' },
+  { key: 'STELLA', name: 'Stella', pos: 'Lead Vocal', count: 131, file: '1790941356664-izd35-STELLA___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 18%' },
+  { key: 'JUUN', name: 'Juun', pos: 'Main Dancer · Main Rapper', count: 139, file: '1790941347448-bvlr6-JUUN___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 15%' },
+  { key: 'A-NA', name: 'A-na', pos: 'Lead Rapper · Visual', count: 125, file: '1790941398384-r9iqj-A-NA___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 15%' },
+  { key: 'IAN', name: 'Ian', pos: 'Main Dancer · Center', count: 129, file: '1790941406679-d1obh-IAN___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 15%' },
+  { key: 'YE-ON', name: 'Ye-on', pos: 'Lead Vocal · Maknae', count: 122, file: '1790941446922-hvrvd-YE-ON___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '50% 18%' },
 ]
 const DUR = [5.2, 6.1, 5.6, 6.5, 5.9, 6.3, 5.4, 6.0]
 const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
@@ -40,48 +41,48 @@ function Kartu({ m, i }) {
           >
             {/* DEPAN */}
             <div className="lc-face bg-white shadow-[0_14px_34px_rgba(23,58,86,0.16)] dark:bg-[#14304a]">
-              <div className="flex justify-between px-4 pb-2 pt-3 text-[8.5px] font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">
+              <div className="lc-meta flex justify-between px-4 pb-2 pt-3 font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">
                 <span>MEMBER / H2H</span><span>#{String(i + 1).padStart(2, '0')}</span>
               </div>
               <div className="mx-3 overflow-hidden rounded-xl" style={{ aspectRatio: '1 / 0.94' }}>
                 <img src={url} alt={`Foto ${m.name}`} className="h-full w-full object-cover" style={{ objectPosition: m.obj }} draggable={false} />
               </div>
               <div className="px-4 pt-3">
-                <h3 className="font-display text-[22px] leading-tight text-plum dark:text-milk">{m.name}</h3>
-                <p className="text-xs text-plum/55 dark:text-milk/55">{m.pos}</p>
+                <h3 className="lc-fname font-display leading-tight text-plum dark:text-milk">{m.name}</h3>
+                <p className="lc-fpos text-plum/55 dark:text-milk/55">{m.pos}</p>
               </div>
               <div className="mt-auto flex items-center justify-between px-4 pb-3.5">
-                <span className="text-[8.5px] font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">LIHAT PROFIL</span>
-                <span className="grid h-[21px] w-[21px] place-items-center rounded-full bg-plum text-[11px] text-milk dark:bg-gold dark:text-plum">+</span>
+                <span className="lc-meta font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">LIHAT PROFIL</span>
+                <span className="lc-dot grid place-items-center rounded-full bg-plum text-milk dark:bg-gold dark:text-plum">+</span>
               </div>
             </div>
             {/* BELAKANG — holografik */}
             <div className="lc-face lc-back lc-holo text-[#26232e]">
-              <div className="relative flex items-center gap-2.5">
-                <img src={url} alt="" className="h-11 w-11 rounded-full border-2 border-white/80 object-cover" style={{ objectPosition: m.obj }} draggable={false} />
+              <div className="lc-btop relative flex items-center">
+                <img src={url} alt="" className="lc-bthumb rounded-full border-2 border-white/80 object-cover" style={{ objectPosition: m.obj }} draggable={false} />
                 <div>
-                  <h4 className="font-display text-[17px] leading-tight">{m.name}</h4>
-                  <p className="text-[10.5px] text-[#5c5770]">{m.pos}</p>
+                  <h4 className="lc-bname font-display leading-tight">{m.name}</h4>
+                  <p className="lc-bpos text-[#5c5770]">{m.pos}</p>
                 </div>
               </div>
-              <div className="relative mt-3.5">
-                <div className="flex items-baseline justify-between gap-2 border-t border-[#26232e]/15 py-[7px] text-[11px]">
-                  <span className="text-[9px] tracking-[0.08em] text-[#5c5770]">POSISI</span><b className="text-right font-semibold">{m.pos}</b>
+              <div className="lc-brows relative">
+                <div className="lc-brow flex items-baseline justify-between gap-2 border-t border-[#26232e]/15">
+                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">POSISI</span><b className="whitespace-nowrap text-right font-semibold">{m.pos}</b>
                 </div>
-                <div className="flex items-baseline justify-between gap-2 border-t border-[#26232e]/15 py-[7px] text-[11px]">
-                  <span className="text-[9px] tracking-[0.08em] text-[#5c5770]">ITEM DI GALERI</span><b className="font-semibold">{m.count} item</b>
+                <div className="lc-brow flex items-baseline justify-between gap-2 border-t border-[#26232e]/15">
+                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">ITEM DI GALERI</span><b className="whitespace-nowrap font-semibold">{m.count} item</b>
                 </div>
               </div>
               <Link
                 href={`/idol/${m.key}`}
                 onClick={(e) => e.stopPropagation()}
-                className="relative mt-3 block rounded-full bg-[#26232e] py-2 text-center text-[11px] font-bold text-white"
+                className="lc-blink relative block rounded-full bg-[#26232e] text-center font-bold text-white"
               >
                 Buka galeri {m.name} →
               </Link>
-              <div className="relative mt-auto flex items-end justify-between">
-                <small className="text-[8.5px] font-bold leading-[1.7] tracking-[0.18em] text-[#5c5770]">PINDAI BUAT BUKA<br />GALERI {m.name.toUpperCase()}</small>
-                <img src={`/qr/${m.key.toLowerCase()}.png`} alt={`QR galeri ${m.name}`} className="h-16 w-16 rounded-lg bg-white p-1 shadow" draggable={false} />
+              <div className="lc-btop relative mt-auto flex items-end justify-between">
+                <small className="lc-bsmall font-bold leading-[1.7] tracking-[0.18em] text-[#5c5770]">PINDAI BUAT BUKA<br />GALERI {m.name.toUpperCase()}</small>
+                <img src={`/qr/${m.key.toLowerCase()}.png`} alt={`QR galeri ${m.name}`} className="lc-bqr rounded-lg bg-white shadow" draggable={false} />
               </div>
             </div>
           </div>
@@ -105,10 +106,27 @@ export default function Landing() {
         @keyframes lcsway{ 0%,100%{ transform:rotate(1.15deg);} 50%{ transform:rotate(-1.15deg);} }
         .lc-kickwrap{ animation:lckick .9s ease-out; transform-origin:50% -58px; }
         @keyframes lckick{ 0%{ transform:rotate(0);} 25%{ transform:rotate(4.5deg);} 55%{ transform:rotate(-3deg);} 80%{ transform:rotate(1.2deg);} 100%{ transform:rotate(0);} }
-        .lc-flip{ position:relative; width:100%; aspect-ratio:240/338; transform-style:preserve-3d; transition:transform .85s cubic-bezier(.3,.7,.3,1); cursor:pointer; }
+        .lc-flip{ position:relative; width:100%; aspect-ratio:240/338; transform-style:preserve-3d; transition:transform .85s cubic-bezier(.3,.7,.3,1); cursor:pointer; container-type:inline-size; }
         .lc-flip.lc-on{ transform:rotateY(180deg); }
         .lc-face{ position:absolute; inset:0; border-radius:18px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; display:flex; flex-direction:column; }
-        .lc-back{ transform:rotateY(180deg); padding:18px 18px 16px; }
+        .lc-back{ transform:rotateY(180deg); padding:7.5cqw 7.5cqw 6.7cqw; }
+        /* Semua ukuran isi kartu pakai cqw (persen lebar kartu) — kartu menyusut = isi ikut
+           menyusut proporsional, jadi di HP pun tidak ada isi yang kepotong. */
+        .lc-meta{ font-size:3.55cqw; }
+        .lc-fname{ font-size:9.2cqw; }
+        .lc-fpos{ font-size:5cqw; }
+        .lc-dot{ width:8.75cqw; height:8.75cqw; font-size:4.6cqw; }
+        .lc-btop{ gap:4.2cqw; }
+        .lc-bthumb{ width:18.3cqw; height:18.3cqw; }
+        .lc-bname{ font-size:7.1cqw; }
+        .lc-bpos{ font-size:4.4cqw; }
+        .lc-brows{ margin-top:5.8cqw; }
+        .lc-brow{ padding:2.9cqw 0; font-size:4.6cqw; }
+        .lc-blab{ font-size:3.75cqw; }
+        .lc-blink{ font-size:4.6cqw; padding:3.3cqw 0; margin-top:5cqw; }
+        .lc-bsmall{ font-size:3.55cqw; }
+        .lc-bqr{ width:26.7cqw; height:26.7cqw; padding:1.7cqw; }
+        .lc-wirem{ display:none; }
         .lc-holo{ background:linear-gradient(125deg,#f6d9ec,#d9e4fb,#d5f3e3,#f7ecd2,#e6dbfa,#f6d9ec); background-size:320% 320%; animation:lcholo 9s ease infinite; }
         @keyframes lcholo{ 0%,100%{ background-position:0% 40%; } 50%{ background-position:100% 60%; } }
         .lc-wire{ position:absolute; left:0; right:0; top:20px; width:100%; height:56px; pointer-events:none; }
@@ -118,6 +136,10 @@ export default function Landing() {
           .lc-clip{ top:28px; }
           .lc-sway,.lc-kickwrap{ transform-origin:50% -40px; }
           .lc-wire{ display:none; }
+          /* Kawat per pasang kartu khusus HP: tiap baris kartu punya kawatnya sendiri,
+             jadi tali tiap kartu selalu nyambung ke kawat (tidak ada tali putus). */
+          .lc-wirem{ display:block; flex:0 0 100%; height:22px; }
+          .lc-wirem svg{ width:100%; height:100%; display:block; }
         }
       `}</style>
 
@@ -142,10 +164,19 @@ export default function Landing() {
           <svg className="lc-wire" viewBox="0 0 1200 56" preserveAspectRatio="none" aria-hidden="true">
             <path d="M0,4 Q600,60 1200,4" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-plum/25 dark:text-milk/25" />
           </svg>
-          <div className="relative mx-auto flex max-w-[1100px] flex-wrap justify-center gap-x-5 pt-5 sm:justify-between">
-            {MEMBERS.slice(start, start + 4).map((m, j) => (
-              <Kartu key={m.key} m={m} i={start + j} />
-            ))}
+          <div className="relative mx-auto flex max-w-[1100px] flex-wrap justify-center gap-x-5 gap-y-1 pt-5 sm:justify-between">
+            {MEMBERS.slice(start, start + 4).flatMap((m, j) => {
+              const kartu = <Kartu key={m.key} m={m} i={start + j} />
+              if (j % 2 !== 0) return [kartu]
+              return [
+                <div key={`w-${start}-${j}`} className="lc-wirem" aria-hidden="true">
+                  <svg viewBox="0 0 400 22" preserveAspectRatio="none">
+                    <path d="M0,2 Q200,24 400,2" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-plum/25 dark:text-milk/25" />
+                  </svg>
+                </div>,
+                kartu,
+              ]
+            })}
           </div>
         </section>
       ))}
