@@ -13,7 +13,7 @@ html.dark .card { background: #152A42; box-shadow: 0 10px 30px -12px rgba(0,0,0,
 /* Background bergerak */
 main { position: relative; z-index: 1; }
 .bg-layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-.orb { position: absolute; border-radius: 9999px; filter: blur(80px); opacity: .4; animation: drift 26s ease-in-out infinite alternate; }
+.orb { position: absolute; border-radius: 9999px; filter: blur(64px); opacity: .4; }
 html.dark .orb { opacity: .2; }
 .float { position: absolute; bottom: -40px; left: var(--l); font-size: var(--s); color: var(--c); opacity: 0; animation: rise var(--d) linear var(--dl) infinite; }
 @keyframes rise {
@@ -24,7 +24,8 @@ html.dark .orb { opacity: .2; }
   100% { transform: translate(-14px, -115vh) rotate(-15deg); opacity: 0; }
 }
 @keyframes drift { to { transform: translate(70px, 50px) scale(1.15); } }
-@media (prefers-reduced-motion: reduce) { .orb { animation: none; } .float { animation: none; opacity: .3; bottom: auto; top: calc(var(--l) * .9); } }
+@media (prefers-reduced-motion: reduce) { .float { animation: none; opacity: .3; bottom: auto; top: calc(var(--l) * .9); } }
+@media (max-width: 700px) { .float:nth-of-type(even) { display: none; } }
 
 /* Skeleton loading */
 .skeleton { position: relative; overflow: hidden; background: #DCEBF6; }
