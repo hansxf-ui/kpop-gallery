@@ -223,9 +223,12 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
-    <div onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh place-items-center overflow-y-auto bg-[#0b1a2c]/95 p-4">
-      <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
-        <div ref={viewRef} className="w-full overflow-hidden">
+    <div onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4">
+      {/* Kolom WAJIB min-w-0 + max-w: tanpa itu lebar kolom ditentukan max-content rel geser
+          (3 slot × lebar bingkai ≈ 889px) — lightbox jadi lebih lebar dari layar HP dan bisa
+          kegeser menyamping, foto diamnya pun di luar tengah. Terukur pakai Chromium 390px. */}
+      <div onClick={(e) => e.stopPropagation()} className="relative mx-auto flex w-full min-w-0 max-w-[440px] flex-col items-center gap-3">
+        <div ref={viewRef} className="w-full min-w-0 overflow-hidden">
           <div
             className={`flex w-full select-none ${multi ? 'cursor-grab touch-pan-y active:cursor-grabbing' : ''}`}
             style={multi ? { transform: `translateX(calc(-100% + ${dragX}px))`, transition: anim ? 'transform 300ms ease' : 'none' } : undefined}
@@ -257,8 +260,8 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             ))}
           </div>
         </div>
-        <div className="text-center px-4">
-          <p className="font-bold text-milk">{it.title || it.idol}</p>
+        <div className="w-full min-w-0 text-center px-4">
+          <p className="font-bold text-milk break-words">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
           {it.note && it.note.trim().startsWith('📷') && (
             <p className="text-[11px] text-milk/60 mt-1">{it.note.trim()}</p>
