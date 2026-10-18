@@ -11,6 +11,18 @@ const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-whit
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
 let qid = 0
 
+const MEMBER_SET = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON']
+// Bakuan bentuk idol: bila semua nama di dalamnya member H2H (solo/unit, pisah koma/&),
+// tulis UPPERCASE disambung ' & ' — mencegah varian Title Case yang lolos dari query album.
+// Nilai lain (mis. 'Hearts2Hearts') dikembalikan apa adanya.
+function canonIdol(v) {
+  const raw = (v || '').trim()
+  if (!raw) return raw
+  const parts = raw.split(/[,&]/).map((s) => s.trim().toUpperCase()).filter(Boolean)
+  if (parts.length && parts.every((p) => MEMBER_SET.includes(p))) return parts.join(' & ')
+  return raw
+}
+
 export default function Admin() {
   const [user, setUser] = useState(undefined)
   const [items, setItems] = useState([])
@@ -61,7 +73,7 @@ export default function Admin() {
     e.preventDefault()
     const ytLinks = f.yt.split('\n').map((s) => s.trim()).filter(Boolean)
     const validYt = ytLinks.filter((l) => ytId(l))
-    const idolName = f.idol.trim() || f.group.trim() || 'Hearts2Hearts'
+    const idolName = canonIdol(f.idol.trim() || f.group.trim() || 'Hearts2Hearts')
     if (queue.length === 0 && validYt.length === 0) return setMsg('Pilih foto/video, atau tempel link YouTube yang valid.')
     setBusy(true)
     const baseRow = { idol: idolName, group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
@@ -102,7 +114,7 @@ export default function Admin() {
         let rowTitle = (f.title || q.file.name.replace(/\.\w+$/, '')).trim()
         if (!f.title && rowTitle.includes(' | ')) {
           const cut = rowTitle.indexOf(' | ')
-          rowIdol = rowTitle.slice(0, cut).trim() || idolName
+          rowIdol = canonIdol(rowTitle.slice(0, cut).trim()) || idolName
           rowTitle = rowTitle.slice(cut + 3).trim()
         }
         const { error } = await sb.from('items').insert({
@@ -125,6 +137,25 @@ export default function Admin() {
     load()
   }
 
+  // SEMENTARA — normalisasi sekali jalan buat 71 baris idol Title Case + combo lama.
+  // Hapus fungsi + tombol ini sesudah dijalankan & terverifikasi.
+  async function normalizeIdols() {
+    setBusy(true)
+    const { data, error } = await sb.from('items').select('id, idol')
+    if (error) { setBusy(false); return setMsg('Gagal memuat daftar item buat normalisasi.') }
+    let n = 0
+    for (const r of data || []) {
+      const c = canonIdol(r.idol || '')
+      if (c && c !== r.idol) {
+        const { error: upErr } = await sb.from('items').update({ idol: c }).eq('id', r.id)
+        if (!upErr) n++
+      }
+    }
+    setBusy(false)
+    setMsg(`Normalisasi selesai: ${n} baris idol dibakukan ✓`)
+    load()
+  }
+
   async function del(it) {
     if (it.path) await sb.storage.from('gallery').remove([it.path])
     await sb.from('items').delete().eq('id', it.id)
@@ -138,7 +169,7 @@ export default function Admin() {
   }
   async function saveEdit(id) {
     const { error } = await sb.from('items').update({
-      idol: editVal.idol.trim() || editVal.group.trim() || 'Hearts2Hearts', title: editVal.title.trim() || null,
+      idol: canonIdol(editVal.idol.trim() || editVal.group.trim() || 'Hearts2Hearts'), title: editVal.title.trim() || null,
       group_name: editVal.group.trim() || null, era: editVal.era.trim() || null, note: editVal.note.trim() || null,
     }).eq('id', id)
     if (error) return setMsg('Gagal menyimpan perubahan: ' + error.message)
@@ -229,6 +260,8 @@ export default function Admin() {
             <button type="button" onClick={() => sb.auth.signOut()} className="ml-3 text-sm underline dark:text-milk">Keluar</button>
           </form>
           {msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
+          {/* SEMENTARA: tombol normalisasi sekali jalan — hapus sesudah dipakai */}
+          <button type="button" onClick={normalizeIdols} disabled={busy} className="mt-3 rounded-full border border-rose/60 px-4 py-2 text-sm font-bold dark:text-milk disabled:opacity-50">Normalisasi idol (sekali jalan)</button>
 
           <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
             <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 Pengumuman comeback</h2>
