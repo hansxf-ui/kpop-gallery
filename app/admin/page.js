@@ -137,34 +137,19 @@ export default function Admin() {
     load()
   }
 
-  // SEMENTARA — normalisasi sekali jalan buat 71 baris idol Title Case + combo lama.
-  // Hapus fungsi + tombol ini sesudah dijalankan & terverifikasi.
-  async function normalizeIdols() {
-    setBusy(true)
-    // PostgREST membatasi 1000 baris per request — ambil SEMUA halaman, jangan cuma halaman pertama.
-    let data = []
-    for (let from = 0; ; from += 1000) {
-      const { data: page, error } = await sb.from('items').select('id, idol').order('id', { ascending: true }).range(from, from + 999)
-      if (error) { setBusy(false); return setMsg('Gagal memuat daftar item buat normalisasi.') }
-      data = data.concat(page || [])
-      if (!page || page.length < 1000) break
-    }
-    let n = 0
-    for (const r of data || []) {
-      const c = canonIdol(r.idol || '')
-      if (c && c !== r.idol) {
-        const { error: upErr } = await sb.from('items').update({ idol: c }).eq('id', r.id)
-        if (!upErr) n++
-      }
-    }
-    setBusy(false)
-    setMsg(`Normalisasi selesai: ${n} baris idol dibakukan ✓`)
-    load()
-  }
-
   async function del(it) {
-    if (it.path) await sb.storage.from('gallery').remove([it.path])
-    await sb.from('items').delete().eq('id', it.id)
+    // Hapus baris DB DULU dan cek errornya: bila gagal, item utuh (jangan tinggalkan
+    // item publik bergambar mati gara-gara file storage sudah terhapus duluan).
+    const { error } = await sb.from('items').delete().eq('id', it.id)
+    if (error) {
+      setPendingDelete(null)
+      setMsg('Gagal menghapus item dari database — item TIDAK dihapus. Coba lagi.')
+      return
+    }
+    if (it.path) {
+      const { error: stErr } = await sb.storage.from('gallery').remove([it.path])
+      if (stErr) setMsg('Item terhapus, tapi file gambarnya gagal dibersihkan dari storage.')
+    }
     setPendingDelete(null)
     load()
   }
@@ -266,8 +251,6 @@ export default function Admin() {
             <button type="button" onClick={() => sb.auth.signOut()} className="ml-3 text-sm underline dark:text-milk">Keluar</button>
           </form>
           {msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
-          {/* SEMENTARA: tombol normalisasi sekali jalan — hapus sesudah dipakai */}
-          <button type="button" onClick={normalizeIdols} disabled={busy} className="mt-3 rounded-full border border-rose/60 px-4 py-2 text-sm font-bold dark:text-milk disabled:opacity-50">Normalisasi idol (sekali jalan)</button>
 
           <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
             <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 Pengumuman comeback</h2>
