@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ytId } from '../../lib/supabase'
+import { ytId, imgOpt } from '../../lib/supabase'
 import Reactions from './Reactions'
 
 function Media({ it }) {
@@ -12,16 +12,23 @@ function Media({ it }) {
 
 // Media tetangga di rel geser: versi ringan TANPA autoplay — video cuma bingkai pertama,
 // YouTube cuma thumbnail — biar gesernya enteng dan tidak ada dua suara bunyi barengan.
+// Foto & video diberi BINGKAI TETAP (panel lembut bg-white/5) supaya slotnya selalu punya
+// badan yang kelihatan walau medianya belum selesai dimuat — tidak ada ruang kosong pas geser.
 function MediaTetangga({ it }) {
-  if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} draggable={false} className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
+  const frame = "relative block aspect-[3/4] w-[72vw] max-w-[330px] overflow-hidden rounded-2xl bg-white/5 mx-auto pointer-events-none"
+  if (it.type === 'photo') return (
+    <span className={frame}>
+      <img src={imgOpt(it.url, 700)} alt={it.title || it.idol} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+    </span>
+  )
   if (it.type === 'video') return (
-    <span className="relative block">
-      <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
+    <span className={frame}>
+      <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="absolute inset-0 h-full w-full object-cover" />
       <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>
     </span>
   )
   return (
-    <span className="relative block w-[90vw] max-w-3xl mx-auto">
+    <span className="relative block w-[90vw] max-w-3xl mx-auto rounded-2xl bg-white/5 pointer-events-none">
       <img src={`https://img.youtube.com/vi/${ytId(it.url)}/maxresdefault.jpg`} alt={it.title || it.idol} draggable={false} className="w-full max-h-[calc(100dvh-300px)] aspect-video object-cover rounded-2xl" />
       <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>
     </span>
