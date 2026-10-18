@@ -164,7 +164,7 @@ export default function Admin() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 page-fade-in">
       <ThemeToggle />
-      <Link href="/" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Kembali ke galeri</Link>
+      <Link href="/galeri" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Kembali ke galeri</Link>
       <h1 className="font-display text-4xl mb-6 mt-3 text-plum dark:text-milk">Admin ✦</h1>
       {!user ? (
         <form onSubmit={login} className="space-y-3">
