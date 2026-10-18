@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { sb } from '../../lib/supabase'
 
 // Gambar emoji asli Apple (gaya iOS), dimuat dari CDN supaya tampilnya
@@ -35,7 +35,14 @@ function loadMine(itemId) {
 export default function Reactions({ itemId }) {
   const [counts, setCounts] = useState({})
   const [mine, setMine] = useState([]) // [{emoji, id}]
-  const [busy, setBusy] = useState(false)
+  const busyRef = useRef(false) // penjaga sinkron — state async bisa ditembus ketukan ganda
+
+  async function refreshCounts() {
+    const { data } = await sb.from('reactions').select('emoji').eq('item_id', itemId)
+    const c = {}
+    for (const r of data || []) c[r.emoji] = (c[r.emoji] || 0) + 1
+    setCounts(c)
+  }
 
   useEffect(() => {
     let alive = true
@@ -50,30 +57,46 @@ export default function Reactions({ itemId }) {
   }, [itemId])
 
   const has = (key) => mine.some((m) => m.emoji === key)
+  const persist = (next) => { try { localStorage.setItem(storeKey(itemId), JSON.stringify(next)) } catch {} }
 
   async function toggle(key) {
-    if (busy) return
-    setBusy(true)
+    if (busyRef.current) return
+    busyRef.current = true
     try {
       const existing = mine.find((m) => m.emoji === key)
       if (existing) {
-        // ketuk lagi = batalkan reaksi
-        setCounts((c) => ({ ...c, [key]: Math.max(0, (c[key] || 1) - 1) }))
+        // ketuk lagi = batalkan reaksi (optimistis, dengan rollback bila server gagal)
+        const prevMine = mine
         const next = mine.filter((m) => m.emoji !== key)
+        setCounts((c) => ({ ...c, [key]: Math.max(0, (c[key] || 1) - 1) }))
         setMine(next)
-        try { localStorage.setItem(storeKey(itemId), JSON.stringify(next)) } catch {}
-        if (existing.id) await sb.from('reactions').delete().eq('id', existing.id)
-        else await sb.from('reactions').delete().eq('item_id', itemId).eq('emoji', key).limit(1)
+        persist(next)
+        if (existing.id) {
+          const { error } = await sb.from('reactions').delete().eq('id', existing.id)
+          if (error) { // gagal di server → kembalikan tampilan seperti semula
+            setCounts((c) => ({ ...c, [key]: (c[key] || 0) + 1 }))
+            setMine(prevMine)
+            persist(prevMine)
+          }
+        } else {
+          // id tak tercatat lokal: JANGAN hapus baris siapa pun (bisa milik pengunjung lain).
+          // Lepas catatan lokal saja, lalu samakan hitungan dengan kebenaran server.
+          await refreshCounts()
+        }
       } else {
         setCounts((c) => ({ ...c, [key]: (c[key] || 0) + 1 }))
-        const { data } = await sb.from('reactions').insert({ item_id: itemId, emoji: key }).select('id')
+        const { data, error } = await sb.from('reactions').insert({ item_id: itemId, emoji: key }).select('id')
+        if (error) { // insert gagal → rollback hitungan optimistis, jangan catat lokal
+          setCounts((c) => ({ ...c, [key]: Math.max(0, (c[key] || 1) - 1) }))
+          return
+        }
         const id = data?.[0]?.id ?? null
         const next = [...mine, { emoji: key, id }]
         setMine(next)
-        try { localStorage.setItem(storeKey(itemId), JSON.stringify(next)) } catch {}
+        persist(next)
       }
     } finally {
-      setBusy(false)
+      busyRef.current = false
     }
   }
 
