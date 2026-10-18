@@ -1,323 +1,172 @@
 'use client'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { sb, ytId, fetchAllItems, imgOpt } from '../lib/supabase'
-import { getFavorites, toggleFavorite } from '../lib/favorites'
-import ThemeToggle from './components/ThemeToggle'
-import Lightbox from './components/Lightbox'
-import FeaturedCarousel from './components/FeaturedCarousel'
-import Skeleton from './components/Skeleton'
+import { imgOpt } from '../lib/supabase'
 
-const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/mqdefault.jpg` : it.url)
+const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
+// Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
+const MEMBERS = [
+  { key: 'JIWOO', name: 'Jiwoo', pos: 'Leader', count: 128, file: '1790949259942-q7eqd-JIWOO___Foto_konsep__ICONIC_HEART__14__rilisan_jaket_album.png', obj: '32% 30%' },
+  { key: 'CARMEN', name: 'Carmen', pos: 'Main Vocal', count: 140, file: '1790467840892-qgtmr-photo-17-carmen.jpg', obj: '50% 22%' },
+  { key: 'YUHA', name: 'Yuha', pos: 'Main Vocal · Lead Dancer', count: 127, file: '1790445197510-g2sub-photo-13-yuha.jpg', obj: '50% 20%' },
+  { key: 'STELLA', name: 'Stella', pos: 'Lead Vocal', count: 131, file: '1790952337890-t4x7d-Etoile_0618_2105995654464249880_1.jpg', obj: '50% 18%' },
+  { key: 'JUUN', name: 'Juun', pos: 'Main Dancer · Main Rapper', count: 139, file: '1790468034206-elqqc-photo-25-juun.jpg', obj: '50% 16%' },
+  { key: 'A-NA', name: 'A-na', pos: 'Lead Rapper · Visual', count: 125, file: '1790467918158-zvyo8-photo-20-ana.jpg', obj: '50% 20%' },
+  { key: 'IAN', name: 'Ian', pos: 'Main Dancer · Center', count: 129, file: '1790949262559-on6pj-IAN___Foto_konsep__ICONIC_HEART__14__rilisan_jaket_album.png', obj: '26% 32%' },
+  { key: 'YE-ON', name: 'Ye-on', pos: 'Lead Vocal · Maknae', count: 122, file: '1790445024076-psxb5-photo-08-yeon.jpg', obj: '50% 18%' },
+]
+const DUR = [5.2, 6.1, 5.6, 6.5, 5.9, 6.3, 5.4, 6.0]
+const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
 
-// 8 member H2H — filter galeri per member, bukan per kombinasi unit
-const MEMBERS = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON']
-// Pecah string idol item jadi nama member: "JUUN & CARMEN" / "CARMEN, YUHA" -> ['JUUN', 'CARMEN']
-const namesOf = (it) => (it.idol || '').toUpperCase().split(/[,&]/).map((s) => s.trim()).filter(Boolean)
-
-function CameraIcon() {
+function Kartu({ m, i }) {
+  const [flip, setFlip] = useState(false)
+  const [kick, setKick] = useState(0)
+  const url = imgOpt(SB + m.file, 800)
+  const toggle = () => { setFlip((f) => !f); setKick((k) => k + 1) }
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-      <circle cx="12" cy="13" r="4" />
-    </svg>
+    <div className="lc-hang">
+      <span className="lc-string" aria-hidden />
+      <span className="lc-clip" aria-hidden />
+      <div className="lc-sway" style={{ animationDuration: `${DUR[i]}s`, animationDelay: `${DEL[i]}s` }}>
+        <div key={kick} className={kick ? 'lc-kickwrap' : undefined}>
+          <div
+            className={`lc-flip${flip ? ' lc-on' : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-label={`Balik kartu ${m.name}`}
+            onClick={toggle}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle() } }}
+          >
+            {/* DEPAN */}
+            <div className="lc-face bg-white shadow-[0_14px_34px_rgba(23,58,86,0.16)] dark:bg-[#14304a]">
+              <div className="flex justify-between px-4 pb-2 pt-3 text-[8.5px] font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">
+                <span>MEMBER / H2H</span><span>#{String(i + 1).padStart(2, '0')}</span>
+              </div>
+              <div className="mx-3 overflow-hidden rounded-xl" style={{ aspectRatio: '1 / 0.94' }}>
+                <img src={url} alt={`Foto ${m.name}`} className="h-full w-full object-cover" style={{ objectPosition: m.obj }} draggable={false} />
+              </div>
+              <div className="px-4 pt-3">
+                <h3 className="font-display text-[22px] leading-tight text-plum dark:text-milk">{m.name}</h3>
+                <p className="text-xs text-plum/55 dark:text-milk/55">{m.pos}</p>
+              </div>
+              <div className="mt-auto flex items-center justify-between px-4 pb-3.5">
+                <span className="text-[8.5px] font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">LIHAT PROFIL</span>
+                <span className="grid h-[21px] w-[21px] place-items-center rounded-full bg-plum text-[11px] text-milk dark:bg-gold dark:text-plum">+</span>
+              </div>
+            </div>
+            {/* BELAKANG — holografik */}
+            <div className="lc-face lc-back lc-holo text-[#26232e]">
+              <div className="relative flex items-center gap-2.5">
+                <img src={url} alt="" className="h-11 w-11 rounded-full border-2 border-white/80 object-cover" style={{ objectPosition: m.obj }} draggable={false} />
+                <div>
+                  <h4 className="font-display text-[17px] leading-tight">{m.name}</h4>
+                  <p className="text-[10.5px] text-[#5c5770]">{m.pos}</p>
+                </div>
+              </div>
+              <div className="relative mt-3.5">
+                <div className="flex items-baseline justify-between gap-2 border-t border-[#26232e]/15 py-[7px] text-[11px]">
+                  <span className="text-[9px] tracking-[0.08em] text-[#5c5770]">POSISI</span><b className="text-right font-semibold">{m.pos}</b>
+                </div>
+                <div className="flex items-baseline justify-between gap-2 border-t border-[#26232e]/15 py-[7px] text-[11px]">
+                  <span className="text-[9px] tracking-[0.08em] text-[#5c5770]">ITEM DI GALERI</span><b className="font-semibold">{m.count} item</b>
+                </div>
+              </div>
+              <Link
+                href={`/idol/${m.key}`}
+                onClick={(e) => e.stopPropagation()}
+                className="relative mt-3 block rounded-full bg-[#26232e] py-2 text-center text-[11px] font-bold text-white"
+              >
+                Buka galeri {m.name} →
+              </Link>
+              <div className="relative mt-auto flex items-end justify-between">
+                <small className="text-[8.5px] font-bold leading-[1.7] tracking-[0.18em] text-[#5c5770]">PINDAI BUAT BUKA<br />GALERI {m.name.toUpperCase()}</small>
+                <img src={`/qr/${m.key.toLowerCase()}.png`} alt={`QR galeri ${m.name}`} className="h-16 w-16 rounded-lg bg-white p-1 shadow" draggable={false} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
-function FilmIcon() {
+export default function Landing() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2" y="2" width="20" height="20" rx="2.18" />
-      <path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5" />
-    </svg>
-  )
-}
+    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-8 sm:px-8">
+      <style>{`
+        .lc-hang{ position:relative; width:min(240px,44vw); padding-top:58px; }
+        .lc-string{ position:absolute; left:50%; top:0; width:1.5px; height:58px; transform:translateX(-50%); background:linear-gradient(#9db8cc,#c8d9e6); }
+        html.dark .lc-string{ background:linear-gradient(#3d5a75,#5b7b99); }
+        .lc-clip{ position:absolute; left:50%; top:46px; transform:translateX(-50%); width:16px; height:22px; border-radius:4px; z-index:3; background:linear-gradient(145deg,#ffffff,#c9d8e4); box-shadow:0 1px 3px rgba(23,58,86,.25), inset 0 0 0 1px rgba(23,58,86,.08); }
+        .lc-clip::after{ content:""; position:absolute; left:50%; top:4px; transform:translateX(-50%); width:6px; height:6px; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1.5px #9db8cc; }
+        .lc-sway{ transform-origin:50% -58px; animation-name:lcsway; animation-timing-function:ease-in-out; animation-iteration-count:infinite; will-change:transform; }
+        @keyframes lcsway{ 0%,100%{ transform:rotate(1.15deg);} 50%{ transform:rotate(-1.15deg);} }
+        .lc-kickwrap{ animation:lckick .9s ease-out; transform-origin:50% -58px; }
+        @keyframes lckick{ 0%{ transform:rotate(0);} 25%{ transform:rotate(4.5deg);} 55%{ transform:rotate(-3deg);} 80%{ transform:rotate(1.2deg);} 100%{ transform:rotate(0);} }
+        .lc-flip{ position:relative; width:100%; aspect-ratio:240/338; transform-style:preserve-3d; transition:transform .85s cubic-bezier(.3,.7,.3,1); cursor:pointer; }
+        .lc-flip.lc-on{ transform:rotateY(180deg); }
+        .lc-face{ position:absolute; inset:0; border-radius:18px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; display:flex; flex-direction:column; }
+        .lc-back{ transform:rotateY(180deg); padding:18px 18px 16px; }
+        .lc-holo{ background:linear-gradient(125deg,#f6d9ec,#d9e4fb,#d5f3e3,#f7ecd2,#e6dbfa,#f6d9ec); background-size:320% 320%; animation:lcholo 9s ease infinite; }
+        @keyframes lcholo{ 0%,100%{ background-position:0% 40%; } 50%{ background-position:100% 60%; } }
+        .lc-wire{ position:absolute; left:0; right:0; top:20px; width:100%; height:56px; pointer-events:none; }
+        @media (max-width:700px){
+          .lc-hang{ padding-top:40px; }
+          .lc-string{ height:40px; }
+          .lc-clip{ top:28px; }
+          .lc-sway,.lc-kickwrap{ transform-origin:50% -40px; }
+          .lc-wire{ display:none; }
+        }
+      `}</style>
 
-const sorts = [['terbaru', 'Terbaru'], ['terlama', 'Terlama'], ['acak', 'Acak']]
-
-function weekNumber(d) {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-  const day = t.getUTCDay() || 7
-  t.setUTCDate(t.getUTCDate() + 4 - day)
-  const yStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1))
-  return Math.ceil(((t - yStart) / 86400000 + 1) / 7)
-}
-
-export default function Home() {
-  const [items, setItems] = useState(null)
-  const [idol, setIdol] = useState('Semua')
-  const [group, setGroup] = useState('Semua')
-  const [era, setEra] = useState('Semua')
-  const [q, setQ] = useState('')
-  const [sort, setSort] = useState('terbaru')
-  const [sortOpen, setSortOpen] = useState(false)
-  const sortRef = useRef(null)
-  const [mediaType, setMediaType] = useState('semua') // 'semua' | 'foto' | 'video'
-  const [favs, setFavs] = useState([])
-  const [openIndex, setOpenIndex] = useState(null)
-  const [autoplay, setAutoplay] = useState(false)
-  const [spot, setSpot] = useState(null) // { items:[it], index:0 } untuk sorotan/on-this-day
-  const [visibleCount, setVisibleCount] = useState(40)
-
-  useEffect(() => {
-    fetchAllItems().then(setItems).catch(() => setItems([]))
-    setFavs(getFavorites())
-  }, [])
-
-  const idols = ['Semua', ...MEMBERS, 'Hearts2Hearts']
-  const groups = [...new Set((items || []).map((i) => i.group_name).filter(Boolean))]
-  const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
-
-  const idolCover = useMemo(() => {
-    const map = {}
-    const photos = (items || []).filter((it) => it.type !== 'youtube')
-    // Pass 1: utamakan foto solo member / foto grup persis buat avatar chip
-    for (const it of photos) {
-      const names = namesOf(it)
-      if (names.length === 1 && !map[names[0]]) map[names[0]] = imgOpt(thumb(it), 100)
-      if (it.idol === 'Hearts2Hearts' && !map['Hearts2Hearts']) map['Hearts2Hearts'] = imgOpt(thumb(it), 100)
-    }
-    // Pass 2: fallback — foto unit apa pun yang memuat membernya
-    for (const it of photos) for (const n of namesOf(it)) if (!map[n]) map[n] = imgOpt(thumb(it), 100)
-    return map
-  }, [items])
-
-  // Sorotan minggu ini: 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
-  const featuredList = useMemo(() => {
-    if (!items || items.length === 0) return []
-    const n = Math.min(5, items.length)
-    const step = Math.max(1, Math.floor(items.length / n))
-    const start = weekNumber(new Date()) % items.length
-    const out = []
-    for (let i = 0; i < n; i++) out.push(items[(start + i * step) % items.length])
-    return out
-  }, [items])
-
-  const onThisDay = useMemo(() => {
-    if (!items) return []
-    const now = new Date()
-    return items.filter((it) => {
-      const d = new Date(it.created_at)
-      return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() !== now.getFullYear()
-    })
-  }, [items])
-
-  const shown = useMemo(() => {
-    let list = (items || []).filter((i) => {
-      if (idol === 'Semua') return true
-      if (idol === 'Hearts2Hearts') return i.idol === 'Hearts2Hearts'
-      return namesOf(i).includes(idol) // member: cocokkan solo maupun unit yang memuat dia
-    })
-    if (mediaType !== 'semua') list = list.filter((i) => (mediaType === 'foto' ? i.type === 'photo' : i.type !== 'photo'))
-    if (group !== 'Semua') list = list.filter((i) => i.group_name === group)
-    if (era !== 'Semua') list = list.filter((i) => i.era === era)
-    if (q.trim()) {
-      const s = q.trim().toLowerCase()
-      list = list.filter((i) => (i.title || '').toLowerCase().includes(s) || i.idol.toLowerCase().includes(s))
-    }
-    list = [...list]
-    if (sort === 'terlama') list.reverse()
-    if (sort === 'acak') list.sort(() => Math.random() - 0.5)
-    return list
-  }, [items, idol, group, era, q, sort, mediaType])
-
-  const fotoCount = shown.filter((i) => i.type === 'photo').length
-  const videoCount = shown.length - fotoCount
-  const visible = shown.slice(0, visibleCount)
-
-  useEffect(() => { setVisibleCount(40) }, [idol, group, era, q, sort, mediaType])
-
-  useEffect(() => {
-    if (!sortOpen) return
-    const close = (e) => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false) }
-    const onKey = (e) => { if (e.key === 'Escape') setSortOpen(false) }
-    document.addEventListener('mousedown', close)
-    window.addEventListener('keydown', onKey)
-    return () => { document.removeEventListener('mousedown', close); window.removeEventListener('keydown', onKey) }
-  }, [sortOpen])
-
-  function onFav(it, e) {
-    e.stopPropagation(); e.preventDefault()
-    const wasFav = favs.includes(it.id)
-    setFavs(toggleFavorite(it.id))
-    if (!wasFav) window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x: e.clientX, y: e.clientY } }))
-  }
-
-  return (
-    <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
-      <header className="py-14 text-center">
-        <p className="flex justify-center items-center" aria-hidden="true">
-          <svg width="30" height="30" viewBox="0 0 24 24" className="text-rose" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-          <svg width="30" height="30" viewBox="0 0 24 24" className="text-gold -ml-3 mt-2.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-        </p>
-        <h1 className="font-display text-5xl sm:text-7xl text-plum dark:text-milk mt-2">Hearts2Hearts Gallery</h1>
-        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Koleksi foto & video idol favoritku</p>
-        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{fotoCount} foto · {videoCount} video</p>
-        <p className="mt-4 flex justify-center gap-6 text-sm font-bold text-gold">
-          <Link href="/favorit" className="flex flex-col items-center">
-            <span aria-hidden="true">♥</span>
-            <span className="underline underline-offset-4 whitespace-nowrap">Favoritku ({favs.length})</span>
-          </Link>
-          <Link href="/jadwal" className="flex flex-col items-center">
-            <span aria-hidden="true">✦</span>
-            <span className="underline underline-offset-4">Jadwal</span>
-          </Link>
-          <Link href="/voting" className="flex flex-col items-center">
-            <span aria-hidden="true">✦</span>
-            <span className="underline underline-offset-4">Voting</span>
-          </Link>
-          <Link href="/tentang" className="flex flex-col items-center">
-            <span aria-hidden="true">✦</span>
-            <span className="underline underline-offset-4">Tentang</span>
-          </Link>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="mb-3 text-[10px] font-bold tracking-[0.22em] text-plum/50 dark:text-milk/50">
+            <span className="text-gold">●</span>&nbsp; GALERI FANS — HEARTS2HEARTS
+          </p>
+          <h1 className="font-display text-4xl leading-[1.05] text-plum dark:text-milk sm:text-[52px]">
+            Meet the members<br />
+            <span className="italic text-gold">behind the hearts.</span>
+          </h1>
+        </div>
+        <p className="max-w-[260px] pt-2 text-xs leading-relaxed text-plum/55 dark:text-milk/55 sm:pt-6">
+          Delapan member Hearts2Hearts yang mengisi galeri ini — balik kartunya buat lihat profil singkat tiap member.
+          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; 8 MEMBER · 1.159 ITEM KOLEKSI</b>
         </p>
       </header>
 
-      {featuredList.length > 0 && (
-        <section className="mb-10">
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ Sorotan Minggu Ini</p>
-          <FeaturedCarousel items={featuredList} onOpen={(i) => setSpot({ items: featuredList, index: i })} />
-        </section>
-      )}
-
-      {onThisDay.length > 0 && (
-        <section className="mb-10 text-center">
-          <button onClick={() => setSpot({ items: onThisDay, index: 0 })}
-            className="inline-block rounded-full bg-lilac/40 dark:bg-lilac/15 border border-lilac/60 dark:border-lilac/25 px-4 py-2 text-sm font-bold text-plum dark:text-milk">
-            🗓️ {onThisDay.length} kenangan dari hari ini di tahun sebelumnya — lihat lagi
-          </button>
-        </section>
-      )}
-
-      <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-        <div className="search-group w-full max-w-xs">
-          <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul atau nama idol…" type="search" className="search-input" />
-          {q && (
-            <button onClick={() => setQ('')} aria-label="Hapus pencarian"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 font-bold text-plum/50 dark:text-milk/50 hover:text-plum dark:hover:text-milk">✕</button>
-          )}
-        </div>
-        <div ref={sortRef} className="relative">
-          <button onClick={() => setSortOpen((o) => !o)} aria-haspopup="listbox" aria-expanded={sortOpen}
-            className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold inline-flex items-center gap-1.5">
-            {sorts.find((s) => s[0] === sort)[1]}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition ${sortOpen ? 'rotate-180' : ''}`}><path d="M6 9l6 6 6-6" /></svg>
-          </button>
-          {sortOpen && (
-            <ul role="listbox" aria-label="Urutkan"
-              className="absolute z-30 mt-2 left-0 w-36 overflow-hidden rounded-2xl border border-rose/50 dark:border-rose/25 bg-milk dark:bg-plum shadow-xl page-fade-in">
-              {sorts.map(([v, label]) => (
-                <li key={v}>
-                  <button role="option" aria-selected={sort === v}
-                    onClick={() => { setSort(v); setSortOpen(false) }}
-                    className={`w-full px-4 py-2.5 text-left text-sm font-bold flex items-center justify-between ${sort === v ? 'text-plum dark:text-milk bg-rose/25 dark:bg-white/10' : 'text-plum/70 dark:text-milk/70 hover:bg-rose/10 dark:hover:bg-white/5'}`}>
-                    {label}
-                    {sort === v && <span className="text-gold">✓</span>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        {shown.length > 1 && (
-          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ Putar semua</button>
-        )}
-      </div>
-
-      <div className="flex flex-wrap justify-center gap-2 mb-3">
-        {[['semua', 'Semua', null], ['foto', 'Foto', CameraIcon], ['video', 'Video', FilmIcon]].map(([v, label, Icon]) => (
-          <button key={v} onClick={() => setMediaType(v)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${mediaType === v ? 'bg-rose text-plum border-rose' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
-            {Icon && <Icon />}{label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap justify-center gap-2 mb-3">
-        {idols.map((n) => (
-          <button key={n} onClick={() => setIdol(n)}
-            className={`flex items-center gap-1.5 pl-1.5 pr-4 py-1.5 rounded-full font-bold text-sm border transition ${idol === n ? 'bg-plum text-milk border-plum' : 'bg-white/70 dark:bg-white/10 border-rose/50 dark:border-rose/20 hover:bg-rose/20'}`}>
-            {n !== 'Semua' && idolCover[n] ? (
-              <img src={idolCover[n]} alt="" className="h-6 w-6 rounded-full object-cover" />
-            ) : n === 'Semua' ? <span className="h-6 w-6 rounded-full bg-gold/30 grid place-items-center text-xs">✦</span> : null}
-            {n}
-          </button>
-        ))}
-      </div>
-
-      {groups.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-3">
-          {['Semua', ...groups].map((n) => (
-            <button key={n} onClick={() => setGroup(n)}
-              className={`px-3 py-1 rounded-full text-xs font-bold border ${group === n ? 'bg-gold text-plum border-gold' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
-              {n}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {eras.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-4">
-          {['Semua', ...eras].map((n) => (
-            <button key={n} onClick={() => setEra(n)}
-              className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
-              {n}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {idol !== 'Semua' && (
-        <p className="text-center mt-2 mb-8">
-          <Link href={`/idol/${encodeURIComponent(idol)}`} className="text-sm font-bold text-gold underline underline-offset-4">
-            Buka album {idol} sendiri →
-          </Link>
-        </p>
-      )}
-
-      {items === null && <Skeleton />}
-      {items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
-
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-        {visible.map((it) => (
-          <div key={it.id} className="card mb-4 w-full break-inside-avoid">
-            <button onClick={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }} className="block w-full text-left">
-              <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
-                {it.type === 'video'
-                  ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
-                  : <img src={imgOpt(thumb(it), 800)} alt={it.title || it.idol} loading="lazy" className="w-full" />}
-                {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
-                <span onClick={(e) => onFav(it, e)} role="button" aria-label="Favoritkan"
-                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
-                  {favs.includes(it.id) ? '❤️' : '🤍'}
-                </span>
-              </div>
-              <p className="font-bold text-sm truncate px-2 pt-2.5 dark:text-milk">{it.title || it.idol}</p>
-            </button>
-            <Link href={`/idol/${encodeURIComponent(it.idol)}`} className="block px-2 pb-2.5 text-xs text-gold font-bold hover:underline w-fit">
-              {it.idol}{it.group_name ? ` · ${it.group_name}` : ''}
-            </Link>
+      {[0, 4].map((start) => (
+        <section key={start} className="relative mt-2">
+          <svg className="lc-wire" viewBox="0 0 1200 56" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,4 Q600,60 1200,4" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-plum/25 dark:text-milk/25" />
+          </svg>
+          <div className="relative mx-auto flex max-w-[1100px] flex-wrap justify-center gap-x-5 pt-5 sm:justify-between">
+            {MEMBERS.slice(start, start + 4).map((m, j) => (
+              <Kartu key={m.key} m={m} i={start + j} />
+            ))}
           </div>
-        ))}
+        </section>
+      ))}
+
+      <div className="mt-12 text-center">
+        <Link
+          href="/galeri"
+          className="inline-block rounded-full bg-gold px-9 py-3.5 text-base font-bold text-white shadow-[0_10px_26px_rgba(234,147,187,0.45)] transition hover:scale-[1.03]"
+        >
+          Masuk ke Galeri →
+        </Link>
+        <nav className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-bold text-plum/60 dark:text-milk/60">
+          <Link href="/jadwal" className="hover:text-gold">📅 Jadwal</Link>
+          <Link href="/voting" className="hover:text-gold">🗳️ Voting</Link>
+          <Link href="/favorit" className="hover:text-gold">❤️ Favorit</Link>
+          <Link href="/tentang" className="hover:text-gold">ℹ️ Tentang</Link>
+        </nav>
       </div>
 
-      {shown.length > visible.length && (
-        <p className="text-center mt-6">
-          <button onClick={() => setVisibleCount((c) => c + 40)} className="rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 dark:border-rose/20 font-bold px-5 py-2 text-sm">
-            Muat lebih banyak ({shown.length - visible.length} lagi)
-          </button>
-        </p>
-      )}
-
-      {openIndex !== null && (
-        <Lightbox items={shown} index={openIndex} onIndexChange={setOpenIndex}
-          onClose={() => { setOpenIndex(null); setAutoplay(false) }} autoplay={autoplay} />
-      )}
-      {spot && (
-        <Lightbox items={spot.items} index={spot.index} onIndexChange={(i) => setSpot({ ...spot, index: i })} onClose={() => setSpot(null)} />
-      )}
-    </main>
+      <footer className="mt-auto flex flex-wrap justify-between gap-2 pt-12 text-[9px] font-bold tracking-[0.22em] text-plum/40 dark:text-milk/40">
+        <span>THE MEMBERS MAKE THE HEARTS</span>
+        <span>HOVER BUAT NGAYUN · KLIK / TAP BUAT BALIK KARTU</span>
+      </footer>
+    </div>
   )
 }
