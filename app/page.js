@@ -40,7 +40,7 @@ function Kartu({ m, i }) {
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle() } }}
           >
             {/* DEPAN */}
-            <div className="lc-face bg-white shadow-[0_14px_34px_rgba(23,58,86,0.16)] dark:bg-[#14304a]">
+            <div className="lc-face bg-white shadow-[0_10px_22px_rgba(23,58,86,0.14)] dark:bg-[#14304a]">
               <div className="lc-meta flex justify-between px-4 pb-2 pt-3 font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">
                 <span>MEMBER / H2H</span><span>#{String(i + 1).padStart(2, '0')}</span>
               </div>
@@ -127,7 +127,8 @@ export default function Landing() {
         .lc-bsmall{ font-size:3.55cqw; }
         .lc-bqr{ width:26.7cqw; height:26.7cqw; padding:1.7cqw; }
         .lc-wirem{ display:none; }
-        .lc-holo{ background:linear-gradient(125deg,#f6d9ec,#d9e4fb,#d5f3e3,#f7ecd2,#e6dbfa,#f6d9ec); background-size:320% 320%; animation:lcholo 9s ease infinite; }
+        .lc-holo{ background:linear-gradient(125deg,#f6d9ec,#d9e4fb,#d5f3e3,#f7ecd2,#e6dbfa,#f6d9ec); background-size:320% 320%; }
+        .lc-flip.lc-on .lc-holo{ animation:lcholo 9s ease infinite; }
         @keyframes lcholo{ 0%,100%{ background-position:0% 40%; } 50%{ background-position:100% 60%; } }
         .lc-wire{ position:absolute; left:0; right:0; top:20px; width:100%; height:56px; pointer-events:none; }
         @media (max-width:700px){
