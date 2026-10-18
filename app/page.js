@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { imgOpt } from '../lib/supabase'
+import { sb, imgOpt } from '../lib/supabase'
 import ThemeToggle from './components/ThemeToggle'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
@@ -20,7 +20,7 @@ const MEMBERS = [
 const DUR = [5.2, 6.1, 5.6, 6.5, 5.9, 6.3, 5.4, 6.0]
 const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
 
-function Kartu({ m, i }) {
+function Kartu({ m, i, count }) {
   const [flip, setFlip] = useState(false)
   const [kick, setKick] = useState(0)
   const url = imgOpt(SB + m.file, 800)
@@ -70,7 +70,7 @@ function Kartu({ m, i }) {
                   <span className="lc-blab tracking-[0.08em] text-[#5c5770]">POSISI</span><b className="whitespace-nowrap text-right font-semibold">{m.pos}</b>
                 </div>
                 <div className="lc-brow flex items-baseline justify-between gap-2 border-t border-[#26232e]/15">
-                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">ITEM DI GALERI</span><b className="whitespace-nowrap font-semibold">{m.count} item</b>
+                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">ITEM DI GALERI</span><b className="whitespace-nowrap font-semibold">{count ?? m.count} item</b>
                 </div>
               </div>
               <Link
@@ -93,6 +93,31 @@ function Kartu({ m, i }) {
 }
 
 export default function Landing() {
+  // Jumlah item per member + total dihitung LANGSUNG dari database (konsisten dengan
+  // filter /galeri) — angka bawaan di MEMBERS hanya cadangan tampilan awal.
+  const [liveCounts, setLiveCounts] = useState(null)
+  const [liveTotal, setLiveTotal] = useState(1159)
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const rows = []
+        for (let from = 0; ; from += 1000) {
+          const { data, error } = await sb.from('items').select('idol').order('id', { ascending: true }).range(from, from + 999)
+          if (error) throw error
+          rows.push(...(data || []))
+          if (!data || data.length < 1000) break
+        }
+        const c = {}
+        for (const r of rows) {
+          for (const n of (r.idol || '').toUpperCase().split(/[,&]/).map((s) => s.trim()).filter(Boolean)) {
+            c[n] = (c[n] || 0) + 1
+          }
+        }
+        setLiveCounts(c)
+        setLiveTotal(rows.length)
+      } catch { /* gagal memuat → tetap pakai angka cadangan */ }
+    })()
+  }, [])
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-8 sm:px-8">
       <ThemeToggle />
@@ -156,7 +181,7 @@ export default function Landing() {
         </div>
         <p className="max-w-[260px] pt-2 text-xs leading-relaxed text-plum/55 dark:text-milk/55 sm:pt-6">
           Delapan member Hearts2Hearts yang mengisi galeri ini — balik kartunya buat lihat profil singkat tiap member.
-          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; 8 MEMBER · 1.159 ITEM KOLEKSI</b>
+          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; 8 MEMBER · {liveTotal.toLocaleString('id-ID')} ITEM KOLEKSI</b>
         </p>
       </header>
 
@@ -167,7 +192,7 @@ export default function Landing() {
           </svg>
           <div className="relative mx-auto flex max-w-[1100px] flex-wrap justify-center gap-x-5 gap-y-1 pt-5 sm:justify-between">
             {MEMBERS.slice(start, start + 4).flatMap((m, j) => {
-              const kartu = <Kartu key={m.key} m={m} i={start + j} />
+              const kartu = <Kartu key={m.key} m={m} i={start + j} count={liveCounts?.[m.key]} />
               if (j % 2 !== 0) return [kartu]
               return [
                 <div key={`w-${start}-${j}`} className="lc-wirem" aria-hidden="true">
