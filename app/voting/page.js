@@ -58,7 +58,7 @@ function KartuVoting({ v, now }) {
     )
 
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/70 dark:bg-plum/40 backdrop-blur p-5 sm:p-6">
+    <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/85 dark:bg-plum/60 p-5 sm:p-6">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose via-gold to-lilac" aria-hidden />
       <div>{badge}</div>
       <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-2">🏆 {v.event}</h2>
