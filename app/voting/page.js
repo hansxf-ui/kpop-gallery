@@ -115,7 +115,7 @@ export default function VotingPage() {
         <h1 className="font-display text-4xl sm:text-6xl text-plum dark:text-milk mt-2">Voting Hearts2Hearts</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Dukung H2H &amp; Carmen Anak Bangsa</p>
         <p className="mt-4 flex justify-center gap-5 text-sm font-bold text-gold">
-          <Link href="/" className="underline underline-offset-4">← Galeri</Link>
+          <Link href="/galeri" className="underline underline-offset-4">← Galeri</Link>
           <Link href="/jadwal" className="underline underline-offset-4">Jadwal →</Link>
         </p>
       </header>
