@@ -102,6 +102,7 @@ export default function JadwalPage() {
   // Satu ticker untuk semua kartu (dulu tiap kartu interval sendiri-sendiri).
   // null sebelum mount: angka countdown tidak dirender server → tidak ada hydration mismatch.
   const [now, setNow] = useState(null)
+  useEffect(() => { document.title = 'Jadwal · Hearts2Hearts Gallery' }, [])
   useEffect(() => {
     setNow(Date.now())
     const t = setInterval(() => setNow(Date.now()), 1000)
