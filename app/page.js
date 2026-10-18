@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { sb, imgOpt } from '../lib/supabase'
 import ThemeToggle from './components/ThemeToggle'
@@ -22,15 +22,34 @@ const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
 
 function Kartu({ m, i, count }) {
   const [flip, setFlip] = useState(false)
-  const [kick, setKick] = useState(0)
+  const kickRef = useRef(null)
   const url = imgOpt(SB + m.file, 800)
-  const toggle = () => { setFlip((f) => !f); setKick((k) => k + 1) }
+  // Tendangan ayun dijalankan via Web Animations API di pembungkus yang STABIL —
+  // versi lama memakai key={kick} yang me-remount seluruh subtree tiap klik,
+  // sehingga .lc-flip lahir langsung di posisi akhir dan transisi baliknya mati total.
+  const toggle = () => {
+    setFlip((f) => !f)
+    const el = kickRef.current
+    if (el) {
+      el.getAnimations().forEach((a) => a.cancel())
+      el.animate(
+        [
+          { transform: 'rotate(0deg)' },
+          { transform: 'rotate(4.5deg)', offset: 0.25 },
+          { transform: 'rotate(-3deg)', offset: 0.55 },
+          { transform: 'rotate(1.2deg)', offset: 0.8 },
+          { transform: 'rotate(0deg)' },
+        ],
+        { duration: 900, easing: 'ease-out' }
+      )
+    }
+  }
   return (
     <div className="lc-hang">
       <span className="lc-string" aria-hidden />
       <span className="lc-clip" aria-hidden />
       <div className="lc-sway" style={{ animationDuration: `${DUR[i]}s`, animationDelay: `${DEL[i]}s` }}>
-        <div key={kick} className={kick ? 'lc-kickwrap' : undefined}>
+        <div ref={kickRef} className="lc-kickwrap">
           <div
             className={`lc-flip${flip ? ' lc-on' : ''}`}
             role="button"
@@ -129,8 +148,7 @@ export default function Landing() {
         .lc-clip::after{ content:""; position:absolute; left:50%; top:4px; transform:translateX(-50%); width:6px; height:6px; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1.5px #9db8cc; }
         .lc-sway{ transform-origin:50% -58px; animation-name:lcsway; animation-timing-function:ease-in-out; animation-iteration-count:infinite; will-change:transform; }
         @keyframes lcsway{ 0%,100%{ transform:rotate(1.15deg);} 50%{ transform:rotate(-1.15deg);} }
-        .lc-kickwrap{ animation:lckick .9s ease-out; transform-origin:50% -58px; }
-        @keyframes lckick{ 0%{ transform:rotate(0);} 25%{ transform:rotate(4.5deg);} 55%{ transform:rotate(-3deg);} 80%{ transform:rotate(1.2deg);} 100%{ transform:rotate(0);} }
+        .lc-kickwrap{ transform-origin:50% -58px; }
         .lc-flip{ position:relative; width:100%; aspect-ratio:240/338; transform-style:preserve-3d; transition:transform .85s cubic-bezier(.3,.7,.3,1); cursor:pointer; container-type:inline-size; }
         .lc-flip.lc-on{ transform:rotateY(180deg); }
         .lc-face{ position:absolute; inset:0; border-radius:18px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; display:flex; flex-direction:column; }
