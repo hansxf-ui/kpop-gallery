@@ -28,7 +28,7 @@ export default function Favorit() {
       <ThemeToggle />
       {ids === null && <Skeleton />}
       <header className="py-14 text-center">
-        <Link href="/" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Semua koleksi</Link>
+        <Link href="/galeri" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Semua koleksi</Link>
         <p className="text-gold text-2xl mt-4" aria-hidden>♥ ♥ ♥</p>
         <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">Favoritku</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">{items.length} item tersimpan</p>
