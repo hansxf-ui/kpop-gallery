@@ -17,7 +17,7 @@ function Media({ it }) {
     </span>
   )
   if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
-  return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-[90vw] max-w-3xl max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
+  return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
 }
 
 // Media tetangga di rel geser: versi ringan TANPA autoplay — video cuma bingkai pertama,
@@ -38,7 +38,7 @@ function MediaTetangga({ it }) {
     </span>
   )
   return (
-    <span className="relative block w-[90vw] max-w-3xl mx-auto rounded-2xl bg-white/5 pointer-events-none">
+    <span className="relative block w-full mx-auto rounded-2xl bg-white/5 pointer-events-none">
       <img src={`https://img.youtube.com/vi/${ytId(it.url)}/maxresdefault.jpg`} alt={it.title || it.idol} draggable={false} className="w-full max-h-[calc(100dvh-300px)] aspect-video object-cover rounded-2xl" />
       <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>
     </span>
