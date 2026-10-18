@@ -182,7 +182,7 @@ export default function Admin() {
   ).sort((a, b) => b[1] - a[1])
   const maxCount = stats[0]?.[1] || 1
 
-  if (user === undefined) return null
+  if (user === undefined) return <main className="mx-auto max-w-3xl px-4 py-24 text-center font-bold text-plum/60 dark:text-milk/60">Memuat sesi admin…</main>
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 page-fade-in">
       <ThemeToggle />
