@@ -58,7 +58,7 @@ function KartuEvent({ event }) {
   const cd = event.tanggal && !isHariIni && !isLewat ? hitungMundur(event.tanggal) : null
 
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/70 dark:bg-plum/40 backdrop-blur p-5 sm:p-6">
+    <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/85 dark:bg-plum/60 p-5 sm:p-6">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose via-gold to-lilac" aria-hidden />
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-bold uppercase tracking-widest text-gold">{TIPE_LABEL[event.tipe] || event.tipe}</p>
