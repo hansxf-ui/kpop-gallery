@@ -141,8 +141,14 @@ export default function Admin() {
   // Hapus fungsi + tombol ini sesudah dijalankan & terverifikasi.
   async function normalizeIdols() {
     setBusy(true)
-    const { data, error } = await sb.from('items').select('id, idol')
-    if (error) { setBusy(false); return setMsg('Gagal memuat daftar item buat normalisasi.') }
+    // PostgREST membatasi 1000 baris per request — ambil SEMUA halaman, jangan cuma halaman pertama.
+    let data = []
+    for (let from = 0; ; from += 1000) {
+      const { data: page, error } = await sb.from('items').select('id, idol').order('id', { ascending: true }).range(from, from + 999)
+      if (error) { setBusy(false); return setMsg('Gagal memuat daftar item buat normalisasi.') }
+      data = data.concat(page || [])
+      if (!page || page.length < 1000) break
+    }
     let n = 0
     for (const r of data || []) {
       const c = canonIdol(r.idol || '')
