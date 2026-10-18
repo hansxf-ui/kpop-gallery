@@ -7,7 +7,6 @@ const SITE_URL = 'https://kpop-gallery-coral.vercel.app'
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  alternates: { canonical: '/' },
   title: 'Hearts2Hearts Gallery',
   description: 'Koleksi foto & video idol Hearts2Hearts (H2H) — Jiwoo, Carmen, Yuha, Stella, Juun, A-na, Ian, dan Ye-on.',
   themeColor: [
