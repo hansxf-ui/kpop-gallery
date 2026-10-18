@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ytId } from '../../lib/supabase'
 import Reactions from './Reactions'
@@ -31,9 +31,16 @@ function MediaTetangga({ it }) {
 export default function Lightbox({ items, index, onIndexChange, onClose, autoplay = false }) {
   const [playing, setPlaying] = useState(autoplay)
   const [making, setMaking] = useState(false)
+  const [dragX, setDragX] = useState(0)
+  const [anim, setAnim] = useState(false)
+  const [controlsOn, setControlsOn] = useState(false)
   const timer = useRef(null)
-  const trackRef = useRef(null)
-  const settleTimer = useRef(null)
+  const commitTimer = useRef(null)
+  const viewRef = useRef(null)
+  const startX = useRef(null)
+  const startT = useRef(0)
+  const dragXRef = useRef(0)
+  const busy = useRef(false)
   const it = items[index]
   const multi = items.length > 1
 
@@ -46,26 +53,78 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
       ]
     : [{ it, active: true }]
 
-  // Setiap item aktif berganti (dari geseran, keyboard, autoplay, atau klik luar),
-  // rel langsung ditata ulang ke slot tengah SEBELUM layar menggambar ulang — tidak ada kedipan.
-  useLayoutEffect(() => {
-    const el = trackRef.current
-    if (el && multi) el.scrollTo({ left: el.clientWidth, behavior: 'auto' })
-  }, [index, multi])
-
-  // Geseran berhenti di slot tepi = pindah item; berhenti di tengah = tidak jadi pindah.
-  function onTrackScroll() {
-    const el = trackRef.current
-    if (!el || !multi) return
-    clearTimeout(settleTimer.current)
-    settleTimer.current = setTimeout(() => {
-      const w = el.clientWidth
-      if (!w) return
-      const slot = Math.round(el.scrollLeft / w)
-      if (slot === 1) return
-      onIndexChange((index + (slot === 2 ? 1 : -1) + items.length) % items.length)
-    }, 120)
+  function setDrag(x, a) {
+    dragXRef.current = x
+    setDragX(x)
+    setAnim(a)
   }
+
+  function lebar() {
+    return viewRef.current?.clientWidth || 0
+  }
+
+  // Pindah item dengan animasi geser penuh, lalu rel ditata ulang ke tengah.
+  function lompat(dir) {
+    const w = lebar()
+    if (!w) {
+      onIndexChange((index + dir + items.length) % items.length)
+      return
+    }
+    busy.current = true
+    setDrag(-dir * w, true)
+    clearTimeout(commitTimer.current)
+    commitTimer.current = setTimeout(() => {
+      onIndexChange((index + dir + items.length) % items.length)
+      setDrag(0, false)
+      busy.current = false
+    }, 310)
+  }
+
+  function maju(dir) {
+    if (!busy.current) lompat(dir)
+  }
+
+  // --- Seretan (pointer: sentuh + mouse satu jalur) ---
+  function onPD(e) {
+    if (busy.current || !multi) return
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    startX.current = e.clientX
+    startT.current = Date.now()
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* abaikan */ }
+  }
+
+  function onPM(e) {
+    if (startX.current === null || busy.current) return
+    const w = lebar()
+    if (!w) return
+    const dx = e.clientX - startX.current
+    setDrag(Math.max(-w, Math.min(w, dx)), false)
+  }
+
+  function onPU() {
+    if (startX.current === null) return
+    const dx = dragXRef.current
+    const dt = Date.now() - startT.current
+    startX.current = null
+    if (Math.abs(dx) > 60) {
+      lompat(dx < 0 ? 1 : -1)
+      return
+    }
+    setDrag(0, true)
+    // Ketukan pelan di video YouTube = serahkan permukaan ke kontrol pemutarnya
+    if (Math.abs(dx) < 8 && dt < 400 && it.type === 'youtube' && !controlsOn) setControlsOn(true)
+  }
+
+  function onPC() {
+    if (startX.current === null) return
+    startX.current = null
+    setDrag(0, true)
+  }
+
+  // Ganti item = mode geser lagi (lapisan penangkap geseran di video YouTube dipasang ulang)
+  useEffect(() => { setControlsOn(false) }, [index])
+
+  useEffect(() => () => clearTimeout(commitTimer.current), [])
 
   async function makeWallpaper() {
     setMaking(true)
@@ -94,19 +153,21 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
 
   useEffect(() => {
     if (!playing || items.length < 2) return
-    timer.current = setTimeout(() => onIndexChange((index + 1) % items.length), 4000)
+    timer.current = setTimeout(() => maju(1), 4000)
     return () => clearTimeout(timer.current)
-  }, [playing, index, items, onIndexChange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, index, items])
 
   useEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowRight') onIndexChange((index + 1) % items.length)
-      if (e.key === 'ArrowLeft') onIndexChange((index - 1 + items.length) % items.length)
+      if (e.key === 'ArrowRight') maju(1)
+      if (e.key === 'ArrowLeft') maju(-1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [index, items, onIndexChange, onClose])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, items, onClose])
 
   if (!it) return null
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
@@ -114,28 +175,37 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   return createPortal(
     <div onClick={onClose} className="fixed inset-0 z-50 grid h-dvh place-items-center overflow-y-auto bg-plum/85 backdrop-blur-sm p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
-        <div ref={trackRef} onScroll={onTrackScroll}
-          className="flex w-full overflow-x-auto snap-x snap-mandatory select-none [&::-webkit-scrollbar]:hidden"
-          style={{ scrollbarWidth: 'none' }}>
-          {slots.map((s, i) => (
-            <div key={`${s.it.id}-${s.active ? 'aktif' : 'tepi' + i}`} className="w-full shrink-0 snap-center flex items-start justify-center">
-              {s.it.type === 'photo' ? (
-                <div className="relative">
-                  {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
-                  {s.active && (
-                    <button onClick={onClose} aria-label="Tutup" className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col">
-                  {s.active && (
-                    <button onClick={onClose} aria-label="Tutup" className="mb-2 self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
-                  )}
-                  {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
-                </div>
-              )}
-            </div>
-          ))}
+        <div ref={viewRef} className="w-full overflow-hidden">
+          <div
+            className={`flex w-full select-none ${multi ? 'cursor-grab touch-pan-y active:cursor-grabbing' : ''}`}
+            style={multi ? { transform: `translateX(calc(-100% + ${dragX}px))`, transition: anim ? 'transform 300ms ease' : 'none' } : undefined}
+            onPointerDown={onPD} onPointerMove={onPM} onPointerUp={onPU} onPointerCancel={onPC}>
+            {slots.map((s, i) => (
+              <div key={`${s.it.id}-${s.active ? 'aktif' : 'tepi' + i}`} className="w-full shrink-0 flex items-start justify-center">
+                {s.it.type === 'photo' ? (
+                  <div className="relative">
+                    {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
+                    {s.active && (
+                      <button onClick={onClose} aria-label="Tutup" className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="relative flex flex-col">
+                    {s.active && (
+                      <button onClick={onClose} aria-label="Tutup" className="relative z-20 mb-2 self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+                    )}
+                    {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
+                    {s.active && s.it.type === 'youtube' && !controlsOn && (
+                      <div className="absolute inset-0 z-10" aria-hidden="true" />
+                    )}
+                    {s.active && s.it.type === 'youtube' && controlsOn && (
+                      <button onClick={() => setControlsOn(false)} className="absolute left-2.5 top-2.5 z-20 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">⇄ Geser</button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
         <div className="text-center px-4">
           <p className="font-bold text-milk">{it.title || it.idol}</p>
