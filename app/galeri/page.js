@@ -65,6 +65,7 @@ export default function Home() {
     setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setLoadError(true) })
   }
+  useEffect(() => { document.title = 'Galeri · Hearts2Hearts Gallery' }, [])
   useEffect(() => {
     loadItems()
     setFavs(getFavorites())
