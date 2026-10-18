@@ -4,8 +4,8 @@ import Link from 'next/link'
 import ThemeToggle from '../components/ThemeToggle'
 import { VOTING, VOTING_CARMEN, PANDUAN_APLIKASI } from '../../lib/voting'
 
-function hitungMundur(target) {
-  const selisih = new Date(target).getTime() - Date.now()
+function hitungMundur(target, nowMs) {
+  const selisih = new Date(target).getTime() - nowMs
   if (selisih <= 0) return null
   const hari = Math.floor(selisih / 86400000)
   const jam = Math.floor((selisih % 86400000) / 3600000)
@@ -20,11 +20,10 @@ function formatTanggal(tanggal) {
 }
 
 // buka | segera | tunggu | tutup
-function statusVote(v) {
+function statusVote(v, nowMs) {
   if (!v.mulai || !v.selesai) return 'tunggu'
-  const now = Date.now()
-  if (now < new Date(v.mulai).getTime()) return 'segera'
-  if (now > new Date(v.selesai).getTime()) return 'tutup'
+  if (nowMs < new Date(v.mulai).getTime()) return 'segera'
+  if (nowMs > new Date(v.selesai).getTime()) return 'tutup'
   return 'buka'
 }
 
@@ -38,9 +37,9 @@ function UnitCountdown({ angka, label }) {
 }
 
 function KartuVoting({ v, now }) {
-  const st = statusVote(v)
+  const st = statusVote(v, now ?? Date.now())
   const target = st === 'buka' ? v.selesai : st === 'segera' ? v.mulai : null
-  const cd = target ? hitungMundur(target) : null
+  const cd = target && now ? hitungMundur(target, now) : null
 
   const badge =
     st === 'buka' ? (
@@ -53,6 +52,8 @@ function KartuVoting({ v, now }) {
       </span>
     ) : st === 'segera' ? (
       <span className="text-xs font-extrabold uppercase tracking-widest text-gold">Segera · {formatTanggal(v.mulai)}</span>
+    ) : st === 'tutup' ? (
+      <span className="text-xs font-extrabold uppercase tracking-widest text-plum/40 dark:text-milk/40">Sudah tutup · {formatTanggal(v.selesai)}</span>
     ) : (
       <span className="text-xs font-extrabold uppercase tracking-widest text-plum/40 dark:text-milk/40">Belum diumumkan</span>
     )
@@ -91,18 +92,23 @@ function KartuVoting({ v, now }) {
 }
 
 export default function VotingPage() {
-  // satu timer untuk semua kartu biar detiknya sinkron
-  const [now, setNow] = useState(() => Date.now())
+  // satu timer untuk semua kartu biar detiknya sinkron; null sebelum mount supaya
+  // angka countdown tidak dirender server (cegah hydration mismatch).
+  const [now, setNow] = useState(null)
   useEffect(() => {
+    setNow(Date.now())
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
   }, [])
+  const acuan = now ?? Date.now()
 
-  const buka = VOTING.filter(v => statusVote(v) === 'buka')
+  const buka = VOTING.filter(v => statusVote(v, acuan) === 'buka')
     .sort((a, b) => new Date(a.selesai) - new Date(b.selesai))
-  const segera = VOTING.filter(v => statusVote(v) === 'segera')
+  const segera = VOTING.filter(v => statusVote(v, acuan) === 'segera')
     .sort((a, b) => new Date(a.mulai) - new Date(b.mulai))
-  const tunggu = VOTING.filter(v => statusVote(v) === 'tunggu')
+  const tunggu = VOTING.filter(v => statusVote(v, acuan) === 'tunggu')
+  const tutup = VOTING.filter(v => statusVote(v, acuan) === 'tutup')
+    .sort((a, b) => new Date(b.selesai) - new Date(a.selesai))
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-20 page-fade-in">
@@ -137,6 +143,13 @@ export default function VotingPage() {
         <section className="space-y-4 mt-10">
           <p className="text-xs font-bold uppercase tracking-widest text-gold">⚪ Belum diumumkan</p>
           {tunggu.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
+        </section>
+      )}
+
+      {tutup.length > 0 && (
+        <section className="space-y-4 mt-10">
+          <p className="text-xs font-bold uppercase tracking-widest text-gold">⚫ Sudah tutup</p>
+          {tutup.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
         </section>
       )}
 
