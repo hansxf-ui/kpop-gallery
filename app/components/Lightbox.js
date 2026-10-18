@@ -45,6 +45,8 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const commitTimer = useRef(null)
   const viewRef = useRef(null)
   const startX = useRef(null)
+  const activePointer = useRef(null) // pointerId pemilik geseran aktif — jari lain tidak boleh menimpa
+  const lastDragEnd = useRef(0) // cap waktu akhir geseran; klik backdrop tepat sesudahnya diabaikan
   const startT = useRef(0)
   const dragXRef = useRef(0)
   const busy = useRef(false)
@@ -104,25 +106,31 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     commitRef.current = commit
     function move(e) {
       if (startX.current === null || busy.current) return
+      if (e.pointerId !== undefined && e.pointerId !== activePointer.current) return
       const width = w()
       if (!width) return
       const dx = e.clientX - startX.current
       setDrag(Math.max(-width, Math.min(width, dx)), false)
     }
-    function up() {
+    function up(e) {
       if (startX.current === null) return
+      if (e && e.pointerId !== undefined && e.pointerId !== activePointer.current) return
       const dx = dragXRef.current
       const dt = Date.now() - startT.current
       startX.current = null
+      activePointer.current = null
+      if (Math.abs(dx) > 8) lastDragEnd.current = Date.now()
       if (Math.abs(dx) > 60) { commit(dx < 0 ? 1 : -1); return }
       setDrag(0, true)
       // Ketukan pelan di video YouTube = serahkan permukaan ke kontrol pemutarnya
       const cur = live.current
       if (Math.abs(dx) < 8 && dt < 400 && cur.it && cur.it.type === 'youtube' && !cur.controlsOn) setControlsOn(true)
     }
-    function cancel() {
+    function cancel(e) {
       if (startX.current === null) return
+      if (e && e.pointerId !== undefined && e.pointerId !== activePointer.current) return
       startX.current = null
+      activePointer.current = null
       setDrag(0, true)
     }
     window.addEventListener('pointermove', move)
@@ -138,8 +146,17 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   function onPD(e) {
     if (busy.current || !multi) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    if (activePointer.current !== null) return // geseran sudah dimiliki satu jari
     // Seretan tidak pernah dimulai dari tombol/tautan — klik mereka harus murni.
     if (e.target && e.target.closest && e.target.closest('button, a')) return
+    // Jangan sambar seek bar / kontrol video lokal: tekanan di 48px terbawah elemen
+    // <video> adalah wilayah kontrolnya — serahkan ke pemutar, jangan mulai geseran.
+    const vid = e.target && e.target.closest && e.target.closest('video')
+    if (vid) {
+      const r = vid.getBoundingClientRect()
+      if (e.clientY > r.bottom - 48) return
+    }
+    activePointer.current = e.pointerId
     startX.current = e.clientX
     startT.current = Date.now()
   }
@@ -196,7 +213,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
-    <div onClick={onClose} className="fixed inset-0 z-50 grid h-dvh place-items-center overflow-y-auto bg-plum/85 backdrop-blur-sm p-4">
+    <div onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh place-items-center overflow-y-auto bg-plum/85 backdrop-blur-sm p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
         <div ref={viewRef} className="w-full overflow-hidden">
           <div
