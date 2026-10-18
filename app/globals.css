@@ -23,7 +23,6 @@ html.dark .orb { opacity: .2; }
   90% { opacity: .4; }
   100% { transform: translate(-14px, -115vh) rotate(-15deg); opacity: 0; }
 }
-@keyframes drift { to { transform: translate(70px, 50px) scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .float { animation: none; opacity: .3; bottom: auto; top: calc(var(--l) * .9); } }
 @media (max-width: 700px) { .float:nth-of-type(even) { display: none; } }
 
@@ -57,8 +56,6 @@ html.dark .skeleton::after { background: linear-gradient(90deg, transparent, rgb
 /* Featured banner & badge kecil */
 .featured-card { background: linear-gradient(135deg, rgba(127,196,232,.28), rgba(234,147,187,.22)); border: 1px solid rgba(234,147,187,.45); border-radius: 26px; padding: 10px 10px 0; }
 html.dark .featured-card { background: linear-gradient(135deg, rgba(127,196,232,.1), rgba(234,147,187,.08)); }
-.count-badge { font-size: 10px; background: rgba(23,58,86,.12); border-radius: 999px; padding: 1px 6px; }
-html.dark .count-badge { background: rgba(255,255,255,.12); }
 
 /* Tema hari spesial (ulang tahun member / debut) */
 html.party body { background: radial-gradient(circle at 15% 0%, #FFE7B8 0, transparent 45%), radial-gradient(circle at 90% 10%, #FFD1E4 0, transparent 45%), #FFF8ED; }
