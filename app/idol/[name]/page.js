@@ -25,13 +25,22 @@ export default function IdolAlbum() {
   const [autoplay, setAutoplay] = useState(false)
   const [visibleCount, setVisibleCount] = useState(40)
 
-  useEffect(() => {
-    const key = idol.toUpperCase()
+  const key = idol.toUpperCase()
+  const valid = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON', 'HEARTS2HEARTS'].includes(key)
+  const [loadError, setLoadError] = useState(false)
+  function loadItems() {
+    setLoadError(false)
+    setItems(null)
     fetchAllItems()
       .then((all) => setItems(all.filter((it) => namesOf(it).includes(key))))
-      .catch(() => setItems([]))
+      .catch(() => { setItems([]); setLoadError(true) })
+  }
+  useEffect(() => {
+    if (valid) loadItems()
+    else setItems([])
     sb.from('items').select('id', { count: 'exact', head: true }).then(({ count }) => setTotal(count ?? null))
     setFavs(getFavorites())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idol])
 
   const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
@@ -110,7 +119,21 @@ export default function IdolAlbum() {
       )}
 
       {items === null && <Skeleton />}
-      {items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
+      {!valid && items !== null && (
+        <div className="py-10 text-center">
+          <p className="font-display text-2xl text-plum dark:text-milk">Member tidak ditemukan</p>
+          <p className="mt-2 text-sm text-plum/60 dark:text-milk/60">Tidak ada member bernama “{idol}” di Hearts2Hearts.</p>
+          <Link href="/galeri" className="mt-4 inline-block rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Lihat semua koleksi</Link>
+        </div>
+      )}
+      {valid && loadError && (
+        <div className="py-10 text-center">
+          <p className="font-bold text-plum dark:text-milk">Gagal memuat album.</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Periksa koneksimu, lalu coba lagi.</p>
+          <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Coba lagi</button>
+        </div>
+      )}
+      {valid && !loadError && items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (
