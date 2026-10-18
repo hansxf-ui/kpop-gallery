@@ -4,8 +4,18 @@ import { createPortal } from 'react-dom'
 import { ytId, imgOpt } from '../../lib/supabase'
 import Reactions from './Reactions'
 
+// Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
+// versi lama: aktif = ukuran alami (max-h saja) sementara tetangga = bingkai tetap 3/4,
+// jadi pas geser/commit ukuran badan foto berubah-ubah (kelihatan "mencong" & kedip kosong).
+// object-contain: foto tampil utuh tanpa crop di dalam bingkai yang stabil.
+// URL aktif juga lewat imgOpt(1000) — versi lama memuat file asli ukuran penuh (lambat,
+// kedip kosong di HP) sementara tetangga cuma 700px.
 function Media({ it }) {
-  if (it.type === 'photo') return <img src={it.url} alt={it.title || it.idol} draggable={false} className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
+  if (it.type === 'photo') return (
+    <span className="relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto">
+      <img src={imgOpt(it.url, 1000)} alt={it.title || it.idol} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
+    </span>
+  )
   if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
   return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-[90vw] max-w-3xl max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
 }
@@ -15,7 +25,7 @@ function Media({ it }) {
 // Foto & video diberi BINGKAI TETAP (panel lembut bg-white/5) supaya slotnya selalu punya
 // badan yang kelihatan walau medianya belum selesai dimuat — tidak ada ruang kosong pas geser.
 function MediaTetangga({ it }) {
-  const frame = "relative block aspect-[3/4] w-[72vw] max-w-[330px] overflow-hidden rounded-2xl bg-white/5 mx-auto pointer-events-none"
+  const frame = "relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto pointer-events-none"
   if (it.type === 'photo') return (
     <span className={frame}>
       <img src={imgOpt(it.url, 700)} alt={it.title || it.idol} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
@@ -213,7 +223,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
-    <div onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh place-items-center overflow-y-auto bg-plum/85 backdrop-blur-sm p-4">
+    <div onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh place-items-center overflow-y-auto bg-[#0b1a2c]/95 p-4">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full flex flex-col items-center gap-3">
         <div ref={viewRef} className="w-full overflow-hidden">
           <div
@@ -223,7 +233,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             {slots.map((s, i) => (
               <div key={`${s.it.id}-${s.active ? 'aktif' : 'tepi' + i}`} className="w-full shrink-0 flex items-start justify-center">
                 {s.it.type === 'photo' ? (
-                  <div className="relative">
+                  <div className="relative w-fit">
                     {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
                     {s.active && (
                       <button onClick={onClose} aria-label="Tutup" className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
