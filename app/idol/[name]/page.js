@@ -35,6 +35,7 @@ export default function IdolAlbum() {
       .then((all) => setItems(all.filter((it) => namesOf(it).includes(key))))
       .catch(() => { setItems([]); setLoadError(true) })
   }
+  useEffect(() => { document.title = `${idol} · Hearts2Hearts Gallery` }, [idol])
   useEffect(() => {
     if (valid) loadItems()
     else setItems([])
