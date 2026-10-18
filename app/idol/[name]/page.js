@@ -2,13 +2,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { sb, ytId, imgOpt } from '../../../lib/supabase'
+import { sb, ytId, imgOpt, fetchAllItems } from '../../../lib/supabase'
 import { getFavorites, toggleFavorite } from '../../../lib/favorites'
 import ThemeToggle from '../../components/ThemeToggle'
 import Lightbox from '../../components/Lightbox'
 import Skeleton from '../../components/Skeleton'
 
 const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/mqdefault.jpg` : it.url)
+// Samakan dengan /galeri: cocokkan nama member solo maupun unit, tanpa peduli kapitalisasi.
+const namesOf = (it) => (it.idol || '').toUpperCase().split(/[,&]/).map((s) => s.trim()).filter(Boolean)
 
 export default function IdolAlbum() {
   const { name } = useParams()
@@ -24,7 +26,10 @@ export default function IdolAlbum() {
   const [visibleCount, setVisibleCount] = useState(40)
 
   useEffect(() => {
-    sb.from('items').select('*').eq('idol', idol).order('created_at', { ascending: false }).then(({ data }) => setItems(data || []))
+    const key = idol.toUpperCase()
+    fetchAllItems()
+      .then((all) => setItems(all.filter((it) => namesOf(it).includes(key))))
+      .catch(() => setItems([]))
     sb.from('items').select('id', { count: 'exact', head: true }).then(({ count }) => setTotal(count ?? null))
     setFavs(getFavorites())
   }, [idol])
