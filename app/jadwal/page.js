@@ -4,8 +4,19 @@ import Link from 'next/link'
 import ThemeToggle from '../components/ThemeToggle'
 import { JADWAL, RIWAYAT_2026, TIPE_LABEL } from '../../lib/jadwal'
 
-function hitungMundur(target) {
-  const selisih = new Date(target).getTime() - Date.now()
+// Tanggal-saja ('2026-10-19') di-parse sebagai tanggal kalender LOKAL murni — bukan
+// UTC tengah malam — supaya harinya tidak bergeser sehari gara-gara zona waktu pengunjung.
+function parseTanggal(t) {
+  if (!t) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+    const [y, m, d] = t.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
+  return new Date(t)
+}
+
+function hitungMundur(target, nowMs) {
+  const selisih = parseTanggal(target).getTime() - nowMs
   if (selisih <= 0) return null
   const hari = Math.floor(selisih / 86400000)
   const jam = Math.floor((selisih % 86400000) / 3600000)
@@ -16,16 +27,15 @@ function hitungMundur(target) {
 
 function hariIni(tanggal) {
   if (!tanggal) return false
-  const d = new Date(tanggal)
+  const d = parseTanggal(tanggal)
   const now = new Date()
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
 }
 
 function sudahLewat(tanggal) {
   if (!tanggal) return false
-  const d = new Date(tanggal)
+  const d = parseTanggal(tanggal)
   const now = new Date()
-  // tanggal saja (tanpa jam) dianggap lewat kalau bukan hari ini dan < hari ini
   const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
   const nDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   return dDay < nDay
@@ -33,7 +43,7 @@ function sudahLewat(tanggal) {
 
 function formatTanggal(tanggal) {
   if (!tanggal) return 'Tanggal menyusul'
-  return new Date(tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  return parseTanggal(tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function UnitCountdown({ angka, label }) {
@@ -45,17 +55,13 @@ function UnitCountdown({ angka, label }) {
   )
 }
 
-function KartuEvent({ event }) {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(t)
-  }, [])
-  void now
-
+function KartuEvent({ event, now }) {
   const isHariIni = hariIni(event.tanggal)
   const isLewat = sudahLewat(event.tanggal)
-  const cd = event.tanggal && !isHariIni && !isLewat ? hitungMundur(event.tanggal) : null
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(event.tanggal || '')
+  // Countdown tampil untuk semua event yang jamnya belum tiba — termasuk event HARI INI
+  // yang baru mulai nanti malam (dulu countdown-nya hilang sepanjang hari-H).
+  const cd = now && event.tanggal && !isLewat && !(dateOnly && isHariIni) ? hitungMundur(event.tanggal, now) : null
 
   return (
     <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/85 dark:bg-plum/60 p-5 sm:p-6">
@@ -68,7 +74,7 @@ function KartuEvent({ event }) {
           {event.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">{event.catatan}</p>}
       </div>
       <div className="mt-4">
-        {isHariIni ? (
+        {isHariIni && (
           <p className="inline-flex items-center gap-2 font-bold text-rose-600 dark:text-rose text-lg">
             <span className="relative flex h-3 w-3" aria-hidden>
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
@@ -76,8 +82,9 @@ function KartuEvent({ event }) {
             </span>
             HARI INI
           </p>
-        ) : cd ? (
-          <div className="flex gap-2">
+        )}
+        {cd ? (
+          <div className={`flex gap-2 ${isHariIni ? 'mt-3' : ''}`}>
             <UnitCountdown angka={cd.hari} label="hari" />
             <UnitCountdown angka={cd.jam} label="jam" />
             <UnitCountdown angka={cd.menit} label="mnt" />
@@ -92,6 +99,14 @@ function KartuEvent({ event }) {
 }
 
 export default function JadwalPage() {
+  // Satu ticker untuk semua kartu (dulu tiap kartu interval sendiri-sendiri).
+  // null sebelum mount: angka countdown tidak dirender server → tidak ada hydration mismatch.
+  const [now, setNow] = useState(null)
+  useEffect(() => {
+    setNow(Date.now())
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
   const upcoming = JADWAL.filter(e => !sudahLewat(e.tanggal))
     .sort((a, b) => (a.tanggal || '9999') > (b.tanggal || '9999') ? 1 : -1)
   const lewat = JADWAL.filter(e => sudahLewat(e.tanggal))
@@ -116,7 +131,7 @@ export default function JadwalPage() {
       <section className="space-y-4">
         <p className="text-xs font-bold uppercase tracking-widest text-gold">✦ Akan datang</p>
         {upcoming.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">Belum ada jadwal baru yang dikonfirmasi.</p>}
-        {upcoming.map(e => <KartuEvent key={e.id} event={e} />)}
+        {upcoming.map(e => <KartuEvent key={e.id} event={e} now={now} />)}
       </section>
 
       {(lewat.length > 0 || RIWAYAT_2026.length > 0) && (
