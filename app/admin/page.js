@@ -156,13 +156,29 @@ export default function Admin() {
 
   function startEdit(it) {
     setEditing(it.id)
-    setEditVal({ idol: it.idol, title: it.title || '', group: it.group_name || '', era: it.era || '', note: it.note || '' })
+    setEditVal({ idol: it.idol, title: it.title || '', group: it.group_name || '', era: it.era || '', note: it.note || '', date: it.created_at ? String(it.created_at).slice(0, 10) : '' })
   }
   async function saveEdit(id) {
-    const { error } = await sb.from('items').update({
+    const payload = {
       idol: canonIdol(editVal.idol.trim() || editVal.group.trim() || 'Hearts2Hearts'), title: editVal.title.trim() || null,
       group_name: editVal.group.trim() || null, era: editVal.era.trim() || null, note: editVal.note.trim() || null,
-    }).eq('id', id)
+    }
+    // Tanggal tayang bisa dibetulkan dari form Ubah: ganti bagian tanggal created_at,
+    // jam-menit-detik asli dipertahankan supaya urutan item dalam satu hari tidak berubah.
+    const ds = (editVal.date || '').trim()
+    if (ds) {
+      const m = ds.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      const chk = m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null
+      if (!chk || chk.getUTCFullYear() !== +m[1] || chk.getUTCMonth() !== +m[2] - 1 || chk.getUTCDate() !== +m[3]) {
+        return setMsg('Tanggal tidak valid — pakai format YYYY-MM-DD, mis. 2026-10-21.')
+      }
+      const it = items.find((x) => x.id === id)
+      const orig = it?.created_at ? new Date(it.created_at) : null
+      if (orig && ds !== orig.toISOString().slice(0, 10)) {
+        payload.created_at = `${ds}T${orig.toISOString().slice(11, 19)}.000Z`
+      }
+    }
+    const { error } = await sb.from('items').update(payload).eq('id', id)
     if (error) return setMsg('Gagal menyimpan perubahan: ' + error.message)
     setEditing(null); load()
   }
@@ -294,6 +310,10 @@ export default function Admin() {
                       <input value={editVal.era} onChange={(e) => setEditVal({ ...editVal, era: e.target.value })} placeholder="Era" className={box} />
                     </div>
                     <input value={editVal.note} onChange={(e) => setEditVal({ ...editVal, note: e.target.value })} placeholder="Catatan pribadi" className={box} />
+                    <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
+                      Tanggal tayang (format YYYY-MM-DD — ubah buat membetulkan tanggal)
+                      <input value={editVal.date} onChange={(e) => setEditVal({ ...editVal, date: e.target.value })} placeholder="2026-10-21" inputMode="numeric" className={`${box} mt-1`} />
+                    </label>
                     <div className="flex gap-2">
                       <button onClick={() => saveEdit(it.id)} className="rounded-full bg-plum text-milk font-bold px-4 py-1.5 text-sm">Simpan</button>
                       <button onClick={() => setEditing(null)} className="rounded-full bg-white dark:bg-white/10 border border-rose/40 px-4 py-1.5 text-sm font-bold">Batal</button>
