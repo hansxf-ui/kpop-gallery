@@ -64,6 +64,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const timer = useRef(null)
   const commitTimer = useRef(null)
   const viewRef = useRef(null)
+  const dialogRef = useRef(null)
   const startX = useRef(null)
   const activePointer = useRef(null) // pointerId pemilik geseran aktif — jari lain tidak boleh menimpa
   const lastDragEnd = useRef(0) // cap waktu akhir geseran; klik backdrop tepat sesudahnya diabaikan
@@ -194,6 +195,24 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     return () => { document.body.style.overflow = prev }
   }, [])
 
+  // Fokus keyboard: pindah ke lightbox saat dibuka, kembali ke kartu asal saat ditutup.
+  // Dulu fokus tertinggal di grid di belakang, jadi Tab berjalan di elemen yang tertutup lightbox.
+  useEffect(() => {
+    const prev = document.activeElement
+    dialogRef.current?.focus({ preventScroll: true })
+    return () => { if (prev && typeof prev.focus === 'function' && document.contains(prev)) prev.focus({ preventScroll: true }) }
+  }, [])
+  // Tab / Shift+Tab berputar di dalam lightbox saja.
+  function trapTab(e) {
+    if (e.key !== 'Tab' || !dialogRef.current) return
+    const els = [...dialogRef.current.querySelectorAll('button:not([disabled]), a[href], iframe, video[controls], textarea, input')]
+      .filter((el) => el.offsetParent !== null || el === document.activeElement)
+    if (els.length === 0) return
+    const first = els[0], last = els[els.length - 1]
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { e.preventDefault(); last.focus() }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+  }
+
   // Favorit dari dalam lightbox — tetap sinkron dengan grid & nav lewat FAVS_EVENT.
   useEffect(() => {
     const sync = () => setFavIds(getFavorites())
@@ -270,8 +289,9 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={it.title || it.idol || 'Tampilan penuh'}
-      onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4">
+    <div ref={dialogRef} tabIndex={-1} onKeyDown={trapTab}
+      role="dialog" aria-modal="true" aria-label={it.title || it.idol || 'Tampilan penuh'}
+      onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4 outline-none">
       {/* Kolom WAJIB min-w-0 + max-w: tanpa itu lebar kolom ditentukan max-content rel geser
           (3 slot × lebar bingkai ≈ 889px) — lightbox jadi lebih lebar dari layar HP dan bisa
           kegeser menyamping, foto diamnya pun di luar tengah. Terukur pakai Chromium 390px. */}
