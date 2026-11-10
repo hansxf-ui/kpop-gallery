@@ -35,7 +35,10 @@ export default function IdolAlbum() {
   function loadItems() {
     setLoadError(false)
     setItems(null)
-    fetchAllItems()
+    // Database hanya mengirim item yang nama idolnya memuat member ini (dulu seluruh ±1.200 item
+    // dimuat lalu disaring di HP). Saringan namesOf tetap dipakai untuk kecocokan nama yang persis.
+    // key sudah tervalidasi ALBUM_KEYS (huruf, angka, '-'), jadi aman dipakai di pola ilike.
+    fetchAllItems({ filter: (q) => q.ilike('idol', `%${key}%`) })
       .then((all) => setItems(all.filter((it) => namesOf(it).includes(key))))
       .catch(() => { setItems([]); setLoadError(true) })
   }
