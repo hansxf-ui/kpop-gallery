@@ -9,6 +9,7 @@ import { useT } from '../../lib/i18n'
 import { sameEra } from '../../lib/eras'
 import { colorsInItems, colorKeyOf } from '../../lib/tagSuggest'
 import { useBias, biasFirst } from '../../lib/bias'
+import { markFavNewSeen } from '../../lib/favNew'
 import BiasPicker from '../components/BiasPicker'
 import { visitBaseline, isNewSince } from '../../lib/lastVisit'
 import { fetchTopReacted } from '../../lib/topReacted'
@@ -165,6 +166,9 @@ export default function GaleriClient() {
     const items_ = biasItems.length >= 5 ? biasItems : items
     return pickWeekly(items_)
   }, [items, bias])
+
+  // Fitur 12: galeri yang sudah dimuat = foto baru sudah "dilihat" → lencana di navigasi hilang.
+  useEffect(() => { if (items && items.length) markFavNewSeen() }, [items])
 
   // Baru ditambahkan sejak kunjungan terakhir (fitur 5). items sudah urut terbaru dulu.
   const newItems = useMemo(() => (items || []).filter((it) => isNewSince(it, baseline)), [items, baseline])

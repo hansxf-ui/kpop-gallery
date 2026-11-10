@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { getFavorites, FAVS_EVENT } from '../../lib/favorites'
+import { fetchFavNew, markFavNewSeen, NEWFAV_EVENT } from '../../lib/favNew'
+import { BIAS_EVENT } from '../../lib/bias'
+import { DISPLAY_NAME } from '../../lib/gallery'
 
 // Satu-satunya navigasi situs — dipakai di semua halaman supaya isi dan gayanya sama
 // (dulu tiap halaman punya baris link sendiri dengan isi berbeda-beda).
@@ -37,6 +40,16 @@ export default function SiteNav({ className = '' }) {
   const t = useT()
   const { lang, setLang } = useLang()
   const [favCount, setFavCount] = useState(0)
+  const [baru, setBaru] = useState({ count: 0, members: [] }) // fitur 12
+
+  useEffect(() => {
+    let alive = true
+    const sync = () => fetchFavNew().then((v) => { if (alive) setBaru(v) }).catch(() => {})
+    sync()
+    window.addEventListener(NEWFAV_EVENT, sync)
+    window.addEventListener(BIAS_EVENT, sync)
+    return () => { alive = false; window.removeEventListener(NEWFAV_EVENT, sync); window.removeEventListener(BIAS_EVENT, sync) }
+  }, [])
 
   useEffect(() => {
     const sync = () => setFavCount(getFavorites().length)
@@ -63,6 +76,14 @@ export default function SiteNav({ className = '' }) {
           </Link>
         )
       })}
+      {baru.count > 0 && (
+        // Fitur 12: lencana foto baru dari member favorit. Hilang setelah diketuk (atau membuka galeri).
+        <Link href={baru.members.length === 1 ? `/galeri?idol=${encodeURIComponent(baru.members[0])}` : '/galeri'} onClick={markFavNewSeen}
+          aria-label={t('{n} foto baru dari member favoritmu', { n: baru.count })}
+          className="rounded-full bg-gold px-3 py-1.5 text-xs font-bold text-plum shadow sm:text-sm">
+          ♥ {t('{n} baru', { n: baru.count })}{baru.members.length === 1 ? ` · ${DISPLAY_NAME[baru.members[0]] || baru.members[0]}` : ''}
+        </Link>
+      )}
       <span className="flex w-full flex-wrap justify-center gap-x-4 gap-y-1 pt-1">
         {EXTRA.map(([href, emoji, label]) => (
           <Link key={href} href={href} aria-current={aktif(path, href) ? 'page' : undefined}
