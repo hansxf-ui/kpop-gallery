@@ -153,7 +153,7 @@ export default function JadwalPage() {
       )}
 
       <p className="mt-10 text-center text-xs text-plum/40 dark:text-milk/40">
-        Data diverifikasi dari pengumuman resmi & media · terakhir dicek 2 Okt 2026
+        Data diverifikasi dari pengumuman resmi & media · terakhir dicek 10 Nov 2026
       </p>
     </main>
   )
