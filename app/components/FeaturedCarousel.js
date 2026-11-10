@@ -2,11 +2,13 @@
 import { useRef, useState } from 'react'
 import { ytId, imgOpt } from '../../lib/supabase'
 import { thumbOf as thumb } from '../../lib/gallery'
+import { useT } from '../../lib/i18n'
 
 // Carousel sorotan beranda — adaptasi demo Carousel shadcn/ui kiriman pemilik (18 Okt 2026)
 // ke stack situs ini (galeri tidak memakai shadcn/embla): rel geser scroll-snap + panah prev/next,
 // kartu persegi seperti demo, isi = item sorotan beneran (bukan angka contoh).
 export default function FeaturedCarousel({ items, onOpen }) {
+  const t = useT()
   const trackRef = useRef(null)
   const [active, setActive] = useState(0)
 
@@ -50,9 +52,9 @@ export default function FeaturedCarousel({ items, onOpen }) {
       </div>
       {items.length > 1 && (
         <>
-          <button onClick={() => go(-1)} aria-label="Pilihan sebelumnya"
+          <button onClick={() => go(-1)} aria-label={t('Pilihan sebelumnya')}
             className="absolute left-3 top-[36%] z-10 grid h-9 w-9 place-items-center rounded-full border border-rose/40 bg-white/85 text-lg font-bold text-plum shadow backdrop-blur dark:border-rose/20 dark:bg-white/10 dark:text-milk">‹</button>
-          <button onClick={() => go(1)} aria-label="Pilihan berikutnya"
+          <button onClick={() => go(1)} aria-label={t('Pilihan berikutnya')}
             className="absolute right-3 top-[36%] z-10 grid h-9 w-9 place-items-center rounded-full border border-rose/40 bg-white/85 text-lg font-bold text-plum shadow backdrop-blur dark:border-rose/20 dark:bg-white/10 dark:text-milk">›</button>
           <div className="mt-2 flex justify-center gap-1.5" aria-hidden>
             {items.map((it, i) => (

@@ -23,8 +23,9 @@ const OFFLINE_HTML = `<!doctype html><html lang="id"><meta charset="utf-8"><meta
 <title>Offline · Hearts2Hearts Gallery</title>
 <body style="font-family:Quicksand,system-ui,sans-serif;background:#F5FAFE;color:#173A56;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px">
 <div><p style="font-size:30px;margin:0;color:#EA93BB">♥<span style="color:#7FC4E8">♥</span></p>
-<h1 style="font-family:'Playfair Display',serif">Kamu sedang offline</h1>
-<p>Halaman ini belum tersimpan di perangkat. Buka <a href="/favorit" style="color:#EA93BB;font-weight:700">Favoritku</a> untuk melihat foto favorit yang sudah tersimpan.</p></div></body></html>`
+<h1 id="j" style="font-family:'Playfair Display',serif">Kamu sedang offline</h1>
+<p id="p">Halaman ini belum tersimpan di perangkat. Buka <a href="/favorit" style="color:#EA93BB;font-weight:700">Favoritku</a> untuk melihat foto favorit yang sudah tersimpan.</p></div>
+<script>try{if(localStorage.getItem('h2h-lang')==='en'){document.documentElement.lang='en';document.title='Offline · Hearts2Hearts Gallery';document.getElementById('j').textContent='You’re offline';document.getElementById('p').innerHTML='This page isn’t saved on this device yet. Open <a href="/favorit" style="color:#EA93BB;font-weight:700">My Favorites</a> to see the favorite photos already saved.'}}catch(e){}</script></body></html>`
 
 self.addEventListener('install', () => self.skipWaiting())
 
