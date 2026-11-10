@@ -6,6 +6,8 @@ import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { itemShareUrl } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
 import { downloadBlob } from '../../lib/download'
+import { makeWallpaperBlob, makePhotocardBlob } from '../../lib/cardMaker'
+import { albumKeysOf, DISPLAY_NAME } from '../../lib/gallery'
 import { tagsOf, tagLabel } from '../../lib/gallery'
 import Reactions from './Reactions'
 
@@ -240,31 +242,33 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     }
   }
 
+  function flash(msg) {
+    setShareMsg(msg)
+    clearTimeout(shareTimer.current)
+    shareTimer.current = setTimeout(() => setShareMsg(''), 2500)
+  }
+
   async function makeWallpaper() {
-    setMaking(true)
-    setShareMsg('')
+    setMaking('wallpaper')
     try {
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = it.url })
-      const W = 1080, H = 1920
-      const canvas = document.createElement('canvas')
-      canvas.width = W; canvas.height = H
-      const ctx = canvas.getContext('2d')
-      const g = ctx.createLinearGradient(0, 0, 0, H)
-      g.addColorStop(0, '#173A56'); g.addColorStop(1, '#0D1D31')
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
-      const scale = Math.max(W / img.width, H / img.height)
-      const w = img.width * scale, h = img.height * scale
-      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h)
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
-      if (!blob) throw new Error('kosong')
-      downloadBlob(blob, 'wallpaper-h2h.jpg')
+      downloadBlob(await makeWallpaperBlob(it.url), 'wallpaper-h2h.jpg')
     } catch {
-      // Gambar dari sumber luar bisa memblokir pengolahan di browser — dulu gagal tanpa pesan.
-      setShareMsg('Wallpaper gagal dibuat untuk foto ini.')
-      clearTimeout(shareTimer.current)
-      shareTimer.current = setTimeout(() => setShareMsg(''), 2500)
+      // Gambar dari sumber luar bisa memblokir pengolahan di browser.
+      flash('Wallpaper gagal dibuat untuk foto ini.')
+    }
+    setMaking(false)
+  }
+
+  // Photocard (fitur 7): foto + bingkai + nama member + hati ganda, diunduh sebagai PNG.
+  async function makePhotocard() {
+    setMaking('pc')
+    try {
+      const keys = albumKeysOf(it)
+      const name = keys.length ? keys.map((k) => DISPLAY_NAME[k] || k).join(' & ') : (it.idol || 'Hearts2Hearts')
+      const blob = await makePhotocardBlob(it.url, { name, sub: it.era || '' })
+      downloadBlob(blob, `photocard-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`)
+    } catch {
+      flash('Photocard gagal dibuat untuk foto ini.')
     }
     setMaking(false)
   }
@@ -360,13 +364,18 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             <a href={it.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">Buka di YouTube</a>
           )}
           {it.type === 'photo' && (
-            <button onClick={makeWallpaper} disabled={making} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
+            <button onClick={makeWallpaper} disabled={!!making} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <rect x="3" y="3" width="18" height="18" rx="3" />
                 <circle cx="8.5" cy="9" r="1.5" />
                 <path d="M21 15l-5-5-9 9" />
               </svg>
-              {making ? 'Membuat…' : 'Wallpaper HP'}
+              {making === 'wallpaper' ? 'Membuat…' : 'Wallpaper HP'}
+            </button>
+          )}
+          {it.type === 'photo' && (
+            <button onClick={makePhotocard} disabled={!!making} className="px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
+              🎴 {making === 'pc' ? 'Membuat…' : 'Photocard'}
             </button>
           )}
         </div>
