@@ -95,7 +95,7 @@ function Kartu({ m, i, count }) {
                   <span className="lc-blab tracking-[0.08em] text-[#5c5770]">{t('POSISI')}</span><b className="whitespace-nowrap text-right font-semibold">{m.pos}</b>
                 </div>
                 <div className="lc-brow flex items-baseline justify-between gap-2 border-t border-[#26232e]/15">
-                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">{t('ITEM DI GALERI')}</span><b className="whitespace-nowrap font-semibold">{count ?? m.count} item</b>
+                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">{t('ITEM DI GALERI')}</span><b className="whitespace-nowrap font-semibold">{t('{n} item', { n: count ?? m.count })}</b>
                 </div>
               </div>
               <Link
