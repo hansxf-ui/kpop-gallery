@@ -77,6 +77,20 @@ create policy "admin update settings" on settings for update to authenticated us
 - Scroll tak terbatas di galeri & album idol (tombol "Muat lebih banyak" tetap ada sebagai cadangan)
 - Ekspor/impor favorit lewat kode `H2H1-…` atau file .json (di halaman Favoritku)
 - Mode offline: foto favorit disimpan di perangkat (service worker `public/sw.js`)
+- Hitung mundur ulang tahun member & anniversary debut di beranda
+- Profil singkat member di album idol (hanya data yang tercatat di repo)
+- `/linimasa` — koleksi dikelompokkan per era sesuai tanggal rilis
+- Tag konsep/acara (Panggung, MV, Fansign, Bandara, Di balik layar) — diisi di admin, filter `?tag=` di galeri
+- Label "Baru" + bagian "Baru ditambahkan" sejak kunjungan terakhir (disimpan di perangkat)
+- "Paling disukai minggu ini" dari reaksi 7 hari terakhir
+- Pembuat photocard (PNG) di tampilan penuh foto
+- `/koleksi` — koleksi bernama milik pengunjung, bisa dibagikan lewat kode `H2HK1-…`
+- Laporan foto dari pengunjung → antrean "🚩 Laporan foto" di admin
+- Reaksi bisa dibatalkan dengan aman (token rahasia per perangkat)
+- `/kuis` — kuis "Tebak member" dari foto solo
+- Pilihan bahasa Inggris (ID · EN di navigasi); bahasa Indonesia tetap bawaan
+- Tombol "Tambah ke kalender" (.ics) di setiap acara `/jadwal`
+- `/kredit` — daftar sumber/kredit foto dari kolom credit
 
 ## Migrasi database (jalankan sekali di Supabase → SQL Editor)
 File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan tidak mengubah data yang ada.
@@ -90,6 +104,10 @@ File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan ti
 4. `20261111_04_hide_admin_notes.sql` — catatan pribadi admin tidak bisa dibaca pengunjung.
    **Deploy kode terbaru dulu**, baru jalankan file ini.
 5. `20261111_05_reactions_emoji_check.sql` — reaksi baru hanya boleh 😍 🔥 😭 👏.
+6. `20261112_06_item_tags.sql` — kolom `tags` (tag konsep/acara). Butuh migrasi 04.
+7. `20261112_07_top_reacted_week.sql` — view "Paling disukai minggu ini".
+8. `20261112_08_reports.sql` — tabel laporan foto (pengunjung hanya kirim, admin baca). Butuh migrasi 03.
+9. `20261112_09_reaction_tokens.sql` — reaksi dengan token + RPC `add_reaction`/`remove_reaction`. Butuh migrasi 05.
 
 ## Pasang domain sendiri (opsional)
 Kalau punya domain sendiri (mis. dari Niagahoster/Namecheap): buka project di Vercel → tab **Domains** → tambahkan domainmu, lalu ikuti instruksi untuk mengarahkan DNS-nya. Vercel akan otomatis pasang HTTPS.
