@@ -31,7 +31,7 @@ function walk(d, out = []) {
 // Teks yang diterjemahkan lewat variabel t(label), t(k), t(e.judul), dst. — bukan literal.
 const DYNAMIC = [
   // navigasi
-  'Beranda', 'Galeri', 'Favoritku', 'Jadwal', 'Voting', 'Tentang', 'Linimasa era', 'Koleksiku', 'Tebak member', 'Kredit foto', 'Hari ini di H2H', 'Bandingkan era', 'Tebak era', 'Foto potongan',
+  'Beranda', 'Galeri', 'Favoritku', 'Jadwal', 'Voting', 'Tentang', 'Linimasa era', 'Koleksiku', 'Tebak member', 'Kredit foto', 'Hari ini di H2H', 'Bandingkan era', 'Tebak era', 'Foto potongan', 'Daftar', 'Kalender',
   // urutan, jenis media, tag
   'Terbaru', 'Terlama', 'Acak', 'Semua', 'Foto', 'Video', 'Semua konsep', 'Panggung', 'MV', 'Fansign', 'Bandara', 'Di balik layar',
   // reaksi & laporan
