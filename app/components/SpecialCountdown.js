@@ -1,0 +1,41 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { nextOccurrences } from '../../lib/specialDates'
+
+// Hitung mundur ulang tahun member & anniversary debut (fitur 1).
+// Dirender setelah mount saja: tanggal "hari ini" bergantung zona waktu pengunjung,
+// jadi tidak boleh dihitung di server (hindari hydration mismatch).
+export default function SpecialCountdown({ count = 3 }) {
+  const [list, setList] = useState(null)
+  useEffect(() => {
+    const update = () => setList(nextOccurrences().slice(0, count))
+    update()
+    const t = setInterval(update, 60 * 60 * 1000) // ganti hari saat halaman lama terbuka
+    return () => clearInterval(t)
+  }, [count])
+  if (!list) return <div className="mt-10 h-[118px]" aria-hidden /> // ruang tetap → tidak ada lompatan layout
+
+  const fmt = (d) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })
+  return (
+    <section className="mt-10" aria-labelledby="hitung-mundur">
+      <h2 id="hitung-mundur" className="mb-3 text-center text-[10px] font-bold tracking-[0.22em] text-plum/50 dark:text-milk/50">
+        <span className="text-gold">●</span>&nbsp; HARI SPESIAL BERIKUTNYA
+      </h2>
+      <ul className="mx-auto grid max-w-3xl gap-3 sm:grid-cols-3">
+        {list.map((s) => {
+          const judul = s.type === 'debut' ? `Anniversary debut ke-${s.anniversary}` : `Ulang tahun ${s.name}`
+          return (
+            <li key={`${s.month}-${s.day}`} className="rounded-2xl border border-rose/40 bg-white/80 px-4 py-3 text-center dark:border-rose/20 dark:bg-white/5">
+              <p className="text-lg" aria-hidden>{s.type === 'debut' ? '🎉' : '🎂'}</p>
+              <p className="font-bold text-plum dark:text-milk">{judul}</p>
+              <p className="text-xs text-plum/55 dark:text-milk/55">{fmt(s.date)}</p>
+              <p className="mt-1 font-display text-2xl text-gold tabular-nums">
+                {s.days === 0 ? 'Hari ini!' : s.days === 1 ? 'Besok' : `${s.days} hari lagi`}
+              </p>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}

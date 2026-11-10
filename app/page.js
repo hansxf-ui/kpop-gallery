@@ -5,6 +5,7 @@ import { imgOpt } from '../lib/supabase'
 import { fetchMemberCounts } from '../lib/counts'
 import ThemeToggle from './components/ThemeToggle'
 import SiteNav from './components/SiteNav'
+import SpecialCountdown from './components/SpecialCountdown'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
 // Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
@@ -219,6 +220,8 @@ export default function Landing() {
           </div>
         </section>
       ))}
+
+      <SpecialCountdown />
 
       <div className="mt-12 text-center">
         <Link
