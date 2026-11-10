@@ -9,6 +9,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 import SiteNav from '../../components/SiteNav'
 import Lightbox from '../../components/Lightbox'
 import GalleryCard from '../../components/GalleryCard'
+import AutoLoadMore from '../../components/AutoLoadMore'
 import ScrollTopButton from '../../components/ScrollTopButton'
 import Skeleton from '../../components/Skeleton'
 
@@ -148,13 +149,8 @@ export default function IdolAlbum() {
         ))}
       </div>
 
-      {shown.length > visible.length && (
-        <p className="text-center mt-6">
-          <button onClick={() => setVisibleCount((c) => c + 40)} className="rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 dark:border-rose/20 font-bold px-5 py-2 text-sm">
-            Muat lebih banyak ({shown.length - visible.length} lagi)
-          </button>
-        </p>
-      )}
+      <AutoLoadMore hasMore={shown.length > visible.length} remaining={shown.length - visible.length}
+        onMore={() => setVisibleCount((c) => Math.min(c + 40, shown.length))} />
 
       {openIndex !== null && (
         <Lightbox items={shown} index={openIndex} onIndexChange={setOpenIndex}

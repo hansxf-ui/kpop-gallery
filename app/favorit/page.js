@@ -8,11 +8,14 @@ import Lightbox from '../components/Lightbox'
 import GalleryCard from '../components/GalleryCard'
 import ScrollTopButton from '../components/ScrollTopButton'
 import Skeleton from '../components/Skeleton'
+import FavTransfer from '../components/FavTransfer'
+import { readCachedRows, syncOffline } from '../../lib/offline'
 
 export default function Favorit() {
   const [items, setItems] = useState(null) // null = sedang memuat
   const [favs, setFavs] = useState([])
   const [loadError, setLoadError] = useState(false)
+  const [offline, setOffline] = useState(false) // menampilkan salinan tersimpan, bukan data terbaru
   const [openIndex, setOpenIndex] = useState(null)
   const [autoplay, setAutoplay] = useState(false)
 
@@ -20,20 +23,27 @@ export default function Favorit() {
     const ids = getFavorites()
     setFavs(ids)
     setLoadError(false)
+    setOffline(false)
     if (ids.length === 0) { setItems([]); return }
     setItems(null)
+    // Urutkan sesuai kapan difavoritkan (terbaru di atas) — hasil .in() dari database tidak berurutan.
+    const urutan = new Map(ids.map((id, i) => [id, i]))
+    const urut = (rows) => rows.sort((a, b) => urutan.get(b.id) - urutan.get(a.id))
     sb.from('items').select('*').in('id', ids).then(({ data, error }) => {
-      if (error) { setItems([]); setLoadError(true); return }
-      const rows = data || []
-      // Urutkan sesuai kapan difavoritkan (terbaru di atas) — hasil .in() dari database tidak berurutan.
-      const urutan = new Map(ids.map((id, i) => [id, i]))
-      rows.sort((a, b) => urutan.get(b.id) - urutan.get(a.id))
+      if (error) {
+        // Offline / database tidak terjangkau: pakai salinan tersimpan (fitur 6) kalau ada.
+        const simpanan = readCachedRows().filter((r) => urutan.has(r.id))
+        if (simpanan.length) { setItems(urut(simpanan)); setOffline(true); return }
+        setItems([]); setLoadError(true); return
+      }
+      const rows = urut(data || [])
       // Item yang sudah dihapus admin tidak ikut dihitung lagi di jumlah favorit.
       if (rows.length < ids.length) {
         const ada = new Set(rows.map((r) => r.id))
         setFavs(setFavorites(getFavorites().filter((id) => ada.has(id))))
       }
       setItems(rows)
+      syncOffline(rows).catch(() => {})
     })
   }
 
@@ -69,6 +79,12 @@ export default function Favorit() {
         )}
       </header>
 
+      {offline && (
+        <p role="status" className="mx-auto mb-6 w-fit rounded-full bg-lilac/40 px-4 py-2 text-center text-sm font-bold text-plum dark:bg-lilac/15 dark:text-milk">
+          📴 Mode offline — menampilkan salinan favorit yang tersimpan di perangkat ini.
+        </p>
+      )}
+      {items !== null && <FavTransfer onImported={load} />}
       {items === null && <Skeleton />}
       {items && !loadError && items.length === 0 && (
         <p className="text-center text-plum/60 dark:text-milk/60">Belum ada favorit. Ketuk ikon hati di galeri untuk menyimpan.</p>

@@ -1,7 +1,9 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { imgOpt } from '../../lib/supabase'
+import { supabaseLoader, hasDimensions } from '../../lib/imageLoader'
 import { thumbOf, albumKeysOf } from '../../lib/gallery'
 
 // Kartu grid bersama untuk /galeri, /idol/[name], dan /favorit.
@@ -20,7 +22,10 @@ export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true,
   const srcSet = big !== src ? `${small} 400w, ${big} 800w` : undefined
   const keys = albumKeysOf(it)
   const label = it.title || it.idol || 'Item galeri'
-  const placeholder = loaded ? '' : it.type === 'youtube' ? 'aspect-video' : 'aspect-[3/4]'
+  // Dimensi tercatat (migrasi 02) -> next/image dengan width/height asli: ruangnya sudah pas sejak awal.
+  // Belum tercatat -> cara lama (bingkai cadangan sampai gambar dimuat).
+  const sized = hasDimensions(it)
+  const placeholder = loaded || sized ? '' : it.type === 'youtube' ? 'aspect-video' : 'aspect-[3/4]'
 
   function fav(e) {
     e.stopPropagation()
@@ -35,7 +40,11 @@ export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true,
     <div className="card relative mb-4 w-full break-inside-avoid">
       <button type="button" onClick={onOpen} className="block w-full text-left">
         <div className={`relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049] ${placeholder}`}>
-          {it.type === 'video'
+          {sized
+            ? <Image loader={supabaseLoader} src={it.url} width={Number(it.width)} height={Number(it.height)} sizes={SIZES}
+                alt={label} onLoad={() => setLoaded(true)} onError={() => setLoaded(true)}
+                className={`h-auto w-full transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`} />
+            : it.type === 'video'
             ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline onLoadedData={() => setLoaded(true)} onError={() => setLoaded(true)} className="w-full" />
             : <img
                 ref={(el) => { if (el && el.complete && el.naturalWidth && !loaded) setLoaded(true) }}

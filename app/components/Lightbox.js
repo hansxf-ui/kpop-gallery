@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ytId, imgOpt } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
+import { itemShareUrl } from '../../lib/galeriUrl'
+import { shareOrCopy } from '../../lib/share'
 import Reactions from './Reactions'
 
 // Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
@@ -56,6 +58,8 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const [anim, setAnim] = useState(false)
   const [controlsOn, setControlsOn] = useState(false)
   const [favIds, setFavIds] = useState(() => getFavorites())
+  const [shareMsg, setShareMsg] = useState('')
+  const shareTimer = useRef(null)
   const timer = useRef(null)
   const commitTimer = useRef(null)
   const viewRef = useRef(null)
@@ -195,6 +199,16 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     window.addEventListener(FAVS_EVENT, sync)
     return () => window.removeEventListener(FAVS_EVENT, sync)
   }, [])
+  // Link langsung ke item ini (/galeri?item=<id>) — dibuka orang lain langsung di lightbox.
+  async function share() {
+    const msg = await shareOrCopy(itemShareUrl(window.location.origin, it.id), it.title || it.idol || 'Hearts2Hearts Gallery')
+    if (!msg) return
+    setShareMsg(msg)
+    clearTimeout(shareTimer.current)
+    shareTimer.current = setTimeout(() => setShareMsg(''), 2200)
+  }
+  useEffect(() => () => clearTimeout(shareTimer.current), [])
+
   function toggleFav(e) {
     const was = favIds.includes(it.id)
     setFavIds(toggleFavorite(it.id))
@@ -305,6 +319,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">
             {favIds.includes(it.id) ? '❤️ Favorit' : '🤍 Favoritkan'}
           </button>
+          <button onClick={share} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">🔗 Bagikan</button>
           {it.type !== 'youtube' ? (
             <a href={`${it.url}?download=${encodeURIComponent(it.url.split('/').pop() || 'hearts2hearts')}`} className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ Unduh</a>
           ) : (
@@ -321,6 +336,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             </button>
           )}
         </div>
+        {shareMsg && <p role="status" className="text-xs font-bold text-gold">{shareMsg}</p>}
         <Reactions key={it.id} itemId={it.id} />
       </div>
     </div>,

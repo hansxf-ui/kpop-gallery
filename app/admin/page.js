@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { sb, ytId, fetchAllItems } from '../../lib/supabase'
+import { sb, ytId, fetchAllItems, imgOpt } from '../../lib/supabase'
 import { compressImage } from '../../lib/compress'
 import { rotateImageFile } from '../../lib/rotate'
+import { measureFile, measureImage, isMissingColumnError } from '../../lib/imageLoader'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
@@ -35,6 +36,8 @@ export default function Admin() {
   const [editVal, setEditVal] = useState({})
   const [pendingDelete, setPendingDelete] = useState(null) // item yang menunggu konfirmasi hapus
   const [announcement, setAnnouncement] = useState('')
+  const [dimMsg, setDimMsg] = useState('')
+  const [dimBusy, setDimBusy] = useState(false)
   const fileInput = useRef(null)
 
   const load = () => fetchAllItems().then(setItems).catch(() => setItems([]))
@@ -109,6 +112,9 @@ export default function Admin() {
         const up = await sb.storage.from('gallery').upload(path, file)
         if (up.error) throw up.error
         const url = sb.storage.from('gallery').getPublicUrl(path).data.publicUrl
+        // Dimensi foto (fitur 4) — dipakai grid supaya ruang tiap foto sudah pas sebelum dimuat.
+        let dims = {}
+        if (file.type.startsWith('image/')) { try { dims = await measureFile(file) } catch { dims = {} } }
         // Judul dari nama file boleh diawali "NAMA IDOL | " untuk idol per foto.
         let rowIdol = idolName
         let rowTitle = (f.title || q.file.name.replace(/\.\w+$/, '')).trim()
@@ -117,10 +123,13 @@ export default function Admin() {
           rowIdol = canonIdol(rowTitle.slice(0, cut).trim()) || idolName
           rowTitle = rowTitle.slice(cut + 3).trim()
         }
-        const { error } = await sb.from('items').insert({
+        const row = {
           ...baseRow, idol: rowIdol, title: rowTitle,
           path, type: file.type.startsWith('video') ? 'video' : 'photo', url, ...backdate(seq++),
-        })
+        }
+        let { error } = await sb.from('items').insert({ ...row, ...dims })
+        // Kolom width/height belum ada (migrasi 02 belum dijalankan) -> simpan tanpa dimensi.
+        if (error && dims.width && isMissingColumnError(error)) ({ error } = await sb.from('items').insert(row))
         if (error) throw error
         ok++
         setQueue((cur) => cur.map((it) => (it.id === q.id ? { ...it, status: 'selesai ✓' } : it)))
@@ -181,6 +190,29 @@ export default function Admin() {
     const { error } = await sb.from('items').update(payload).eq('id', id)
     if (error) return setMsg('Gagal menyimpan perubahan: ' + error.message)
     setEditing(null); load()
+  }
+
+  // Isi dimensi foto lama (fitur 4). Diukur dari versi 600px — yang dipakai hanya rasionya.
+  // Aman diulang: hanya foto yang width/height-nya masih kosong.
+  async function backfillDimensions() {
+    const todo = items.filter((it) => it.type === 'photo' && !(it.width > 0 && it.height > 0))
+    if (todo.length === 0) return setDimMsg('Semua foto sudah punya dimensi ✓')
+    setDimBusy(true)
+    let ok = 0, gagal = 0
+    for (const it of todo) {
+      try {
+        const d = await measureImage(imgOpt(it.url, 600))
+        const { error } = await sb.from('items').update({ width: d.width, height: d.height }).eq('id', it.id)
+        if (error) {
+          if (isMissingColumnError(error)) { setDimBusy(false); return setDimMsg('Kolom width/height belum ada — jalankan dulu supabase/migrations/20261110_02_item_dimensions.sql.') }
+          gagal++
+        } else ok++
+      } catch { gagal++ }
+      setDimMsg(`Mengukur… ${ok + gagal}/${todo.length}`)
+    }
+    setDimBusy(false)
+    setDimMsg(`Selesai: ${ok} foto diukur${gagal ? `, ${gagal} gagal` : ''} ✓`)
+    load()
   }
 
   function exportData() {
@@ -275,6 +307,18 @@ export default function Admin() {
               <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} placeholder="mis. Comeback baru: Lemon Tang! 🍋" className={box} />
               <button onClick={() => saveAnnouncement(announcement)} className="rounded-full bg-gold text-plum font-bold px-4 shrink-0 text-sm">Simpan</button>
             </div>
+          </div>
+
+          <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
+            <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📐 Dimensi foto</h2>
+            <p className="text-xs text-plum/50 dark:text-milk/50 mb-3">
+              Foto yang dimensinya tercatat tampil tanpa lompatan layout di galeri. Upload baru tercatat otomatis;
+              tombol ini mengukur foto lama yang belum. Perlu migrasi <code>20261110_02_item_dimensions.sql</code>.
+            </p>
+            <button onClick={backfillDimensions} disabled={dimBusy} className="rounded-full bg-gold text-plum font-bold px-4 py-2 text-sm disabled:opacity-50">
+              {dimBusy ? 'Mengukur…' : `Ukur dimensi foto lama (${items.filter((it) => it.type === 'photo' && !(it.width > 0 && it.height > 0)).length})`}
+            </button>
+            {dimMsg && <p className="mt-2 text-sm font-bold dark:text-milk" role="status">{dimMsg}</p>}
           </div>
 
           {stats.length > 0 && (

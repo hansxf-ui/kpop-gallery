@@ -2,6 +2,7 @@ import './globals.css'
 import Background from './components/Background'
 import ConfettiHearts from './components/ConfettiHearts'
 import TopBanner from './components/TopBanner'
+import ServiceWorker from './components/ServiceWorker'
 
 const SITE_URL = 'https://kpop-gallery-coral.vercel.app'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -48,6 +49,7 @@ export default function RootLayout({ children }) {
         <TopBanner />
         <Background />
         <ConfettiHearts />
+        <ServiceWorker />
         {children}
       </body>
     </html>
