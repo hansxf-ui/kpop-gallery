@@ -70,7 +70,8 @@ export default function GaleriClient() {
     setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setLoadError(true) })
   }
-  useEffect(() => { document.title = 'Galeri · Hearts2Hearts Gallery' }, [])
+  // Judul tab diatur server (generateMetadata di page.js), termasuk judul item untuk ?item=.
+  // Dulu efek di sini menimpanya jadi "Galeri · …" begitu halaman aktif.
   useEffect(() => {
     loadItems()
     setFavs(getFavorites())
