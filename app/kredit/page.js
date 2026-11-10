@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { fetchAllItems, imgOpt } from '../../lib/supabase'
@@ -9,15 +10,16 @@ import SiteNav from '../components/SiteNav'
 import Skeleton from '../components/Skeleton'
 
 function Grup({ title, groups }) {
+  const t = useT()
   if (groups.length === 0) return null
   return (
     <section className="mb-12">
-      <h2 className="mb-4 font-display text-3xl text-plum dark:text-milk">{title}</h2>
+      <h2 className="mb-4 font-display text-3xl text-plum dark:text-milk">{t(title)}</h2>
       <ul className="grid gap-3 sm:grid-cols-2">
         {groups.map((g) => (
           <li key={g.name} className="rounded-2xl border border-rose/40 bg-white/80 p-4 dark:border-rose/20 dark:bg-white/5">
             <p className="break-words font-bold text-plum dark:text-milk">📷 {g.name}</p>
-            <p className="text-xs text-plum/55 dark:text-milk/55">{g.items.length} item di galeri</p>
+            <p className="text-xs text-plum/55 dark:text-milk/55">{t('{n} item di galeri', { n: g.items.length })}</p>
             <div className="mt-2 flex gap-1.5">
               {g.items.filter((it) => it.type === 'photo').slice(0, 4).map((it) => (
                 <Link key={it.id} href={`/galeri?item=${it.id}`}>
@@ -27,8 +29,8 @@ function Grup({ title, groups }) {
               ))}
             </div>
             <div className="mt-2 flex flex-wrap gap-x-4 text-xs font-bold">
-              <Link href={`/galeri?q=${encodeURIComponent(g.name)}`} className="text-gold underline underline-offset-4">Lihat fotonya</Link>
-              {g.link && <a href={g.link} target="_blank" rel="noopener noreferrer nofollow ugc" className="text-gold underline underline-offset-4">Kunjungi sumber ↗</a>}
+              <Link href={`/galeri?q=${encodeURIComponent(g.name)}`} className="text-gold underline underline-offset-4">{t('Lihat fotonya')}</Link>
+              {g.link && <a href={g.link} target="_blank" rel="noopener noreferrer nofollow ugc" className="text-gold underline underline-offset-4">{t('Kunjungi sumber ↗')}</a>}
             </div>
           </li>
         ))}
@@ -39,6 +41,7 @@ function Grup({ title, groups }) {
 
 // Kredit & sumber foto (fitur 14), dari kolom `credit` (catatan admin yang diawali "📷").
 export default function Kredit() {
+  const t = useT()
   const [items, setItems] = useState(null)
   const [error, setError] = useState(false)
   function load() {
@@ -56,28 +59,28 @@ export default function Kredit() {
       <header className="pt-16 pb-12 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>📷</p>
-        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">Kredit Foto</h1>
+        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{t('Kredit Foto')}</h1>
         <p className="mx-auto mt-3 max-w-prose font-bold text-plum/70 dark:text-milk/70">
-          Terima kasih untuk para fotografer, fansite, dan sumber resmi yang karyanya ada di galeri ini.
+          {t('Terima kasih untuk para fotografer, fansite, dan sumber resmi yang karyanya ada di galeri ini.')}
         </p>
         <p className="mx-auto mt-1 max-w-prose text-xs text-plum/50 dark:text-milk/50">
-          Hak cipta foto dan video tetap milik pemilik aslinya. Penggolongan “sumber resmi” berdasarkan nama di kredit.
+          {t('Hak cipta foto dan video tetap milik pemilik aslinya. Penggolongan “sumber resmi” berdasarkan nama di kredit.')}
         </p>
       </header>
 
       {items === null && <Skeleton count={4} />}
       {error && (
         <div className="py-6 text-center">
-          <p className="font-bold text-plum dark:text-milk">Gagal memuat kredit.</p>
-          <button onClick={load} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Coba lagi</button>
+          <p className="font-bold text-plum dark:text-milk">{t('Gagal memuat kredit.')}</p>
+          <button onClick={load} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">{t('Coba lagi')}</button>
         </div>
       )}
       {items && !error && official.length + others.length === 0 && (
-        <p className="text-center text-plum/60 dark:text-milk/60">Belum ada kredit foto yang tercatat.</p>
+        <p className="text-center text-plum/60 dark:text-milk/60">{t('Belum ada kredit foto yang tercatat.')}</p>
       )}
       <Grup title="Sumber resmi" groups={official} />
       <Grup title="Fansite & sumber lain" groups={others} />
-      {items && tanpa > 0 && <p className="text-center text-xs text-plum/50 dark:text-milk/50">{tanpa} item belum punya keterangan sumber.</p>}
+      {items && tanpa > 0 && <p className="text-center text-xs text-plum/50 dark:text-milk/50">{t('{n} item belum punya keterangan sumber.', { n: tanpa })}</p>}
     </main>
   )
 }

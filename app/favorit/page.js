@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { fetchItemsByIds } from '../../lib/supabase'
 import { getFavorites, setFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
@@ -12,6 +13,7 @@ import FavTransfer from '../components/FavTransfer'
 import { readCachedRows, syncOffline } from '../../lib/offline'
 
 export default function Favorit() {
+  const t = useT()
   const [items, setItems] = useState(null) // null = sedang memuat
   const [favs, setFavs] = useState([])
   const [loadError, setLoadError] = useState(false)
@@ -69,31 +71,31 @@ export default function Favorit() {
       <header className="pt-16 pb-12 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>♥ ♥ ♥</p>
-        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">Favoritku</h1>
-        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">{items === null ? 'Memuat…' : `${items.length} item tersimpan`}</p>
-        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">Favorit tersimpan di perangkat ini saja.</p>
+        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{t('Favoritku')}</h1>
+        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">{items === null ? t('Memuat…') : t('{n} item tersimpan', { n: items.length })}</p>
+        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Favorit tersimpan di perangkat ini saja.')}</p>
         {items && items.length > 1 && (
           <p className="mt-4">
-            <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ Putar semua</button>
+            <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
           </p>
         )}
       </header>
 
       {offline && (
         <p role="status" className="mx-auto mb-6 w-fit rounded-full bg-lilac/40 px-4 py-2 text-center text-sm font-bold text-plum dark:bg-lilac/15 dark:text-milk">
-          📴 Mode offline — menampilkan salinan favorit yang tersimpan di perangkat ini.
+          📴 {t('Mode offline — menampilkan salinan favorit yang tersimpan di perangkat ini.')}
         </p>
       )}
       {items !== null && <FavTransfer onImported={load} />}
       {items === null && <Skeleton />}
       {items && !loadError && items.length === 0 && (
-        <p className="text-center text-plum/60 dark:text-milk/60">Belum ada favorit. Ketuk ikon hati di galeri untuk menyimpan.</p>
+        <p className="text-center text-plum/60 dark:text-milk/60">{t('Belum ada favorit. Ketuk ikon hati di galeri untuk menyimpan.')}</p>
       )}
       {loadError && (
         <div className="py-6 text-center">
-          <p className="font-bold text-plum dark:text-milk">Gagal memuat favorit.</p>
-          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Periksa koneksimu, lalu coba lagi.</p>
-          <button onClick={load} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Coba lagi</button>
+          <p className="font-bold text-plum dark:text-milk">{t('Gagal memuat favorit.')}</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">{t('Periksa koneksimu, lalu coba lagi.')}</p>
+          <button onClick={load} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">{t('Coba lagi')}</button>
         </div>
       )}
 

@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { imgOpt } from '../lib/supabase'
@@ -24,6 +25,7 @@ const DUR = [5.2, 6.1, 5.6, 6.5, 5.9, 6.3, 5.4, 6.0]
 const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
 
 function Kartu({ m, i, count }) {
+  const t = useT()
   const [flip, setFlip] = useState(false)
   const kickRef = useRef(null)
   // Kartu maksimal 240px lebar → 480px cukup untuk layar 2x (dulu 800px, ±2,5× lebih berat).
@@ -58,7 +60,7 @@ function Kartu({ m, i, count }) {
             className={`lc-flip${flip ? ' lc-on' : ''}`}
             role="button"
             tabIndex={0}
-            aria-label={`Balik kartu ${m.name}`}
+            aria-label={t('Balik kartu {nama}', { nama: m.name })}
             onClick={toggle}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle() } }}
           >
@@ -68,14 +70,14 @@ function Kartu({ m, i, count }) {
                 <span>MEMBER / H2H</span><span>#{String(i + 1).padStart(2, '0')}</span>
               </div>
               <div className="mx-3 overflow-hidden rounded-xl" style={{ aspectRatio: '1 / 0.94' }}>
-                <img src={url} alt={`Foto ${m.name}`} decoding="async" className="h-full w-full object-cover" style={{ objectPosition: m.obj }} draggable={false} />
+                <img src={url} alt={t('Foto {nama}', { nama: m.name })} decoding="async" className="h-full w-full object-cover" style={{ objectPosition: m.obj }} draggable={false} />
               </div>
               <div className="px-4 pt-3">
                 <h3 className="lc-fname font-display leading-tight text-plum dark:text-milk">{m.name}</h3>
                 <p className="lc-fpos text-plum/55 dark:text-milk/55">{m.pos}</p>
               </div>
               <div className="mt-auto flex items-center justify-between px-4 pb-3.5">
-                <span className="lc-meta font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">LIHAT PROFIL</span>
+                <span className="lc-meta font-bold tracking-[0.2em] text-plum/45 dark:text-milk/45">{t('LIHAT PROFIL')}</span>
                 <span className="lc-dot grid place-items-center rounded-full bg-plum text-milk dark:bg-gold dark:text-plum">+</span>
               </div>
             </div>
@@ -90,10 +92,10 @@ function Kartu({ m, i, count }) {
               </div>
               <div className="lc-brows relative">
                 <div className="lc-brow flex items-baseline justify-between gap-2 border-t border-[#26232e]/15">
-                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">POSISI</span><b className="whitespace-nowrap text-right font-semibold">{m.pos}</b>
+                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">{t('POSISI')}</span><b className="whitespace-nowrap text-right font-semibold">{m.pos}</b>
                 </div>
                 <div className="lc-brow flex items-baseline justify-between gap-2 border-t border-[#26232e]/15">
-                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">ITEM DI GALERI</span><b className="whitespace-nowrap font-semibold">{count ?? m.count} item</b>
+                  <span className="lc-blab tracking-[0.08em] text-[#5c5770]">{t('ITEM DI GALERI')}</span><b className="whitespace-nowrap font-semibold">{count ?? m.count} item</b>
                 </div>
               </div>
               <Link
@@ -101,11 +103,11 @@ function Kartu({ m, i, count }) {
                 onClick={(e) => e.stopPropagation()}
                 className="lc-blink relative block rounded-full bg-[#26232e] text-center font-bold text-white"
               >
-                Buka galeri {m.name} →
+                {t('Buka galeri {nama} →', { nama: m.name })}
               </Link>
               <div className="lc-btop relative mt-auto flex items-end justify-between">
-                <small className="lc-bsmall font-bold leading-[1.7] tracking-[0.18em] text-[#5c5770]">PINDAI BUAT BUKA<br />GALERI {m.name.toUpperCase()}</small>
-                <img src={`/qr/${m.key.toLowerCase()}.png`} alt={`QR galeri ${m.name}`} loading="lazy" decoding="async" className="lc-bqr rounded-lg bg-white shadow" draggable={false} />
+                <small className="lc-bsmall font-bold leading-[1.7] tracking-[0.18em] text-[#5c5770]">{t('PINDAI BUAT BUKA')}<br />{t('GALERI {nama}', { nama: m.name.toUpperCase() })}</small>
+                <img src={`/qr/${m.key.toLowerCase()}.png`} alt={t('QR galeri {nama}', { nama: m.name })} loading="lazy" decoding="async" className="lc-bqr rounded-lg bg-white shadow" draggable={false} />
               </div>
             </div>
           </div>
@@ -116,6 +118,7 @@ function Kartu({ m, i, count }) {
 }
 
 export default function Landing() {
+  const t = useT()
   // Jumlah item per member + total dihitung di database (view member_counts, lihat lib/counts.js)
   // — angka bawaan di MEMBERS hanya cadangan tampilan awal / saat gagal memuat.
   const [liveCounts, setLiveCounts] = useState(null)
@@ -186,7 +189,7 @@ export default function Landing() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="mb-3 text-[10px] font-bold tracking-[0.22em] text-plum/50 dark:text-milk/50">
-            <span className="text-gold">●</span>&nbsp; GALERI FANS — HEARTS2HEARTS
+            <span className="text-gold">●</span>&nbsp; {t('GALERI FANS — HEARTS2HEARTS')}
           </p>
           <h1 className="font-display text-4xl leading-[1.05] text-plum dark:text-milk sm:text-[52px]">
             Meet the members<br />
@@ -194,8 +197,8 @@ export default function Landing() {
           </h1>
         </div>
         <p className="max-w-[260px] pt-2 text-xs leading-relaxed text-plum/55 dark:text-milk/55 sm:pt-6">
-          Delapan member Hearts2Hearts yang mengisi galeri ini — balik kartunya buat lihat profil singkat tiap member.
-          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; 8 MEMBER · {liveTotal.toLocaleString('id-ID')} ITEM KOLEKSI</b>
+          {t('Delapan member Hearts2Hearts yang mengisi galeri ini — balik kartunya buat lihat profil singkat tiap member.')}
+          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; {t('8 MEMBER · {n} ITEM KOLEKSI', { n: liveTotal.toLocaleString('id-ID') })}</b>
         </p>
       </header>
 
@@ -228,13 +231,13 @@ export default function Landing() {
           href="/galeri"
           className="inline-block rounded-full bg-gold px-9 py-3.5 text-base font-bold text-plum shadow-[0_10px_26px_rgba(234,147,187,0.45)] transition hover:scale-[1.03]"
         >
-          Masuk ke Galeri →
+          {t('Masuk ke Galeri →')}
         </Link>
       </div>
 
       <footer className="mt-auto flex flex-wrap justify-between gap-2 pt-12 text-[9px] font-bold tracking-[0.22em] text-plum/40 dark:text-milk/40">
         <span>THE MEMBERS MAKE THE HEARTS</span>
-        <span>KLIK / TAP KARTU BUAT LIHAT PROFIL</span>
+        <span>{t('KLIK / TAP KARTU BUAT LIHAT PROFIL')}</span>
       </footer>
     </div>
   )

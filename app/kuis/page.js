@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { fetchAllItems, imgOpt } from '../../lib/supabase'
 import { quizPool, makeRound, nameOf, getBest, saveBest, ROUND } from '../../lib/quiz'
@@ -8,6 +9,7 @@ import SiteNav from '../components/SiteNav'
 
 // Kuis "Tebak member" (fitur 11).
 export default function Kuis() {
+  const t = useT()
   const [items, setItems] = useState(null)
   const [error, setError] = useState(false)
   const [round, setRound] = useState(null)
@@ -43,8 +45,8 @@ export default function Kuis() {
     if (next >= round.length) setBest(saveBest(score))
   }
   async function bagikan() {
-    const msg = await shareOrCopy(`${window.location.origin}/kuis`, `Aku dapat ${score}/${round.length} di kuis Tebak Member Hearts2Hearts! Coba kamu 💗`)
-    if (msg) setShareMsg(msg)
+    const msg = await shareOrCopy(`${window.location.origin}/kuis`, t('Aku dapat {s}/{n} di kuis Tebak Member Hearts2Hearts! Coba kamu 💗', { s: score, n: round.length }))
+    if (msg) setShareMsg(t(msg))
   }
 
   // Foto soal berikutnya dimuat lebih dulu supaya tidak menunggu setelah "Lanjut".
@@ -60,29 +62,29 @@ export default function Kuis() {
       <header className="pt-16 pb-8 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>❓</p>
-        <h1 className="font-display text-5xl text-plum dark:text-milk mt-2">Tebak Member</h1>
-        <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">Siapa member di foto ini? {ROUND} soal dari koleksi galeri.</p>
-        {best > 0 && <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">Skor terbaikmu: {best}/{ROUND}</p>}
+        <h1 className="font-display text-5xl text-plum dark:text-milk mt-2">{t('Tebak Member')}</h1>
+        <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">{t('Siapa member di foto ini? {n} soal dari koleksi galeri.', { n: ROUND })}</p>
+        {best > 0 && <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Skor terbaikmu: {b}/{n}', { b: best, n: ROUND })}</p>}
       </header>
 
-      {items === null && <p className="text-center text-plum/60 dark:text-milk/60">Memuat foto…</p>}
+      {items === null && <p className="text-center text-plum/60 dark:text-milk/60">{t('Memuat foto…')}</p>}
       {error && (
         <div className="text-center">
-          <p className="font-bold text-plum dark:text-milk">Gagal memuat koleksi.</p>
-          <button onClick={load} className={`${btn} mt-4`}>Coba lagi</button>
+          <p className="font-bold text-plum dark:text-milk">{t('Gagal memuat koleksi.')}</p>
+          <button onClick={load} className={`${btn} mt-4`}>{t('Coba lagi')}</button>
         </div>
       )}
-      {items && !error && pool.length < 4 && <p className="text-center text-plum/60 dark:text-milk/60">Belum cukup foto solo member untuk membuat kuis.</p>}
+      {items && !error && pool.length < 4 && <p className="text-center text-plum/60 dark:text-milk/60">{t('Belum cukup foto solo member untuk membuat kuis.')}</p>}
 
       {items && !error && pool.length >= 4 && !round && (
-        <p className="text-center"><button onClick={mulai} className={btn}>Mulai kuis</button></p>
+        <p className="text-center"><button onClick={mulai} className={btn}>{t('Mulai kuis')}</button></p>
       )}
 
       {q && !selesai && (
         <section aria-live="polite">
-          <p className="mb-2 text-center text-xs font-bold uppercase tracking-widest text-gold">Soal {i + 1} / {round.length} · Skor {score}</p>
+          <p className="mb-2 text-center text-xs font-bold uppercase tracking-widest text-gold">{t('Soal {i} / {n} · Skor {s}', { i: i + 1, n: round.length, s: score })}</p>
           <div className="card mx-auto mb-4 max-w-sm pb-2">
-            <img key={q.it.id} src={imgOpt(q.it.url, 700)} alt="Foto member yang harus ditebak" decoding="async"
+            <img key={q.it.id} src={imgOpt(q.it.url, 700)} alt={t('Foto member yang harus ditebak')} decoding="async"
               className="mx-auto aspect-[3/4] w-full rounded-2xl object-cover object-top bg-[#DCEBF6] dark:bg-[#1B3049]" />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -100,10 +102,10 @@ export default function Kuis() {
           {picked && (
             <div className="mt-4 text-center">
               <p className="font-bold text-plum dark:text-milk">
-                {picked === q.answer ? 'Benar! 💗' : `Ups — ini ${nameOf(q.answer)}.`}
+                {picked === q.answer ? t('Benar! 💗') : t('Ups — ini {nama}.', { nama: nameOf(q.answer) })}
                 {q.it.title && <span className="block text-xs font-normal text-plum/60 dark:text-milk/60">{q.it.title}</span>}
               </p>
-              <button onClick={lanjut} className={`${btn} mt-3`} autoFocus>{i + 1 < round.length ? 'Lanjut →' : 'Lihat hasil'}</button>
+              <button onClick={lanjut} className={`${btn} mt-3`} autoFocus>{i + 1 < round.length ? t('Lanjut →') : t('Lihat hasil')}</button>
             </div>
           )}
         </section>
@@ -113,12 +115,12 @@ export default function Kuis() {
         <section className="text-center" aria-live="polite">
           <p className="font-display text-6xl text-gold">{score}/{round.length}</p>
           <p className="mt-2 font-bold text-plum dark:text-milk">
-            {score === round.length ? 'Sempurna! Kamu S2U sejati 💗' : score >= round.length * 0.7 ? 'Keren! Hampir semua benar.' : 'Ayo coba lagi — makin sering, makin hafal!'}
+            {score === round.length ? t('Sempurna! Kamu S2U sejati 💗') : score >= round.length * 0.7 ? t('Keren! Hampir semua benar.') : t('Ayo coba lagi — makin sering, makin hafal!')}
           </p>
-          <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">Skor terbaik: {best}/{ROUND}</p>
+          <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Skor terbaik: {b}/{n}', { b: best, n: ROUND })}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <button onClick={mulai} className={btn}>Main lagi</button>
-            <button onClick={bagikan} className="rounded-full border border-rose/50 bg-white/80 px-6 py-2.5 text-sm font-bold dark:border-rose/25 dark:bg-white/10 dark:text-milk">🔗 Ajak teman</button>
+            <button onClick={mulai} className={btn}>{t('Main lagi')}</button>
+            <button onClick={bagikan} className="rounded-full border border-rose/50 bg-white/80 px-6 py-2.5 text-sm font-bold dark:border-rose/25 dark:bg-white/10 dark:text-milk">🔗 {t('Ajak teman')}</button>
           </div>
           {shareMsg && <p role="status" className="mt-2 text-xs font-bold text-gold">{shareMsg}</p>}
         </section>

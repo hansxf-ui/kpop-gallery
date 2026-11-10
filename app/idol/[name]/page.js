@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -17,6 +18,7 @@ import MemberProfile from '../../components/MemberProfile'
 import { visitBaseline, isNewSince } from '../../../lib/lastVisit'
 
 export default function IdolAlbum() {
+  const t = useT()
   const { name } = useParams()
   const idol = decodeURIComponent(name)
   const [items, setItems] = useState(null)
@@ -93,14 +95,14 @@ export default function IdolAlbum() {
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>✦ ✧ ✦</p>
         <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{nama}</h1>
-        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Album khusus {nama}</p>
-        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{fotoCount} foto · {videoCount} video</p>
+        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">{t('Album khusus {nama}', { nama })}</p>
+        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('{f} foto · {v} video', { f: fotoCount, v: videoCount })}</p>
         {pct !== null && (
           <div className="mx-auto mt-3 max-w-xs">
             <div className="h-1.5 rounded-full bg-rose/20 dark:bg-white/10 overflow-hidden">
               <div className="h-full bg-gold rounded-full" style={{ width: `${pct}%` }} />
             </div>
-            <p className="text-[11px] text-plum/50 dark:text-milk/50 mt-1">{pct}% dari seluruh koleksi galeri</p>
+            <p className="text-[11px] text-plum/50 dark:text-milk/50 mt-1">{t('{n}% dari seluruh koleksi galeri', { n: pct })}</p>
           </div>
         )}
       </header>
@@ -110,16 +112,16 @@ export default function IdolAlbum() {
       <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
         <div className="search-group w-full max-w-xs">
           <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul atau era…" type="search" aria-label="Cari di album" className="search-input" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Cari judul atau era…')} type="search" aria-label={t('Cari di album')} className="search-input" />
         </div>
-        <select value={sort} aria-label="Urutkan" onChange={(e) => { setSort(e.target.value); if (e.target.value === 'acak') setSeed(newSeed()) }}
+        <select value={sort} aria-label={t('Urutkan')} onChange={(e) => { setSort(e.target.value); if (e.target.value === 'acak') setSeed(newSeed()) }}
           className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold">
-          <option value="terbaru">Terbaru</option>
-          <option value="terlama">Terlama</option>
-          <option value="acak">Acak</option>
+          <option value="terbaru">{t('Terbaru')}</option>
+          <option value="terlama">{t('Terlama')}</option>
+          <option value="acak">{t('Acak')}</option>
         </select>
         {shown.length > 1 && (
-          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ Putar semua</button>
+          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
         )}
       </div>
 
@@ -128,7 +130,7 @@ export default function IdolAlbum() {
           {['Semua', ...eras].map((n) => (
             <button key={n} onClick={() => setEra(n)} aria-pressed={era === n}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
-              {n}
+              {n === 'Semua' ? t('Semua') : n}
             </button>
           ))}
         </div>
@@ -137,19 +139,19 @@ export default function IdolAlbum() {
       {items === null && <Skeleton />}
       {!valid && items !== null && (
         <div className="py-10 text-center">
-          <p className="font-display text-2xl text-plum dark:text-milk">Member tidak ditemukan</p>
-          <p className="mt-2 text-sm text-plum/60 dark:text-milk/60">Tidak ada member bernama “{idol}” di Hearts2Hearts.</p>
-          <Link href="/galeri" className="mt-4 inline-block rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Lihat semua koleksi</Link>
+          <p className="font-display text-2xl text-plum dark:text-milk">{t('Member tidak ditemukan')}</p>
+          <p className="mt-2 text-sm text-plum/60 dark:text-milk/60">{t('Tidak ada member bernama “{nama}” di Hearts2Hearts.', { nama: idol })}</p>
+          <Link href="/galeri" className="mt-4 inline-block rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">{t('Lihat semua koleksi')}</Link>
         </div>
       )}
       {valid && loadError && (
         <div className="py-10 text-center">
-          <p className="font-bold text-plum dark:text-milk">Gagal memuat album.</p>
-          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Periksa koneksimu, lalu coba lagi.</p>
-          <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Coba lagi</button>
+          <p className="font-bold text-plum dark:text-milk">{t('Gagal memuat album.')}</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">{t('Periksa koneksimu, lalu coba lagi.')}</p>
+          <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">{t('Coba lagi')}</button>
         </div>
       )}
-      {valid && !loadError && items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
+      {valid && !loadError && items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">{t('Tidak ada yang cocok.')}</p>}
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (

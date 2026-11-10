@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { fetchItemsByIds } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
@@ -17,6 +18,7 @@ const tombol = 'rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 
 
 // Koleksiku (fitur 8): daftar koleksi bernama + isi koleksi yang dipilih.
 export default function Koleksi() {
+  const t = useT()
   const [list, setList] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [items, setItems] = useState(null)
@@ -55,7 +57,7 @@ export default function Koleksi() {
       rows.sort((a, b) => pos.get(b.id) - pos.get(a.id))
       if (rows.length < active.ids.length) pruneCollection(active.id, rows.map((r) => r.id))
       setItems(rows)
-    }).catch(() => { if (alive) { setItems([]); setMsg('Gagal memuat isi koleksi. Periksa koneksimu.') } })
+    }).catch(() => { if (alive) { setItems([]); setMsg(t('Gagal memuat isi koleksi. Periksa koneksimu.')) } })
     return () => { alive = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, activeIds])
@@ -77,8 +79,8 @@ export default function Koleksi() {
 
   async function salinKode() {
     const kode = encodeCollection(active)
-    try { await navigator.clipboard.writeText(kode); setMsg('Kode koleksi disalin ✓ — kirim ke teman, lalu impor di halaman ini.') }
-    catch { setCode(kode); setMsg('Tidak bisa menyalin otomatis — kode ditampilkan di kolom impor, salin manual.') }
+    try { await navigator.clipboard.writeText(kode); setMsg(t('Kode koleksi disalin ✓ — kirim ke teman, lalu impor di halaman ini.')) }
+    catch { setCode(kode); setMsg(t('Tidak bisa menyalin otomatis — kode ditampilkan di kolom impor, salin manual.')) }
   }
 
   function impor() {
@@ -86,8 +88,8 @@ export default function Koleksi() {
       const c = importCollection(code)
       setCode('')
       pilih(c.id)
-      setMsg(`Koleksi "${c.name}" ditambahkan (${c.ids.length} item) ✓`)
-    } catch (e) { setMsg(e.message) }
+      setMsg(t('Koleksi “{nama}” ditambahkan ({n} item) ✓', { nama: c.name, n: c.ids.length }))
+    } catch (e) { setMsg(t(e.message)) }
   }
 
   function onFav(it, x, y) {
@@ -102,13 +104,13 @@ export default function Koleksi() {
       <header className="pt-16 pb-10 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>📁</p>
-        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">Koleksiku</h1>
-        <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">Kelompokkan foto favoritmu sendiri, mis. “Carmen era Focus”.</p>
-        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">Tersimpan di perangkat ini. Tambahkan foto lewat tombol 📁 Koleksi saat foto dibuka.</p>
+        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{t('Koleksiku')}</h1>
+        <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">{t('Kelompokkan foto favoritmu sendiri, mis. “Carmen era Focus”.')}</p>
+        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Tersimpan di perangkat ini. Tambahkan foto lewat tombol 📁 Koleksi saat foto dibuka.')}</p>
       </header>
 
       <section className="mx-auto mb-8 max-w-2xl">
-        <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Daftar koleksi">
+        <div className="flex flex-wrap justify-center gap-2" role="group" aria-label={t('Daftar koleksi')}>
           {list.map((c) => (
             <button key={c.id} onClick={() => pilih(c.id)} aria-pressed={c.id === activeId}
               className={`rounded-full border px-4 py-1.5 text-sm font-bold ${c.id === activeId ? 'border-plum bg-plum text-milk dark:border-gold dark:bg-gold dark:text-plum' : 'border-rose/50 bg-white/70 dark:border-rose/20 dark:bg-white/10'}`}>
@@ -117,46 +119,46 @@ export default function Koleksi() {
           ))}
         </div>
         <form onSubmit={buat} className="mx-auto mt-4 flex max-w-sm gap-2">
-          <input value={newName} onChange={(e) => setNewName(e.target.value)} maxLength={60} placeholder="Nama koleksi baru…" aria-label="Nama koleksi baru"
+          <input value={newName} onChange={(e) => setNewName(e.target.value)} maxLength={60} placeholder={t('Nama koleksi baru…')} aria-label={t('Nama koleksi baru')}
             className="min-w-0 flex-1 rounded-full border border-rose/50 bg-white px-4 py-2 text-sm dark:border-rose/25 dark:bg-white/10 dark:text-milk" />
-          <button disabled={!newName.trim()} className="rounded-full bg-plum px-4 py-2 text-sm font-bold text-milk disabled:opacity-50 dark:bg-gold dark:text-plum">Buat</button>
+          <button disabled={!newName.trim()} className="rounded-full bg-plum px-4 py-2 text-sm font-bold text-milk disabled:opacity-50 dark:bg-gold dark:text-plum">{t('Buat')}</button>
         </form>
         <details className="mx-auto mt-4 max-w-sm text-sm">
-          <summary className="cursor-pointer text-center font-bold text-plum/70 dark:text-milk/70">Impor koleksi dari kode teman</summary>
-          <textarea value={code} onChange={(e) => setCode(e.target.value)} rows={3} placeholder="Tempel kode H2HK1-… di sini" aria-label="Kode koleksi"
+          <summary className="cursor-pointer text-center font-bold text-plum/70 dark:text-milk/70">{t('Impor koleksi dari kode teman')}</summary>
+          <textarea value={code} onChange={(e) => setCode(e.target.value)} rows={3} placeholder={t('Tempel kode H2HK1-… di sini')} aria-label={t('Kode koleksi')}
             className="mt-2 w-full rounded-xl border border-rose/60 bg-white px-3 py-2 font-mono text-xs dark:border-rose/25 dark:bg-white/10 dark:text-milk" />
-          <button onClick={impor} disabled={!code.trim()} className={`${tombol} mt-2`}>Impor kode</button>
+          <button onClick={impor} disabled={!code.trim()} className={`${tombol} mt-2`}>{t('Impor kode')}</button>
         </details>
         {msg && <p role="status" className="mt-3 text-center text-sm font-bold text-plum dark:text-milk">{msg}</p>}
       </section>
 
       {active && (
-        <section aria-label={`Koleksi ${active.name}`}>
+        <section aria-label={t('Koleksi {nama}', { nama: active.name })}>
           <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
             {renaming !== '' ? (
               <form onSubmit={(e) => { e.preventDefault(); renameCollection(active.id, renaming); setRenaming('') }} className="flex gap-2">
-                <input autoFocus value={renaming} onChange={(e) => setRenaming(e.target.value)} maxLength={60} aria-label="Nama baru"
+                <input autoFocus value={renaming} onChange={(e) => setRenaming(e.target.value)} maxLength={60} aria-label={t('Nama baru')}
                   className="rounded-full border border-rose/50 bg-white px-4 py-2 text-sm dark:bg-white/10 dark:text-milk" />
-                <button className={tombol}>Simpan</button>
-                <button type="button" onClick={() => setRenaming('')} className={tombol}>Batal</button>
+                <button className={tombol}>{t('Simpan')}</button>
+                <button type="button" onClick={() => setRenaming('')} className={tombol}>{t('Batal')}</button>
               </form>
             ) : (
               <>
                 <h2 className="mr-2 font-display text-3xl text-plum dark:text-milk">{active.name}</h2>
-                <button onClick={() => setRenaming(active.name)} className={tombol}>Ganti nama</button>
-                <button onClick={salinKode} disabled={active.ids.length === 0} className={tombol}>🔗 Salin kode bagikan</button>
-                <button onClick={() => setPendingDelete(active)} className={`${tombol} text-red-600 dark:text-red-300`}>Hapus</button>
+                <button onClick={() => setRenaming(active.name)} className={tombol}>{t('Ganti nama')}</button>
+                <button onClick={salinKode} disabled={active.ids.length === 0} className={tombol}>🔗 {t('Salin kode bagikan')}</button>
+                <button onClick={() => setPendingDelete(active)} className={`${tombol} text-red-600 dark:text-red-300`}>{t('Hapus')}</button>
               </>
             )}
           </div>
           {items === null && <Skeleton count={4} />}
-          {items && items.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Koleksi ini masih kosong.</p>}
+          {items && items.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">{t('Koleksi ini masih kosong.')}</p>}
           <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
             {(items || []).map((it, i) => (
               <div key={it.id} className="relative">
                 <GalleryCard it={it} isFav={favs.includes(it.id)} onOpen={() => setOpenIndex(i)} onFav={(x, y) => onFav(it, x, y)} />
                 <button onClick={() => { toggleInCollection(active.id, it.id); setItems((cur) => cur.filter((x) => x.id !== it.id)) }}
-                  aria-label={`Keluarkan ${it.title || it.idol} dari koleksi`}
+                  aria-label={t('Keluarkan {judul} dari koleksi', { judul: it.title || it.idol })}
                   className="absolute left-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-sm font-bold text-plum shadow-sm">✕</button>
               </div>
             ))}
@@ -169,9 +171,9 @@ export default function Koleksi() {
       )}
       <ConfirmModal
         open={!!pendingDelete}
-        title="Hapus koleksi ini?"
-        message={pendingDelete ? `${pendingDelete.name} — foto di galeri tidak ikut terhapus.` : ''}
-        confirmLabel="Ya, hapus"
+        title={t('Hapus koleksi ini?')}
+        message={pendingDelete ? t('{nama} — foto di galeri tidak ikut terhapus.', { nama: pendingDelete.name }) : ''}
+        confirmLabel={t('Ya, hapus')}
         onConfirm={() => { deleteCollection(pendingDelete.id); setPendingDelete(null); pilih(null) }}
         onCancel={() => setPendingDelete(null)}
       />

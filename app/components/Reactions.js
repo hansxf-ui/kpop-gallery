@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { sb } from '../../lib/supabase'
 
@@ -43,6 +44,7 @@ function loadMine(itemId) {
 }
 
 export default function Reactions({ itemId }) {
+  const t = useT()
   const [counts, setCounts] = useState({})
   const [mine, setMine] = useState([]) // [{emoji, id}]
   const [info, setInfo] = useState('')
@@ -98,7 +100,7 @@ export default function Reactions({ itemId }) {
             setCounts((c) => ({ ...c, [key]: (c[key] || 0) + 1 }))
             setMine(prevMine)
             persist(prevMine)
-            setInfo(existing.token ? 'Reaksi belum bisa dibatalkan. Coba lagi.' : 'Reaksi lama ini tidak bisa dibatalkan.')
+            setInfo(existing.token ? t('Reaksi belum bisa dibatalkan. Coba lagi.') : t('Reaksi lama ini tidak bisa dibatalkan.'))
             setTimeout(() => setInfo(''), 2500)
           }
         } else {
@@ -133,13 +135,13 @@ export default function Reactions({ itemId }) {
 
   return (
     <div className="flex flex-col items-center gap-1">
-    <div className="flex items-center justify-center gap-2" role="group" aria-label="Reaksi">
+    <div className="flex items-center justify-center gap-2" role="group" aria-label={t('Reaksi')}>
       {REACTIONS.map(({ key, code, label }) => {
         const active = has(key)
         return (
-          <button key={key} onClick={() => toggle(key)} aria-label={label} title={label} aria-pressed={active}
+          <button key={key} onClick={() => toggle(key)} aria-label={t(label)} title={t(label)} aria-pressed={active}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold border transition ${active ? 'bg-gold/30 border-gold' : 'bg-white/90 border-transparent hover:bg-white'} text-plum`}>
-            <AppleEmoji code={code} char={key} label={label} />
+            <AppleEmoji code={code} char={key} label={t(label)} />
             {counts[key] ? <span className="text-xs">{counts[key]}</span> : null}
           </button>
         )
