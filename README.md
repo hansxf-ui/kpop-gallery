@@ -112,6 +112,7 @@ File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan ti
 7. `20261112_07_top_reacted_week.sql` — view "Paling disukai minggu ini".
 8. `20261112_08_reports.sql` — tabel laporan foto (pengunjung hanya kirim, admin baca). Butuh migrasi 03.
 9. `20261112_09_reaction_tokens.sql` — reaksi dengan token + RPC `add_reaction`/`remove_reaction`. Butuh migrasi 05.
+10. `20261113_10_harden_reactions_reports.sql` — sisip reaksi langsung hanya `item_id`/`emoji`, view mingguan hanya 4 emoji, maks. 10 laporan terbuka per item. Butuh 05, 07, 08, 09.
 
 ## Tes
 `npm test` — logika kuis (tanpa foto ganda dalam satu ronde) dan kelengkapan kamus bahasa Inggris
