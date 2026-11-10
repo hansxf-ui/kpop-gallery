@@ -87,3 +87,21 @@ test('bentuk tunggal/jamak', () => {
   assert.equal(EN['Anniversary debut ke-{n}']({ n: 2 }), '2nd debut anniversary')
   assert.equal(EN['Anniversary debut ke-{n}']({ n: 11 }), '11th debut anniversary')
 })
+
+// ---------- Teks data ----------
+const loadData = async (name) => {
+  writeFileSync(join(dir, name + '.mjs'), readFileSync(join(root, 'lib', name + '.js'), 'utf8'))
+  return import(pathToFileURL(join(dir, name + '.mjs')).href)
+}
+// Kata yang menandakan teks masih bahasa Indonesia (judul/lokasi yang memang nama diri boleh lolos).
+const INDO = /\b(Penampilan|Baru|Jepang|Korea Selatan|Spanyol|Tampil|tampil|rilis|acara|hari|menyusul|belum|dengan|versi|perdana|Kolaborasi|Debut Jepang|ke-\d)\b/
+
+test('jadwal: semua catatan, jenis, dan lokasi/judul berbahasa Indonesia punya terjemahan', async () => {
+  const { JADWAL, RIWAYAT_2026, TIPE_LABEL } = await loadData('jadwal')
+  const need = new Set(Object.values(TIPE_LABEL))
+  for (const e of [...JADWAL, ...RIWAYAT_2026]) {
+    if (e.catatan) need.add(e.catatan)
+    for (const f of [e.judul, e.lokasi]) if (f && INDO.test(f)) need.add(f)
+  }
+  assert.deepEqual([...need].filter((k) => !(k in ALL)), [])
+})

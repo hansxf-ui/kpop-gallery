@@ -1,5 +1,5 @@
 'use client'
-import { useT } from '../../lib/i18n'
+import { useT, useLocale, useDocTitle } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -8,8 +8,8 @@ import { buildIcs, icsFilename } from '../../lib/ics'
 import { downloadBlob } from '../../lib/download'
 
 // Unduh file .ics (fitur 13) — dibuka HP/laptop langsung di aplikasi kalender.
-function unduhIcs(events, filename) {
-  const ics = buildIcs(events, { siteUrl: window.location.origin })
+function unduhIcs(events, filename, tr) {
+  const ics = buildIcs(events, { siteUrl: window.location.origin, tr })
   downloadBlob(new Blob([ics], { type: 'text/calendar;charset=utf-8' }), filename)
 }
 
@@ -50,9 +50,10 @@ function sudahLewat(tanggal) {
   return dDay < nDay
 }
 
-function formatTanggal(tanggal) {
-  if (!tanggal) return 'Tanggal menyusul'
-  return parseTanggal(tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+// Format tanggal ikut bahasa aktif (loc = 'id-ID' / 'en-GB').
+function formatTanggal(tanggal, loc = 'id-ID') {
+  if (!tanggal) return loc === 'en-GB' ? 'Date to be announced' : 'Tanggal menyusul'
+  return parseTanggal(tanggal).toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function UnitCountdown({ angka, label }) {
@@ -66,6 +67,7 @@ function UnitCountdown({ angka, label }) {
 
 function KartuEvent({ event, now }) {
   const t = useT()
+  const loc = useLocale()
   const isHariIni = hariIni(event.tanggal)
   const isLewat = sudahLewat(event.tanggal)
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(event.tanggal || '')
@@ -77,11 +79,11 @@ function KartuEvent({ event, now }) {
     <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/85 dark:bg-plum/60 p-5 sm:p-6">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose via-gold to-lilac" aria-hidden />
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-gold">{TIPE_LABEL[event.tipe] || event.tipe}</p>
-        <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-1">{event.emoji} {event.judul}</h2>
-          <p className="mt-1 text-sm font-bold text-plum/70 dark:text-milk/70">{formatTanggal(event.tanggal)}</p>
-          {event.lokasi && <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5">📍 {event.lokasi}</p>}
-          {event.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">{event.catatan}</p>}
+        <p className="text-[11px] font-bold uppercase tracking-widest text-gold">{t(TIPE_LABEL[event.tipe] || event.tipe)}</p>
+        <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-1">{event.emoji} {t(event.judul)}</h2>
+          <p className="mt-1 text-sm font-bold text-plum/70 dark:text-milk/70">{formatTanggal(event.tanggal, loc)}</p>
+          {event.lokasi && <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5">📍 {t(event.lokasi)}</p>}
+          {event.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">{t(event.catatan)}</p>}
       </div>
       <div className="mt-4">
         {isHariIni && (
@@ -104,7 +106,7 @@ function KartuEvent({ event, now }) {
           <p className="text-sm font-bold text-gold">⏳ {t('Segera diumumkan')}</p>
         ) : null}
         {event.tanggal && !isLewat && (
-          <button onClick={() => unduhIcs([event], icsFilename(event))}
+          <button onClick={() => unduhIcs([event], icsFilename(event), t)}
             className="mt-4 rounded-full border border-rose/50 bg-white/80 px-4 py-1.5 text-xs font-bold text-plum dark:border-rose/25 dark:bg-white/10 dark:text-milk">
             📅 {t('Tambah ke kalender')}
           </button>
@@ -116,10 +118,11 @@ function KartuEvent({ event, now }) {
 
 export default function JadwalPage() {
   const t = useT()
+  const loc = useLocale()
   // Satu ticker untuk semua kartu (dulu tiap kartu interval sendiri-sendiri).
   // null sebelum mount: angka countdown tidak dirender server → tidak ada hydration mismatch.
   const [now, setNow] = useState(null)
-  useEffect(() => { document.title = 'Jadwal · Hearts2Hearts Gallery' }, [])
+  useDocTitle('Jadwal')
   useEffect(() => {
     setNow(Date.now())
     const t = setInterval(() => setNow(Date.now()), 1000)
@@ -147,7 +150,7 @@ export default function JadwalPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-bold uppercase tracking-widest text-gold">✦ {t('Akan datang')}</p>
           {upcoming.some((e) => e.tanggal) && (
-            <button onClick={() => unduhIcs(upcoming.filter((e) => e.tanggal), 'jadwal-hearts2hearts.ics')}
+            <button onClick={() => unduhIcs(upcoming.filter((e) => e.tanggal), 'jadwal-hearts2hearts.ics', t)}
               className="text-xs font-bold text-plum/70 underline underline-offset-4 dark:text-milk/70">📅 {t('Tambah semua ke kalender')}</button>
           )}
         </div>
@@ -161,14 +164,14 @@ export default function JadwalPage() {
           <ul className="space-y-2">
             {lewat.map(e => (
               <li key={e.id} className="text-sm text-plum/60 dark:text-milk/60">
-                <span className="font-bold text-plum/80 dark:text-milk/80">{e.judul}</span>
-                {' · '}{formatTanggal(e.tanggal)}
+                <span className="font-bold text-plum/80 dark:text-milk/80">{t(e.judul)}</span>
+                {' · '}{formatTanggal(e.tanggal, loc)}
               </li>
             ))}
             {RIWAYAT_2026.map(r => (
               <li key={r.judul} className="text-sm text-plum/60 dark:text-milk/60">
-                <span className="font-bold text-plum/80 dark:text-milk/80">{r.judul}</span>
-                {' · '}{formatTanggal(r.tanggal)} · {r.catatan}
+                <span className="font-bold text-plum/80 dark:text-milk/80">{t(r.judul)}</span>
+                {' · '}{formatTanggal(r.tanggal, loc)} · {t(r.catatan)}
               </li>
             ))}
           </ul>
@@ -176,7 +179,7 @@ export default function JadwalPage() {
       )}
 
       <p className="mt-10 text-center text-xs text-plum/40 dark:text-milk/40">
-        Data diverifikasi dari pengumuman resmi & media · terakhir dicek 10 Nov 2026
+        {t('Data diverifikasi dari pengumuman resmi & media · terakhir dicek')} 10 Nov 2026
       </p>
     </main>
   )
