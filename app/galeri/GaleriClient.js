@@ -112,7 +112,8 @@ export default function GaleriClient() {
 
   const idolCover = useMemo(() => {
     const map = {}
-    const photos = (items || []).filter((it) => it.type !== 'youtube')
+    // Hanya foto: dulu video upload ikut terpilih, dan URL .mp4-nya dipasang di <img> → avatar rusak.
+    const photos = (items || []).filter((it) => it.type === 'photo')
     // Pass 1: utamakan foto solo member / foto grup persis buat avatar chip
     for (const it of photos) {
       const names = namesOf(it)
@@ -287,7 +288,7 @@ export default function GaleriClient() {
           <button key={n} onClick={() => setIdol(n)}
             className={`flex items-center gap-1.5 pl-1.5 pr-4 py-1.5 rounded-full font-bold text-sm border transition ${idol === n ? 'bg-plum text-milk border-plum' : 'bg-white/70 dark:bg-white/10 border-rose/50 dark:border-rose/20 hover:bg-rose/20'}`}>
             {n !== 'Semua' && idolCover[n] ? (
-              <img src={idolCover[n]} alt="" className="h-6 w-6 rounded-full object-cover" />
+              <img src={idolCover[n]} alt="" width={24} height={24} loading="lazy" decoding="async" className="h-6 w-6 rounded-full object-cover" />
             ) : n === 'Semua' ? <span className="h-6 w-6 rounded-full bg-gold/30 grid place-items-center text-xs">✦</span> : null}
             {n}
           </button>
