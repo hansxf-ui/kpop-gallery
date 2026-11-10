@@ -7,6 +7,7 @@ import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } 
 import { shareOrCopy } from '../../lib/share'
 import { sameEra } from '../../lib/eras'
 import { visitBaseline, isNewSince } from '../../lib/lastVisit'
+import { fetchTopReacted } from '../../lib/topReacted'
 import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -70,6 +71,8 @@ export default function GaleriClient() {
   const [shareMsg, setShareMsg] = useState('')
   const [baseline, setBaseline] = useState(null) // fitur 5: patokan "Baru sejak kunjungan terakhir"
   useEffect(() => { setBaseline(visitBaseline()) }, [])
+  const [top, setTop] = useState([]) // fitur 6: [{ item_id, jumlah }]
+  useEffect(() => { fetchTopReacted().then(setTop).catch(() => setTop([])) }, [])
   function loadItems() {
     setLoadError(false)
     setItems(null)
@@ -146,6 +149,13 @@ export default function GaleriClient() {
 
   // Baru ditambahkan sejak kunjungan terakhir (fitur 5). items sudah urut terbaru dulu.
   const newItems = useMemo(() => (items || []).filter((it) => isNewSince(it, baseline)), [items, baseline])
+
+  // Paling disukai minggu ini (fitur 6): hanya item yang masih ada di galeri.
+  const topItems = useMemo(() => {
+    if (!items || top.length === 0) return []
+    const byId = new Map(items.map((it) => [it.id, it]))
+    return top.map((t) => byId.get(t.item_id) && { it: byId.get(t.item_id), jumlah: t.jumlah }).filter(Boolean).slice(0, 6)
+  }, [items, top])
 
   const onThisDay = useMemo(() => {
     if (!items) return []
@@ -238,6 +248,25 @@ export default function GaleriClient() {
         <section className="mb-10">
           <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ Sorotan Minggu Ini</p>
           <FeaturedCarousel items={featuredList} onOpen={(i) => setSpot({ items: featuredList, index: i })} />
+        </section>
+      )}
+
+      {topItems.length > 0 && (
+        <section className="mb-10" aria-labelledby="paling-disukai">
+          <p id="paling-disukai" className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">♥ Paling disukai minggu ini</p>
+          <ol className="mx-auto grid max-w-3xl grid-cols-3 gap-3 sm:grid-cols-6">
+            {topItems.map(({ it, jumlah }, i) => (
+              <li key={it.id}>
+                <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={`Peringkat ${i + 1}: ${it.title || it.idol}, ${jumlah} reaksi`}>
+                  {it.type === 'video'
+                    ? <span className="grid aspect-[3/4] w-full place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
+                    : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
+                  <span className="absolute left-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-plum text-xs font-bold text-milk">{i + 1}</span>
+                  <span className="mt-1 block text-center text-[11px] font-bold text-plum/70 dark:text-milk/70">{jumlah} reaksi</span>
+                </button>
+              </li>
+            ))}
+          </ol>
         </section>
       )}
 
