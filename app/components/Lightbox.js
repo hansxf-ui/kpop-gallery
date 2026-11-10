@@ -10,6 +10,7 @@ import { makeWallpaperBlob, makePhotocardBlob } from '../../lib/cardMaker'
 import { albumKeysOf, DISPLAY_NAME } from '../../lib/gallery'
 import { tagsOf, tagLabel } from '../../lib/gallery'
 import Reactions from './Reactions'
+import CollectionPicker from './CollectionPicker'
 
 // Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
 // versi lama: aktif = ukuran alami (max-h saja) sementara tetangga = bingkai tetap 3/4,
@@ -357,6 +358,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">
             {favIds.includes(it.id) ? '❤️ Favorit' : '🤍 Favoritkan'}
           </button>
+          <CollectionPicker itemId={it.id} />
           <button onClick={share} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">🔗 Bagikan</button>
           {it.type !== 'youtube' ? (
             <a href={`${it.url}?download=${encodeURIComponent(it.url.split('/').pop() || 'hearts2hearts')}`} className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ Unduh</a>

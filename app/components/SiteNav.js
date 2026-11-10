@@ -15,6 +15,12 @@ const LINKS = [
   ['/tentang', 'Tentang'],
 ]
 
+// Halaman tambahan — baris tautan kecil di bawah navigasi utama supaya baris utama tidak penuh di HP.
+const EXTRA = [
+  ['/linimasa', '🕰️ Linimasa era'],
+  ['/koleksi', '📁 Koleksiku'],
+]
+
 function aktif(path, href) {
   if (href === '/') return path === '/'
   if (href === '/galeri' && path.startsWith('/idol/')) return true // album idol = bagian galeri
@@ -50,6 +56,14 @@ export default function SiteNav({ className = '' }) {
           </Link>
         )
       })}
+      <span className="flex w-full flex-wrap justify-center gap-x-4 gap-y-1 pt-1">
+        {EXTRA.map(([href, label]) => (
+          <Link key={href} href={href} aria-current={aktif(path, href) ? 'page' : undefined}
+            className={`text-xs font-bold underline-offset-4 hover:underline ${aktif(path, href) ? 'text-gold underline' : 'text-plum/60 dark:text-milk/60'}`}>
+            {label}
+          </Link>
+        ))}
+      </span>
     </nav>
   )
 }
