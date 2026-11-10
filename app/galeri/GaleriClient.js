@@ -5,7 +5,11 @@ import { fetchAllItems, imgOpt } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
-import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed } from '../../lib/gallery'
+import { useT } from '../../lib/i18n'
+import { sameEra } from '../../lib/eras'
+import { visitBaseline, isNewSince } from '../../lib/lastVisit'
+import { fetchTopReacted } from '../../lib/topReacted'
+import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
@@ -44,10 +48,12 @@ function weekNumber(d) {
 }
 
 export default function GaleriClient() {
+  const t = useT()
   const [items, setItems] = useState(null)
   const [idol, setIdol] = useState('Semua')
   const [group, setGroup] = useState('Semua')
   const [era, setEra] = useState('Semua')
+  const [tag, setTag] = useState('Semua') // fitur 4: tag konsep/acara
   const [q, setQ] = useState('')
   const [sort, setSort] = useState('terbaru')
   const [seed, setSeed] = useState(0) // kunci urutan "Acak" — hanya berganti saat Acak dipilih
@@ -65,6 +71,10 @@ export default function GaleriClient() {
   const deepLinkDone = useRef(false) // ?item= di URL sudah diproses (sekali per kunjungan)
   const [urlReady, setUrlReady] = useState(false) // filter dari URL sudah dibaca
   const [shareMsg, setShareMsg] = useState('')
+  const [baseline, setBaseline] = useState(null) // fitur 5: patokan "Baru sejak kunjungan terakhir"
+  useEffect(() => { setBaseline(visitBaseline()) }, [])
+  const [top, setTop] = useState([]) // fitur 6: [{ item_id, jumlah }]
+  useEffect(() => { fetchTopReacted().then(setTop).catch(() => setTop([])) }, [])
   function loadItems() {
     setLoadError(false)
     setItems(null)
@@ -90,19 +100,19 @@ export default function GaleriClient() {
   // supaya HTML server dan klien sama), lalu setiap perubahan filter ditulis balik ke URL.
   useEffect(() => {
     const f = parseGaleriFilters(window.location.search, idols.slice(1))
-    setIdol(f.idol); setGroup(f.group); setEra(f.era); setMediaType(f.mediaType); setQ(f.q); setSort(f.sort); setSeed(f.seed)
+    setIdol(f.idol); setGroup(f.group); setEra(f.era); setTag(f.tag); setMediaType(f.mediaType); setQ(f.q); setSort(f.sort); setSeed(f.seed)
     setUrlReady(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     if (!urlReady) return
     // Ketikan pencarian ditunda sebentar supaya riwayat/URL tidak ditulis tiap huruf.
-    const t = setTimeout(() => replaceQuery(filterQueryPatch({ idol, group, era, mediaType, q, sort, seed })), 300)
+    const t = setTimeout(() => replaceQuery(filterQueryPatch({ idol, group, era, tag, mediaType, q, sort, seed })), 300)
     return () => clearTimeout(t)
-  }, [urlReady, idol, group, era, mediaType, q, sort, seed])
+  }, [urlReady, idol, group, era, tag, mediaType, q, sort, seed])
 
   async function shareView() {
-    replaceQuery(filterQueryPatch({ idol, group, era, mediaType, q, sort, seed }))
+    replaceQuery(filterQueryPatch({ idol, group, era, tag, mediaType, q, sort, seed }))
     const u = new URL(window.location.href)
     u.searchParams.delete('item')
     const msg = await shareOrCopy(u.toString(), 'Hearts2Hearts Gallery')
@@ -110,6 +120,8 @@ export default function GaleriClient() {
   }
   const groups = [...new Set((items || []).map((i) => i.group_name).filter(Boolean))]
   const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
+  // Chip tag hanya muncul untuk tag yang benar-benar dipakai (sebelum admin menandai apa pun = tersembunyi).
+  const usedTags = TAGS.filter(([k]) => (items || []).some((i) => tagsOf(i).includes(k)))
 
   const idolCover = useMemo(() => {
     const map = {}
@@ -137,6 +149,16 @@ export default function GaleriClient() {
     return out
   }, [items])
 
+  // Baru ditambahkan sejak kunjungan terakhir (fitur 5). items sudah urut terbaru dulu.
+  const newItems = useMemo(() => (items || []).filter((it) => isNewSince(it, baseline)), [items, baseline])
+
+  // Paling disukai minggu ini (fitur 6): hanya item yang masih ada di galeri.
+  const topItems = useMemo(() => {
+    if (!items || top.length === 0) return []
+    const byId = new Map(items.map((it) => [it.id, it]))
+    return top.map((t) => byId.get(t.item_id) && { it: byId.get(t.item_id), jumlah: t.jumlah }).filter(Boolean).slice(0, 6)
+  }, [items, top])
+
   const onThisDay = useMemo(() => {
     if (!items) return []
     const now = new Date()
@@ -154,17 +176,18 @@ export default function GaleriClient() {
     })
     if (mediaType !== 'semua') list = list.filter((i) => (mediaType === 'foto' ? i.type === 'photo' : i.type !== 'photo'))
     if (group !== 'Semua') list = list.filter((i) => i.group_name === group)
-    if (era !== 'Semua') list = list.filter((i) => i.era === era)
+    if (era !== 'Semua') list = list.filter((i) => sameEra(i.era, era))
+    if (tag !== 'Semua') list = list.filter((i) => tagsOf(i).includes(tag))
     if (q.trim()) list = list.filter((i) => matchesQuery(i, q))
     list = [...list]
     if (sort === 'terlama') list.reverse()
     if (sort === 'acak') list = shuffleStable(list, seed)
     return list
-  }, [items, idol, group, era, q, sort, seed, mediaType])
+  }, [items, idol, group, era, tag, q, sort, seed, mediaType])
 
-  const filtered = idol !== 'Semua' || group !== 'Semua' || era !== 'Semua' || mediaType !== 'semua' || q.trim() !== ''
+  const filtered = idol !== 'Semua' || group !== 'Semua' || era !== 'Semua' || tag !== 'Semua' || mediaType !== 'semua' || q.trim() !== ''
   function resetFilters() {
-    setIdol('Semua'); setGroup('Semua'); setEra('Semua'); setMediaType('semua'); setQ('')
+    setIdol('Semua'); setGroup('Semua'); setEra('Semua'); setTag('Semua'); setMediaType('semua'); setQ('')
   }
 
   // Link langsung: /galeri?item=<id> membuka item itu di lightbox begitu koleksi selesai dimuat.
@@ -178,7 +201,7 @@ export default function GaleriClient() {
     if (idx >= 0) { setOpenIndex(idx); setAutoplay(false); return }
     const it = items.find((x) => x.id === item)
     if (it) setSpot({ items: [it], index: 0 })
-    else { setNotice('Item yang dibagikan sudah tidak ada di galeri.'); replaceQuery({ item: null }) }
+    else { setNotice(t('Item yang dibagikan sudah tidak ada di galeri.')); replaceQuery({ item: null }) }
   }, [items, loadError, urlReady, shown])
 
   // URL selalu menunjuk item yang sedang dibuka (bisa langsung disalin dari address bar);
@@ -192,7 +215,7 @@ export default function GaleriClient() {
   const videoCount = shown.length - fotoCount
   const visible = shown.slice(0, visibleCount)
 
-  useEffect(() => { setVisibleCount(40) }, [idol, group, era, q, sort, mediaType])
+  useEffect(() => { setVisibleCount(40) }, [idol, group, era, tag, q, sort, mediaType])
 
   useEffect(() => {
     if (!sortOpen) return
@@ -219,14 +242,56 @@ export default function GaleriClient() {
           <svg width="30" height="30" viewBox="0 0 24 24" className="text-gold -ml-3 mt-2.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
         </p>
         <h1 className="font-display text-5xl sm:text-7xl text-plum dark:text-milk mt-2">Hearts2Hearts Gallery</h1>
-        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Koleksi foto & video idol favoritku</p>
-        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{fotoCount} foto · {videoCount} video</p>
+        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">{t('Koleksi foto & video idol favoritku')}</p>
+        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('{f} foto · {v} video', { f: fotoCount, v: videoCount })}</p>
       </header>
 
       {featuredList.length > 0 && (
         <section className="mb-10">
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ Sorotan Minggu Ini</p>
+          <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ {t('Sorotan Minggu Ini')}</p>
           <FeaturedCarousel items={featuredList} onOpen={(i) => setSpot({ items: featuredList, index: i })} />
+        </section>
+      )}
+
+      {topItems.length > 0 && (
+        <section className="mb-10" aria-labelledby="paling-disukai">
+          <p id="paling-disukai" className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">♥ {t('Paling disukai minggu ini')}</p>
+          <ol className="mx-auto grid max-w-3xl grid-cols-3 gap-3 sm:grid-cols-6">
+            {topItems.map(({ it, jumlah }, i) => (
+              <li key={it.id}>
+                <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={t('Peringkat {n}: {judul}, {j} reaksi', { n: i + 1, judul: it.title || it.idol, j: jumlah })}>
+                  {it.type === 'video'
+                    ? <span className="grid aspect-[3/4] w-full place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
+                    : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
+                  <span className="absolute left-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-plum text-xs font-bold text-milk">{i + 1}</span>
+                  <span className="mt-1 block text-center text-[11px] font-bold text-plum/70 dark:text-milk/70">{t('{j} reaksi', { j: jumlah })}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {newItems.length > 0 && (
+        <section className="mb-10" aria-labelledby="baru-ditambahkan">
+          <p id="baru-ditambahkan" className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">
+            ✦ {t('Baru ditambahkan sejak kunjungan terakhirmu ({n})', { n: newItems.length })}
+          </p>
+          <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-1 pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+            {newItems.slice(0, 12).map((it, i) => (
+              <button key={it.id} onClick={() => setSpot({ items: newItems, index: i })} className="relative shrink-0" aria-label={t('Buka {judul}', { judul: it.title || it.idol })}>
+                {it.type === 'video'
+                  ? <span className="grid h-32 w-24 place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
+                  : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" width={96} height={128} className="h-32 w-24 rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-gold px-1.5 text-[9px] font-bold uppercase text-plum">{t('Baru')}</span>
+              </button>
+            ))}
+          </div>
+          {newItems.length > 1 && (
+            <p className="mt-2 text-center">
+              <button onClick={() => setSpot({ items: newItems, index: 0 })} className="text-sm font-bold text-gold underline underline-offset-4">{t('Lihat semua yang baru →')}</button>
+            </p>
+          )}
         </section>
       )}
 
@@ -234,7 +299,7 @@ export default function GaleriClient() {
         <section className="mb-10 text-center">
           <button onClick={() => setSpot({ items: onThisDay, index: 0 })}
             className="inline-block rounded-full bg-lilac/40 dark:bg-lilac/15 border border-lilac/60 dark:border-lilac/25 px-4 py-2 text-sm font-bold text-plum dark:text-milk">
-            🗓️ {onThisDay.length} kenangan dari hari ini di tahun sebelumnya — lihat lagi
+            🗓️ {t('{n} kenangan dari hari ini di tahun sebelumnya — lihat lagi', { n: onThisDay.length })}
           </button>
         </section>
       )}
@@ -242,27 +307,27 @@ export default function GaleriClient() {
       <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
         <div className="search-group w-full max-w-xs">
           <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul, idol, atau era…" type="search" aria-label="Cari di galeri" className="search-input" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Cari judul, idol, atau era…')} type="search" aria-label={t('Cari di galeri')} className="search-input" />
           {q && (
-            <button onClick={() => setQ('')} aria-label="Hapus pencarian"
+            <button onClick={() => setQ('')} aria-label={t('Hapus pencarian')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 font-bold text-plum/50 dark:text-milk/50 hover:text-plum dark:hover:text-milk">✕</button>
           )}
         </div>
         <div ref={sortRef} className="relative">
-          <button onClick={() => setSortOpen((o) => !o)} aria-haspopup="listbox" aria-expanded={sortOpen} aria-label={`Urutkan: ${sorts.find((s) => s[0] === sort)[1]}`}
+          <button onClick={() => setSortOpen((o) => !o)} aria-haspopup="listbox" aria-expanded={sortOpen} aria-label={`${t('Urutkan')}: ${t(sorts.find((s) => s[0] === sort)[1])}`}
             className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold inline-flex items-center gap-1.5">
-            {sorts.find((s) => s[0] === sort)[1]}
+            {t(sorts.find((s) => s[0] === sort)[1])}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition ${sortOpen ? 'rotate-180' : ''}`}><path d="M6 9l6 6 6-6" /></svg>
           </button>
           {sortOpen && (
-            <ul role="listbox" aria-label="Urutkan"
+            <ul role="listbox" aria-label={t('Urutkan')}
               className="absolute z-30 mt-2 left-0 w-36 overflow-hidden rounded-2xl border border-rose/50 dark:border-rose/25 bg-milk dark:bg-plum shadow-xl page-fade-in">
               {sorts.map(([v, label]) => (
                 <li key={v} role="none">
                   <button role="option" aria-selected={sort === v}
                     onClick={() => { setSort(v); if (v === 'acak') setSeed(newSeed()); setSortOpen(false) }}
                     className={`w-full px-4 py-2.5 text-left text-sm font-bold flex items-center justify-between ${sort === v ? 'text-plum dark:text-milk bg-rose/25 dark:bg-white/10' : 'text-plum/70 dark:text-milk/70 hover:bg-rose/10 dark:hover:bg-white/5'}`}>
-                    {label}
+                    {t(label)}
                     {sort === v && <span className="text-gold">✓</span>}
                   </button>
                 </li>
@@ -271,7 +336,7 @@ export default function GaleriClient() {
           )}
         </div>
         {shown.length > 1 && (
-          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ Putar semua</button>
+          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
         )}
       </div>
 
@@ -279,7 +344,7 @@ export default function GaleriClient() {
         {[['semua', 'Semua', null], ['foto', 'Foto', CameraIcon], ['video', 'Video', FilmIcon]].map(([v, label, Icon]) => (
           <button key={v} onClick={() => setMediaType(v)} aria-pressed={mediaType === v}
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${mediaType === v ? 'bg-rose text-plum border-rose' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
-            {Icon && <Icon />}{label}
+            {Icon && <Icon />}{t(label)}
           </button>
         ))}
       </div>
@@ -291,7 +356,7 @@ export default function GaleriClient() {
             {n !== 'Semua' && idolCover[n] ? (
               <img src={idolCover[n]} alt="" width={24} height={24} loading="lazy" decoding="async" className="h-6 w-6 rounded-full object-cover" />
             ) : n === 'Semua' ? <span className="h-6 w-6 rounded-full bg-gold/30 grid place-items-center text-xs">✦</span> : null}
-            {n}
+            {n === 'Semua' ? t('Semua') : n}
           </button>
         ))}
       </div>
@@ -301,7 +366,7 @@ export default function GaleriClient() {
           {['Semua', ...groups].map((n) => (
             <button key={n} onClick={() => setGroup(n)} aria-pressed={group === n}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${group === n ? 'bg-gold text-plum border-gold' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
-              {n}
+              {n === 'Semua' ? t('Semua') : n}
             </button>
           ))}
         </div>
@@ -312,16 +377,31 @@ export default function GaleriClient() {
           {['Semua', ...eras].map((n) => (
             <button key={n} onClick={() => setEra(n)} aria-pressed={era === n}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
-              {n}
+              {n === 'Semua' ? t('Semua') : n}
             </button>
           ))}
         </div>
       )}
 
+      {usedTags.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2 mb-4" role="group" aria-label={t('Konsep / acara')}>
+          {[['Semua', 'Semua konsep'], ...usedTags].map(([k, label]) => (
+            <button key={k} onClick={() => setTag(k)} aria-pressed={tag === k}
+              className={`px-3 py-1 rounded-full text-xs font-bold border ${tag === k ? 'bg-plum text-milk border-plum dark:bg-milk dark:text-plum dark:border-milk' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
+              {k !== 'Semua' && '#'}{t(label)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <p className="mb-4 text-center">
+        <Link href="/linimasa" className="text-xs font-bold text-plum/60 underline underline-offset-4 hover:text-plum dark:text-milk/60 dark:hover:text-milk">🕰️ {t('Lihat per era (Linimasa)')}</Link>
+      </p>
+
       {filtered && (
         <p className="mb-4 text-center">
           <button onClick={shareView} className="text-xs font-bold text-plum/60 underline underline-offset-4 hover:text-plum dark:text-milk/60 dark:hover:text-milk">
-            🔗 Bagikan tampilan ini
+            🔗 {t('Bagikan tampilan ini')}
           </button>
           {shareMsg && <span role="status" className="ml-2 text-xs font-bold text-gold">{shareMsg}</span>}
         </p>
@@ -330,30 +410,30 @@ export default function GaleriClient() {
       {idol !== 'Semua' && (
         <p className="text-center mt-2 mb-8">
           <Link href={`/idol/${encodeURIComponent(idol)}`} className="text-sm font-bold text-gold underline underline-offset-4">
-            Buka album {idol} sendiri →
+            {t('Buka album {nama} sendiri →', { nama: idol })}
           </Link>
         </p>
       )}
 
       {notice && (
         <p role="status" className="mx-auto mb-6 w-fit rounded-full bg-lilac/40 px-4 py-2 text-sm font-bold text-plum dark:bg-lilac/15 dark:text-milk">
-          {notice} <button onClick={() => setNotice('')} aria-label="Tutup pesan" className="ml-2">✕</button>
+          {notice} <button onClick={() => setNotice('')} aria-label={t('Tutup pesan')} className="ml-2">✕</button>
         </p>
       )}
       {items === null && <Skeleton />}
       {loadError && (
         <div className="py-10 text-center">
-          <p className="font-bold text-plum dark:text-milk">Gagal memuat koleksi.</p>
-          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Periksa koneksimu, lalu coba lagi. Sedang offline? Foto favorit tetap bisa dilihat di <Link href="/favorit" className="font-bold text-gold underline underline-offset-4">Favoritku</Link>.</p>
-          <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Coba lagi</button>
+          <p className="font-bold text-plum dark:text-milk">{t('Gagal memuat koleksi.')}</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">{t('Periksa koneksimu, lalu coba lagi. Sedang offline? Foto favorit tetap bisa dilihat di')} <Link href="/favorit" className="font-bold text-gold underline underline-offset-4">{t('Favoritku')}</Link>.</p>
+          <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">{t('Coba lagi')}</button>
         </div>
       )}
       {items && !loadError && shown.length === 0 && (
         <div className="py-6 text-center">
-          <p className="text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>
+          <p className="text-plum/60 dark:text-milk/60">{t('Tidak ada yang cocok.')}</p>
           {filtered && (
             <button onClick={resetFilters} className="mt-3 rounded-full border border-rose/50 bg-white/80 px-4 py-1.5 text-sm font-bold dark:border-rose/25 dark:bg-white/10">
-              Reset filter
+              {t('Reset filter')}
             </button>
           )}
         </div>
@@ -361,7 +441,7 @@ export default function GaleriClient() {
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (
-          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)}
+          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} isNew={isNewSince(it, baseline)}
             onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
             onFav={(x, y) => onFav(it, x, y)} />
         ))}

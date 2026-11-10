@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -14,14 +15,15 @@ import { thumbOf, albumKeysOf } from '../../lib/gallery'
 // - srcSet 400/800px: HP 2 kolom cukup unduh versi 400px.
 const SIZES = '(min-width: 1024px) 270px, (min-width: 768px) 33vw, 50vw'
 
-export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true, favLabel }) {
+export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true, favLabel, isNew = false }) {
+  const t = useT()
   const [loaded, setLoaded] = useState(false)
   const src = thumbOf(it)
   const small = imgOpt(src, 400)
   const big = imgOpt(src, 800)
   const srcSet = big !== src ? `${small} 400w, ${big} 800w` : undefined
   const keys = albumKeysOf(it)
-  const label = it.title || it.idol || 'Item galeri'
+  const label = it.title || it.idol || t('Item galeri')
   // Dimensi tercatat (migrasi 02) -> next/image dengan width/height asli: ruangnya sudah pas sejak awal.
   // Belum tercatat -> cara lama (bingkai cadangan sampai gambar dimuat).
   const sized = hasDimensions(it)
@@ -53,11 +55,12 @@ export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true,
                 onLoad={() => setLoaded(true)} onError={() => setLoaded(true)}
                 className={`w-full transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`} />}
           {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
+          {isNew && <span className="absolute left-2 top-2 rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-plum shadow">{t('Baru')}</span>}
         </div>
         <p className={`truncate px-2 text-sm font-bold dark:text-milk ${showIdol ? 'pt-2.5' : 'py-2.5'}`}>{label}</p>
       </button>
       <button type="button" onClick={fav} aria-pressed={isFav}
-        aria-label={favLabel || `Favoritkan ${label}`}
+        aria-label={favLabel || t('Favoritkan {judul}', { judul: label })}
         className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-base shadow-sm transition hover:scale-110">
         {isFav ? '❤️' : '🤍'}
       </button>

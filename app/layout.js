@@ -4,6 +4,7 @@ import Background from './components/Background'
 import ConfettiHearts from './components/ConfettiHearts'
 import TopBanner from './components/TopBanner'
 import ServiceWorker from './components/ServiceWorker'
+import { LangProvider } from '../lib/i18n'
 
 const SITE_URL = 'https://kpop-gallery-coral.vercel.app'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -50,11 +51,13 @@ export default function RootLayout({ children }) {
         {SUPABASE_URL && <link rel="preconnect" href={SUPABASE_URL} crossOrigin="" />}
       </head>
       <body>
-        <TopBanner />
-        <Background />
-        <ConfettiHearts />
-        <ServiceWorker />
-        {children}
+        <LangProvider>
+          <TopBanner />
+          <Background />
+          <ConfettiHearts />
+          <ServiceWorker />
+          {children}
+        </LangProvider>
       </body>
     </html>
   )

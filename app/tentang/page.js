@@ -1,5 +1,7 @@
+import Link from 'next/link'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
+import { RELEASES } from '../../lib/eras'
 
 export const metadata = { title: 'Tentang · Hearts2Hearts Gallery' }
 
@@ -14,15 +16,6 @@ const members = [
   ['Ye-on', 'Lead Vocal, Maknae'],
 ]
 
-const releases = [
-  ['Feb 2025', 'The Chase', 'Single album debut'],
-  ['Jun 2025', 'Style', 'Single digital'],
-  ['Sep 2025', 'Pretty Please', 'Pre-release Focus'],
-  ['Okt 2025', 'Focus', 'Mini album pertama'],
-  ['Feb 2026', 'RUDE!', 'Single digital'],
-  ['Jun 2026', 'Lemon Tang', 'Mini album kedua'],
-  ['2026', 'ICONIC HEART', 'Single album'],
-]
 
 const h2 = 'font-display text-3xl text-plum dark:text-milk mb-4'
 const p = 'leading-relaxed text-plum/80 dark:text-milk/80 max-w-prose'
@@ -72,7 +65,7 @@ export default function Tentang() {
       <section className="mb-14">
         <h2 className={h2}>Perjalanan rilisan</h2>
         <ol className="space-y-3">
-          {releases.map(([d, t, k]) => (
+          {RELEASES.map(({ label: d, nama: t, jenis: k }) => (
             <li key={t} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 border-b border-rose/30 dark:border-rose/15 pb-3">
               <span className="w-20 shrink-0 text-sm font-bold text-gold">{d}</span>
               <span className="font-bold text-plum dark:text-milk">{t}</span>
@@ -81,6 +74,7 @@ export default function Tentang() {
           ))}
         </ol>
         <p className="text-xs text-plum/50 dark:text-milk/50 mt-3">Data per September 2026. Bisa jadi sudah ada rilisan terbaru.</p>
+        <p className="mt-3"><Link href="/linimasa" className="text-sm font-bold text-gold underline underline-offset-4">Lihat koleksi galeri per era di Linimasa →</Link></p>
         <p className="text-xs text-plum/50 dark:text-milk/50 mt-1">Tandai foto/video dengan nama era (mis. "Focus") lewat halaman admin, supaya bisa difilter per era di galeri.</p>
       </section>
 
@@ -92,7 +86,7 @@ export default function Tentang() {
         </p>
         <p className={`${p} mt-3`}>
           Situs ini dibuat oleh penggemar dan tidak berafiliasi dengan SM Entertainment maupun Hearts2Hearts.
-          Hak cipta foto dan video tetap milik pemilik aslinya.
+          Hak cipta foto dan video tetap milik pemilik aslinya. Daftar sumbernya ada di <Link href="/kredit" className="font-bold text-gold underline underline-offset-4">Kredit foto</Link>.
         </p>
         <p className="mt-8 text-center text-xs text-plum/40 dark:text-milk/40">
           © 2026 Hearts2Hearts Gallery · Dibuat dengan ♥ untuk S2U

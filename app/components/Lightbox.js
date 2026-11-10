@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ytId, imgOpt, creditOf } from '../../lib/supabase'
@@ -6,7 +7,12 @@ import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { itemShareUrl } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
 import { downloadBlob } from '../../lib/download'
+import { makeWallpaperBlob, makePhotocardBlob } from '../../lib/cardMaker'
+import { albumKeysOf, DISPLAY_NAME } from '../../lib/gallery'
+import { tagsOf, tagLabel } from '../../lib/gallery'
 import Reactions from './Reactions'
+import CollectionPicker from './CollectionPicker'
+import ReportButton from './ReportButton'
 
 // Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
 // versi lama: aktif = ukuran alami (max-h saja) sementara tetangga = bingkai tetap 3/4,
@@ -14,14 +20,14 @@ import Reactions from './Reactions'
 // object-contain: foto tampil utuh tanpa crop di dalam bingkai yang stabil.
 // URL aktif juga lewat imgOpt(1000) — versi lama memuat file asli ukuran penuh (lambat,
 // kedip kosong di HP) sementara tetangga cuma 700px.
-function Media({ it, videoRef, onEnded }) {
+function Media({ it, videoRef, onEnded, ytTitle }) {
   if (it.type === 'photo') return (
     <span className="relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto">
       <img src={imgOpt(it.url, 1000)} alt={it.title || it.idol} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
     </span>
   )
   if (it.type === 'video') return <video ref={videoRef} onEnded={onEnded} src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
-  return <iframe title={`Video YouTube: ${it.title || it.idol || 'Hearts2Hearts'}`} src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
+  return <iframe title={ytTitle} src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
 }
 
 // Media tetangga di rel geser: versi ringan TANPA autoplay — video cuma bingkai pertama,
@@ -53,6 +59,7 @@ function MediaTetangga({ it }) {
 }
 
 export default function Lightbox({ items, index, onIndexChange, onClose, autoplay = false }) {
+  const t = useT()
   const [playing, setPlaying] = useState(autoplay)
   const [making, setMaking] = useState(false)
   const [dragX, setDragX] = useState(0)
@@ -224,7 +231,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   async function share() {
     const msg = await shareOrCopy(itemShareUrl(window.location.origin, it.id), it.title || it.idol || 'Hearts2Hearts Gallery')
     if (!msg) return
-    setShareMsg(msg)
+    setShareMsg(t(msg))
     clearTimeout(shareTimer.current)
     shareTimer.current = setTimeout(() => setShareMsg(''), 2200)
   }
@@ -239,31 +246,33 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     }
   }
 
+  function flash(msg) {
+    setShareMsg(msg)
+    clearTimeout(shareTimer.current)
+    shareTimer.current = setTimeout(() => setShareMsg(''), 2500)
+  }
+
   async function makeWallpaper() {
-    setMaking(true)
-    setShareMsg('')
+    setMaking('wallpaper')
     try {
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = it.url })
-      const W = 1080, H = 1920
-      const canvas = document.createElement('canvas')
-      canvas.width = W; canvas.height = H
-      const ctx = canvas.getContext('2d')
-      const g = ctx.createLinearGradient(0, 0, 0, H)
-      g.addColorStop(0, '#173A56'); g.addColorStop(1, '#0D1D31')
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
-      const scale = Math.max(W / img.width, H / img.height)
-      const w = img.width * scale, h = img.height * scale
-      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h)
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
-      if (!blob) throw new Error('kosong')
-      downloadBlob(blob, 'wallpaper-h2h.jpg')
+      downloadBlob(await makeWallpaperBlob(it.url), 'wallpaper-h2h.jpg')
     } catch {
-      // Gambar dari sumber luar bisa memblokir pengolahan di browser — dulu gagal tanpa pesan.
-      setShareMsg('Wallpaper gagal dibuat untuk foto ini.')
-      clearTimeout(shareTimer.current)
-      shareTimer.current = setTimeout(() => setShareMsg(''), 2500)
+      // Gambar dari sumber luar bisa memblokir pengolahan di browser.
+      flash(t('Wallpaper gagal dibuat untuk foto ini.'))
+    }
+    setMaking(false)
+  }
+
+  // Photocard (fitur 7): foto + bingkai + nama member + hati ganda, diunduh sebagai PNG.
+  async function makePhotocard() {
+    setMaking('pc')
+    try {
+      const keys = albumKeysOf(it)
+      const name = keys.length ? keys.map((k) => DISPLAY_NAME[k] || k).join(' & ') : (it.idol || 'Hearts2Hearts')
+      const blob = await makePhotocardBlob(it.url, { name, sub: it.era || '' })
+      downloadBlob(blob, `photocard-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`)
+    } catch {
+      flash(t('Photocard gagal dibuat untuk foto ini.'))
     }
     setMaking(false)
   }
@@ -297,7 +306,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
     <div ref={dialogRef} tabIndex={-1} onKeyDown={trapTab}
-      role="dialog" aria-modal="true" aria-label={it.title || it.idol || 'Tampilan penuh'}
+      role="dialog" aria-modal="true" aria-label={it.title || it.idol || t('Tampilan penuh')}
       onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4 outline-none">
       {/* Kolom WAJIB min-w-0 + max-w: tanpa itu lebar kolom ditentukan max-content rel geser
           (3 slot × lebar bingkai ≈ 889px) — lightbox jadi lebih lebar dari layar HP dan bisa
@@ -314,22 +323,22 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
                   <div className="relative w-fit">
                     {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
                     {s.active && (
-                      <button onClick={onClose} aria-label="Tutup" className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+                      <button onClick={onClose} aria-label={t('Tutup')} className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">{t('Tutup')}</button>
                     )}
                   </div>
                 ) : (
                   <div className="relative flex flex-col">
                     {s.active && (
-                      <button onClick={onClose} aria-label="Tutup" className="relative z-20 mb-2 self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
+                      <button onClick={onClose} aria-label={t('Tutup')} className="relative z-20 mb-2 self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">{t('Tutup')}</button>
                     )}
                     {s.active
-                      ? <Media it={s.it} videoRef={videoRef} onEnded={() => { if (live.current.playing) maju(1) }} />
+                      ? <Media it={s.it} ytTitle={t('Video YouTube: {judul}', { judul: s.it.title || s.it.idol || 'Hearts2Hearts' })} videoRef={videoRef} onEnded={() => { if (live.current.playing) maju(1) }} />
                       : <MediaTetangga it={s.it} />}
                     {s.active && s.it.type === 'youtube' && !controlsOn && (
                       <div className="absolute inset-0 z-10" aria-hidden="true" />
                     )}
                     {s.active && s.it.type === 'youtube' && controlsOn && (
-                      <button onClick={() => setControlsOn(false)} className="absolute left-2.5 top-2.5 z-20 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">⇄ Geser</button>
+                      <button onClick={() => setControlsOn(false)} className="absolute left-2.5 top-2.5 z-20 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">⇄ {t('Geser')}</button>
                     )}
                   </div>
                 )}
@@ -341,35 +350,43 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
           <p className="font-bold text-milk break-words">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
           {creditOf(it) && <p className="text-[11px] text-milk/60 mt-1">{creditOf(it)}</p>}
+          {tagsOf(it).length > 0 && <p className="mt-1 text-[11px] font-bold text-lilac">{tagsOf(it).map((k) => `#${tagLabel(k)}`).join('  ')}</p>}
           {multi && <p className="mt-1 text-[11px] font-bold tabular-nums text-milk/50">{index + 1} / {items.length}</p>}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {items.length > 1 && (
-            <button onClick={() => setPlaying((p) => !p)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">{playing ? '⏸ Jeda' : '▶ Putar semua'}</button>
+            <button onClick={() => setPlaying((p) => !p)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">{playing ? `⏸ ${t('Jeda')}` : `▶ ${t('Putar semua')}`}</button>
           )}
           <button onClick={toggleFav} aria-pressed={favIds.includes(it.id)}
             className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">
-            {favIds.includes(it.id) ? '❤️ Favorit' : '🤍 Favoritkan'}
+            {favIds.includes(it.id) ? `❤️ ${t('Favorit')}` : `🤍 ${t('Favoritkan')}`}
           </button>
-          <button onClick={share} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">🔗 Bagikan</button>
+          <CollectionPicker itemId={it.id} />
+          <button onClick={share} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">🔗 {t('Bagikan')}</button>
           {it.type !== 'youtube' ? (
-            <a href={`${it.url}?download=${encodeURIComponent(it.url.split('/').pop() || 'hearts2hearts')}`} className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ Unduh</a>
+            <a href={`${it.url}?download=${encodeURIComponent(it.url.split('/').pop() || 'hearts2hearts')}`} className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ {t('Unduh')}</a>
           ) : (
-            <a href={it.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">Buka di YouTube</a>
+            <a href={it.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">{t('Buka di YouTube')}</a>
           )}
           {it.type === 'photo' && (
-            <button onClick={makeWallpaper} disabled={making} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
+            <button onClick={makeWallpaper} disabled={!!making} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <rect x="3" y="3" width="18" height="18" rx="3" />
                 <circle cx="8.5" cy="9" r="1.5" />
                 <path d="M21 15l-5-5-9 9" />
               </svg>
-              {making ? 'Membuat…' : 'Wallpaper HP'}
+              {making === 'wallpaper' ? t('Membuat…') : t('Wallpaper HP')}
+            </button>
+          )}
+          {it.type === 'photo' && (
+            <button onClick={makePhotocard} disabled={!!making} className="px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
+              🎴 {making === 'pc' ? t('Membuat…') : t('Photocard')}
             </button>
           )}
         </div>
         {shareMsg && <p role="status" className="text-xs font-bold text-gold">{shareMsg}</p>}
         <Reactions key={it.id} itemId={it.id} />
+        <ReportButton itemId={it.id} />
       </div>
     </div>,
     document.body

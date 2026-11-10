@@ -1,4 +1,5 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { sb } from '../../lib/supabase'
 
@@ -25,14 +26,25 @@ function AppleEmoji({ code, char, label }) {
 
 const storeKey = (itemId) => `h2h-reacted-${itemId}`
 
+// Fitur 10: token rahasia per reaksi (128 bit acak), disimpan hanya di perangkat ini.
+// Database menyimpan hash-nya saja (migrasi 09) — membatalkan reaksi butuh token yang cocok.
+function newToken() {
+  const b = new Uint8Array(16)
+  crypto.getRandomValues(b)
+  return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('')
+}
+// RPC belum ada (migrasi 09 belum dijalankan): PostgREST PGRST202 / Postgres 42883.
+const noRpc = (error) => !!error && (error.code === 'PGRST202' || error.code === '42883' || /Could not find the function/i.test(error.message || ''))
+
 function loadMine(itemId) {
   try {
     const raw = JSON.parse(localStorage.getItem(storeKey(itemId)) || '[]')
-    return raw.map((r) => (typeof r === 'string' ? { emoji: r, id: null } : r))
+    return raw.map((r) => (typeof r === 'string' ? { emoji: r, id: null, token: null } : { token: null, ...r }))
   } catch { return [] }
 }
 
 export default function Reactions({ itemId }) {
+  const t = useT()
   const [counts, setCounts] = useState({})
   const [mine, setMine] = useState([]) // [{emoji, id}]
   const [info, setInfo] = useState('')
@@ -73,15 +85,22 @@ export default function Reactions({ itemId }) {
         setMine(next)
         persist(next)
         if (existing.id) {
-          // .select() mengembalikan baris yang benar-benar terhapus. Tanpa policy DELETE, Supabase
-          // tidak mengembalikan error tapi juga tidak menghapus apa pun — dulu tampilan "batal"
-          // padahal reaksinya tetap ada dan muncul lagi saat dibuka ulang.
-          const { data, error } = await sb.from('reactions').delete().eq('id', existing.id).select('id')
-          if (error || !data || data.length === 0) { // gagal di server → kembalikan tampilan seperti semula
+          let removed = false
+          if (existing.token) {
+            // Jalur aman: hapus lewat RPC yang mencocokkan token milik perangkat ini.
+            const { data, error } = await sb.rpc('remove_reaction', { p_id: existing.id, p_token: existing.token })
+            removed = !error && data === true
+          } else {
+            // Reaksi lama (sebelum token): coba hapus langsung. .select() mengembalikan baris yang
+            // benar-benar terhapus — tanpa hak hapus, Supabase tidak error tapi juga tidak menghapus.
+            const { data, error } = await sb.from('reactions').delete().eq('id', existing.id).select('id')
+            removed = !error && !!data && data.length > 0
+          }
+          if (!removed) { // gagal di server → kembalikan tampilan seperti semula
             setCounts((c) => ({ ...c, [key]: (c[key] || 0) + 1 }))
             setMine(prevMine)
             persist(prevMine)
-            setInfo('Reaksi belum bisa dibatalkan.')
+            setInfo(existing.token ? t('Reaksi belum bisa dibatalkan. Coba lagi.') : t('Reaksi lama ini tidak bisa dibatalkan.'))
             setTimeout(() => setInfo(''), 2500)
           }
         } else {
@@ -91,13 +110,21 @@ export default function Reactions({ itemId }) {
         }
       } else {
         setCounts((c) => ({ ...c, [key]: (c[key] || 0) + 1 }))
-        const { data, error } = await sb.from('reactions').insert({ item_id: itemId, emoji: key }).select('id')
-        if (error) { // insert gagal → rollback hitungan optimistis, jangan catat lokal
+        const token = newToken()
+        let id = null
+        let { data, error } = await sb.rpc('add_reaction', { p_item: itemId, p_emoji: key, p_token: token })
+        let saved = token
+        if (noRpc(error)) {
+          // Migrasi 09 belum dijalankan → cara lama (tanpa token, tidak bisa dibatalkan dengan aman).
+          ;({ data, error } = await sb.from('reactions').insert({ item_id: itemId, emoji: key }).select('id'))
+          saved = null
+          if (!error) id = data?.[0]?.id ?? null
+        } else if (!error) id = typeof data === 'number' || typeof data === 'string' ? data : null
+        if (error) { // gagal → rollback hitungan optimistis, jangan catat lokal
           setCounts((c) => ({ ...c, [key]: Math.max(0, (c[key] || 1) - 1) }))
           return
         }
-        const id = data?.[0]?.id ?? null
-        const next = [...mine, { emoji: key, id }]
+        const next = [...mine, { emoji: key, id, token: saved }]
         setMine(next)
         persist(next)
       }
@@ -108,13 +135,13 @@ export default function Reactions({ itemId }) {
 
   return (
     <div className="flex flex-col items-center gap-1">
-    <div className="flex items-center justify-center gap-2" role="group" aria-label="Reaksi">
+    <div className="flex items-center justify-center gap-2" role="group" aria-label={t('Reaksi')}>
       {REACTIONS.map(({ key, code, label }) => {
         const active = has(key)
         return (
-          <button key={key} onClick={() => toggle(key)} aria-label={label} title={label} aria-pressed={active}
+          <button key={key} onClick={() => toggle(key)} aria-label={t(label)} title={t(label)} aria-pressed={active}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold border transition ${active ? 'bg-gold/30 border-gold' : 'bg-white/90 border-transparent hover:bg-white'} text-plum`}>
-            <AppleEmoji code={code} char={key} label={label} />
+            <AppleEmoji code={code} char={key} label={t(label)} />
             {counts[key] ? <span className="text-xs">{counts[key]}</span> : null}
           </button>
         )

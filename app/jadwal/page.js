@@ -1,8 +1,17 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import { JADWAL, RIWAYAT_2026, TIPE_LABEL } from '../../lib/jadwal'
+import { buildIcs, icsFilename } from '../../lib/ics'
+import { downloadBlob } from '../../lib/download'
+
+// Unduh file .ics (fitur 13) — dibuka HP/laptop langsung di aplikasi kalender.
+function unduhIcs(events, filename) {
+  const ics = buildIcs(events, { siteUrl: window.location.origin })
+  downloadBlob(new Blob([ics], { type: 'text/calendar;charset=utf-8' }), filename)
+}
 
 // Tanggal-saja ('2026-10-19') di-parse sebagai tanggal kalender LOKAL murni — bukan
 // UTC tengah malam — supaya harinya tidak bergeser sehari gara-gara zona waktu pengunjung.
@@ -56,6 +65,7 @@ function UnitCountdown({ angka, label }) {
 }
 
 function KartuEvent({ event, now }) {
+  const t = useT()
   const isHariIni = hariIni(event.tanggal)
   const isLewat = sudahLewat(event.tanggal)
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(event.tanggal || '')
@@ -80,25 +90,32 @@ function KartuEvent({ event, now }) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
             </span>
-            HARI INI
+            {t('HARI INI')}
           </p>
         )}
         {cd ? (
           <div className={`flex gap-2 ${isHariIni ? 'mt-3' : ''}`}>
-            <UnitCountdown angka={cd.hari} label="hari" />
-            <UnitCountdown angka={cd.jam} label="jam" />
-            <UnitCountdown angka={cd.menit} label="mnt" />
-            <UnitCountdown angka={cd.detik} label="dtk" />
+            <UnitCountdown angka={cd.hari} label={t('hari')} />
+            <UnitCountdown angka={cd.jam} label={t('jam')} />
+            <UnitCountdown angka={cd.menit} label={t('mnt')} />
+            <UnitCountdown angka={cd.detik} label={t('dtk')} />
           </div>
         ) : !event.tanggal ? (
-          <p className="text-sm font-bold text-gold">⏳ Segera diumumkan</p>
+          <p className="text-sm font-bold text-gold">⏳ {t('Segera diumumkan')}</p>
         ) : null}
+        {event.tanggal && !isLewat && (
+          <button onClick={() => unduhIcs([event], icsFilename(event))}
+            className="mt-4 rounded-full border border-rose/50 bg-white/80 px-4 py-1.5 text-xs font-bold text-plum dark:border-rose/25 dark:bg-white/10 dark:text-milk">
+            📅 {t('Tambah ke kalender')}
+          </button>
+        )}
       </div>
     </article>
   )
 }
 
 export default function JadwalPage() {
+  const t = useT()
   // Satu ticker untuk semua kartu (dulu tiap kartu interval sendiri-sendiri).
   // null sebelum mount: angka countdown tidak dirender server → tidak ada hydration mismatch.
   const [now, setNow] = useState(null)
@@ -122,19 +139,25 @@ export default function JadwalPage() {
           <svg width="30" height="30" viewBox="0 0 24 24" className="text-rose" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           <svg width="30" height="30" viewBox="0 0 24 24" className="text-gold -ml-3 mt-2.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
         </p>
-        <h1 className="font-display text-4xl sm:text-6xl text-plum dark:text-milk mt-2">Jadwal Hearts2Hearts</h1>
-        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Comeback, rilisan & acara — khusus H2H</p>
+        <h1 className="font-display text-4xl sm:text-6xl text-plum dark:text-milk mt-2">{t('Jadwal Hearts2Hearts')}</h1>
+        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">{t('Comeback, rilisan & acara — khusus H2H')}</p>
       </header>
 
       <section className="space-y-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-gold">✦ Akan datang</p>
-        {upcoming.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">Belum ada jadwal baru yang dikonfirmasi.</p>}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-gold">✦ {t('Akan datang')}</p>
+          {upcoming.some((e) => e.tanggal) && (
+            <button onClick={() => unduhIcs(upcoming.filter((e) => e.tanggal), 'jadwal-hearts2hearts.ics')}
+              className="text-xs font-bold text-plum/70 underline underline-offset-4 dark:text-milk/70">📅 {t('Tambah semua ke kalender')}</button>
+          )}
+        </div>
+        {upcoming.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">{t('Belum ada jadwal baru yang dikonfirmasi.')}</p>}
         {upcoming.map(e => <KartuEvent key={e.id} event={e} now={now} />)}
       </section>
 
       {(lewat.length > 0 || RIWAYAT_2026.length > 0) && (
         <section className="mt-10">
-          <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ Sudah lewat (2026)</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ {t('Sudah lewat (2026)')}</p>
           <ul className="space-y-2">
             {lewat.map(e => (
               <li key={e.id} className="text-sm text-plum/60 dark:text-milk/60">
