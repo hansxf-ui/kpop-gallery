@@ -3,6 +3,9 @@ import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { fetchAllItems, imgOpt } from '../../lib/supabase'
 import { quizPool, makeRound, nameOf, getBest, saveBest, ROUND } from '../../lib/quiz'
+import { namesOf } from '../../lib/gallery'
+import { useBias } from '../../lib/bias'
+import BiasPicker from '../components/BiasPicker'
 import { shareOrCopy } from '../../lib/share'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -10,6 +13,7 @@ import SiteNav from '../components/SiteNav'
 // Kuis "Tebak member" (fitur 11).
 export default function Kuis() {
   const t = useT()
+  const bias = useBias()
   const [items, setItems] = useState(null)
   const [error, setError] = useState(false)
   const [round, setRound] = useState(null)
@@ -29,7 +33,9 @@ export default function Kuis() {
   const pool = useMemo(() => quizPool(items || []), [items])
 
   function mulai() {
-    setRound(makeRound(pool)); setI(0); setPicked(null); setScore(0); setShareMsg('')
+    // Fitur 5: dengan mode fokus, sampai 4 dari 10 soal memakai foto member itu.
+    const opts = bias ? { prefer: (it) => namesOf(it).includes(bias), preferCount: 4 } : {}
+    setRound(makeRound(pool, ROUND, Math.random, opts)); setI(0); setPicked(null); setScore(0); setShareMsg('')
   }
   const q = round && round[i]
   const selesai = round && i >= round.length
@@ -65,6 +71,7 @@ export default function Kuis() {
         <p className="text-gold text-2xl" aria-hidden>❓</p>
         <h1 className="font-display text-5xl text-plum dark:text-milk mt-2">{t('Tebak Member')}</h1>
         <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">{t('Siapa member di foto ini? {n} soal dari koleksi galeri.', { n: ROUND })}</p>
+        <p className="mt-3"><BiasPicker /></p>
         {best > 0 && <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Skor terbaikmu: {b}/{n}', { b: best, n: ROUND })}</p>}
       </header>
 

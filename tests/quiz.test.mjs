@@ -17,7 +17,7 @@ writeFileSync(join(dir, 'supabase.mjs'), "export const ytId = () => 'x'\nexport 
 writeFileSync(join(dir, 'tagSuggest.mjs'), readFileSync(join(root, 'lib/tagSuggest.js'), 'utf8'))
 writeFileSync(join(dir, 'gallery.mjs'), readFileSync(join(root, 'lib/gallery.js'), 'utf8').replace("from './supabase'", "from './supabase.mjs'").replace("from './tagSuggest'", "from './tagSuggest.mjs'"))
 writeFileSync(join(dir, 'quiz.mjs'), readFileSync(join(root, 'lib/quiz.js'), 'utf8').replace("from './gallery'", "from './gallery.mjs'"))
-const { quizPool, makeRound, fileKey } = await import(pathToFileURL(join(dir, 'quiz.mjs')).href)
+const { quizPool, makeRound, fileKey, pickUnique } = await import(pathToFileURL(join(dir, 'quiz.mjs')).href)
 
 const B = 'https://x.supabase.co/storage/v1/object/public/gallery/'
 const MEMBERS = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON']
@@ -71,4 +71,15 @@ test('ronde tidak pernah berisi file yang sama dua kali (300 ronde, pool mentah)
 
 test('jumlah soal dibatasi jumlah file unik', () => {
   assert.equal(makeRound(quizPool(dupItems)).length, 9)
+})
+
+test('mode fokus: sampai 4 soal dari member fokus, tanpa file berulang', () => {
+  const pool = quizPool([...solo, ...MEMBERS.map((m, i) => ({ id: 'x' + i, idol: 'CARMEN', type: 'photo', url: `${B}c${i}.jpg` }))])
+  for (let t = 0; t < 100; t++) {
+    const r = makeRound(pool, 10, Math.random, { prefer: (it) => it.idol === 'CARMEN', preferCount: 4 })
+    assert.equal(r.length, 10)
+    assert.ok(r.filter((q) => q.answer === 'CARMEN').length >= 4)
+    assert.equal(new Set(r.map((q) => fileKey(q.it.url))).size, 10)
+  }
+  assert.equal(pickUnique(dupItems, 10, Math.random, { prefer: (it) => it.idol === 'JUUN', preferCount: 4 }).filter((it) => it.url.includes('iconic-3')).length <= 1, true)
 })

@@ -8,6 +8,8 @@ import { shareOrCopy } from '../../lib/share'
 import { useT } from '../../lib/i18n'
 import { sameEra } from '../../lib/eras'
 import { colorsInItems, colorKeyOf } from '../../lib/tagSuggest'
+import { useBias, biasFirst } from '../../lib/bias'
+import BiasPicker from '../components/BiasPicker'
 import { visitBaseline, isNewSince } from '../../lib/lastVisit'
 import { fetchTopReacted } from '../../lib/topReacted'
 import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf } from '../../lib/gallery'
@@ -46,6 +48,16 @@ function weekNumber(d) {
   t.setUTCDate(t.getUTCDate() + 4 - day)
   const yStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1))
   return Math.ceil(((t - yStart) / 86400000 + 1) / 7)
+}
+
+// "Pilihan minggu ini": 5 item menyebar dari daftar, titik mulai bergeser tiap minggu (logika lama).
+function pickWeekly(items) {
+  const n = Math.min(5, items.length)
+  const step = Math.max(1, Math.floor(items.length / n))
+  const start = weekNumber(new Date()) % items.length
+  const out = []
+  for (let i = 0; i < n; i++) out.push(items[(start + i * step) % items.length])
+  return out
 }
 
 export default function GaleriClient() {
@@ -98,6 +110,7 @@ export default function GaleriClient() {
   }, [])
 
   const idols = ['Semua', ...MEMBERS, 'Hearts2Hearts']
+  const bias = useBias() // fitur 5: mode fokus member (disimpan di perangkat)
 
   // Fitur 7: filter dibaca dari URL sekali saat halaman dibuka (di efek, bukan saat render,
   // supaya HTML server dan klien sama), lalu setiap perubahan filter ditulis balik ke URL.
@@ -144,15 +157,14 @@ export default function GaleriClient() {
   }, [items])
 
   // "Pilihan minggu ini" (dulu "Sorotan Minggu Ini"): 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
+  // Fitur 5: dengan mode fokus, sampel mingguan diambil dari item member itu (cara pilih sama),
+  // kecuali itemnya kurang dari 5. Tanpa mode fokus: persis seperti sebelumnya.
   const featuredList = useMemo(() => {
     if (!items || items.length === 0) return []
-    const n = Math.min(5, items.length)
-    const step = Math.max(1, Math.floor(items.length / n))
-    const start = weekNumber(new Date()) % items.length
-    const out = []
-    for (let i = 0; i < n; i++) out.push(items[(start + i * step) % items.length])
-    return out
-  }, [items])
+    const biasItems = bias ? items.filter((it) => namesOf(it).includes(bias)) : []
+    const items_ = biasItems.length >= 5 ? biasItems : items
+    return pickWeekly(items_)
+  }, [items, bias])
 
   // Baru ditambahkan sejak kunjungan terakhir (fitur 5). items sudah urut terbaru dulu.
   const newItems = useMemo(() => (items || []).filter((it) => isNewSince(it, baseline)), [items, baseline])
@@ -188,8 +200,10 @@ export default function GaleriClient() {
     list = [...list]
     if (sort === 'terlama') list.reverse()
     if (sort === 'acak') list = shuffleStable(list, seed)
+    // Fitur 5: di tampilan "Semua", foto member fokus tampil lebih dulu (urutan pilihan tetap berlaku).
+    if (bias && idol === 'Semua') list = biasFirst(list, bias, namesOf)
     return list
-  }, [items, idol, group, era, tag, q, sort, seed, mediaType])
+  }, [items, idol, group, era, tag, q, sort, seed, mediaType, bias])
 
   const filtered = idol !== 'Semua' || group !== 'Semua' || era !== 'Semua' || tag !== 'Semua' || mediaType !== 'semua' || q.trim() !== ''
   function resetFilters() {
@@ -344,6 +358,7 @@ export default function GaleriClient() {
         {shown.length > 1 && (
           <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
         )}
+        <BiasPicker />
       </div>
 
       <div className="flex flex-wrap justify-center gap-2 mb-3">
