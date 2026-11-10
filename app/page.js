@@ -226,6 +226,9 @@ export default function Landing() {
       ))}
 
       <SpecialCountdown />
+      <p className="mt-4 text-center">
+        <Link href="/hari-ini" className="text-sm font-bold text-gold underline underline-offset-4">☀️ {t('Lihat semua yang terjadi hari ini →')}</Link>
+      </p>
 
       <div className="mt-12 text-center">
         <Link

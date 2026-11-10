@@ -4,16 +4,7 @@ import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import { VOTING, VOTING_CARMEN, PANDUAN_APLIKASI } from '../../lib/voting'
-
-function hitungMundur(target, nowMs) {
-  const selisih = new Date(target).getTime() - nowMs
-  if (selisih <= 0) return null
-  const hari = Math.floor(selisih / 86400000)
-  const jam = Math.floor((selisih % 86400000) / 3600000)
-  const menit = Math.floor((selisih % 3600000) / 60000)
-  const detik = Math.floor((selisih % 60000) / 1000)
-  return { hari, jam, menit, detik }
-}
+import { hitungMundur, statusVote } from '../../lib/schedule'
 
 // Format tanggal ikut bahasa aktif (loc = 'id-ID' / 'en-GB').
 // Tanggal "terakhir dicek" footer — nilainya sama seperti sebelumnya (16 Okt 2026), hanya
@@ -24,14 +15,6 @@ const formatCek = (iso, loc) => { const [y, m, d] = iso.split('-').map(Number); 
 function formatTanggal(tanggal, loc = 'id-ID') {
   if (!tanggal) return loc === 'en-GB' ? 'Date to be announced' : 'Tanggal menyusul'
   return new Date(tanggal).toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-// buka | segera | tunggu | tutup
-function statusVote(v, nowMs) {
-  if (!v.mulai || !v.selesai) return 'tunggu'
-  if (nowMs < new Date(v.mulai).getTime()) return 'segera'
-  if (nowMs > new Date(v.selesai).getTime()) return 'tutup'
-  return 'buka'
 }
 
 function UnitCountdown({ angka, label }) {
