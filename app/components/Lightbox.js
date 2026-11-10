@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ytId, imgOpt } from '../../lib/supabase'
+import { ytId, imgOpt, creditOf } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { itemShareUrl } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
@@ -306,9 +306,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
         <div className="w-full min-w-0 text-center px-4">
           <p className="font-bold text-milk break-words">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
-          {it.note && it.note.trim().startsWith('📷') && (
-            <p className="text-[11px] text-milk/60 mt-1">{it.note.trim()}</p>
-          )}
+          {creditOf(it) && <p className="text-[11px] text-milk/60 mt-1">{creditOf(it)}</p>}
           {multi && <p className="mt-1 text-[11px] font-bold tabular-nums text-milk/50">{index + 1} / {items.length}</p>}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">

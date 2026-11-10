@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { sb } from '../../lib/supabase'
+import { sb, selectPublic } from '../../lib/supabase'
 import { getFavorites, setFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -29,7 +29,7 @@ export default function Favorit() {
     // Urutkan sesuai kapan difavoritkan (terbaru di atas) — hasil .in() dari database tidak berurutan.
     const urutan = new Map(ids.map((id, i) => [id, i]))
     const urut = (rows) => rows.sort((a, b) => urutan.get(b.id) - urutan.get(a.id))
-    sb.from('items').select('*').in('id', ids).then(({ data, error }) => {
+    selectPublic((cols) => sb.from('items').select(cols).in('id', ids)).then(({ data, error }) => {
       if (error) {
         // Offline / database tidak terjangkau: pakai salinan tersimpan (fitur 6) kalau ada.
         const simpanan = readCachedRows().filter((r) => urutan.has(r.id))

@@ -42,17 +42,25 @@ export default function Admin() {
   const [dimBusy, setDimBusy] = useState(false)
   const fileInput = useRef(null)
 
-  const load = () => fetchAllItems().then(setItems).catch(() => setItems([]))
+  // Admin memuat semua kolom (termasuk catatan pribadi) — hanya bisa setelah login (migrasi 04).
+  const load = () => fetchAllItems({ columns: '*' }).then(setItems).catch(() => setItems([]))
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
     const { data } = sb.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null))
-    load()
     sb.from('settings').select('value').eq('key', 'announcement').maybeSingle().then(({ data }) => setAnnouncement(data?.value || ''))
     return () => data.subscription.unsubscribe()
   }, [])
 
   // Migrasi 03: hanya akun di tabel admins yang boleh mengubah galeri. Akun lain diberi tahu
   // di sini, alih-alih mendapati setiap simpan/hapus gagal tanpa alasan.
+  // Daftar item dimuat ulang tiap kali status login berubah (dulu hanya sekali saat halaman dibuka,
+  // jadi setelah login dari form, daftar bisa kosong sampai halaman dimuat ulang).
+  useEffect(() => {
+    if (user) load()
+    else setItems([])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   useEffect(() => {
     if (!user) { setIsAdmin(null); return }
     let alive = true
