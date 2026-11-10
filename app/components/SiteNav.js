@@ -20,6 +20,7 @@ const EXTRA = [
   ['/linimasa', '🕰️ Linimasa era'],
   ['/koleksi', '📁 Koleksiku'],
   ['/kuis', '❓ Tebak member'],
+  ['/kredit', '📷 Kredit foto'],
 ]
 
 function aktif(path, href) {
