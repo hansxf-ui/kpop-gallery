@@ -11,6 +11,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import SpecialCountdown from '../components/SpecialCountdown'
 import Lightbox from '../components/Lightbox'
+import BirthdayCard from '../components/BirthdayCard'
 
 const kotak = 'rounded-3xl border border-rose/40 bg-white/80 p-5 dark:border-rose/20 dark:bg-white/5'
 const judulBagian = 'mb-3 text-xs font-bold uppercase tracking-widest text-gold'
@@ -54,6 +55,7 @@ export default function HariIniClient() {
 
       {now && (
         <div className="space-y-6">
+          <BirthdayCard now={now} />
           <SpecialCountdown now={now} className="" />
 
           <section className={kotak} aria-labelledby="acara-hari-ini">
