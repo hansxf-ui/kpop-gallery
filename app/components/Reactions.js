@@ -35,6 +35,7 @@ function loadMine(itemId) {
 export default function Reactions({ itemId }) {
   const [counts, setCounts] = useState({})
   const [mine, setMine] = useState([]) // [{emoji, id}]
+  const [info, setInfo] = useState('')
   const busyRef = useRef(false) // penjaga sinkron — state async bisa ditembus ketukan ganda
 
   async function refreshCounts() {
@@ -72,11 +73,16 @@ export default function Reactions({ itemId }) {
         setMine(next)
         persist(next)
         if (existing.id) {
-          const { error } = await sb.from('reactions').delete().eq('id', existing.id)
-          if (error) { // gagal di server → kembalikan tampilan seperti semula
+          // .select() mengembalikan baris yang benar-benar terhapus. Tanpa policy DELETE, Supabase
+          // tidak mengembalikan error tapi juga tidak menghapus apa pun — dulu tampilan "batal"
+          // padahal reaksinya tetap ada dan muncul lagi saat dibuka ulang.
+          const { data, error } = await sb.from('reactions').delete().eq('id', existing.id).select('id')
+          if (error || !data || data.length === 0) { // gagal di server → kembalikan tampilan seperti semula
             setCounts((c) => ({ ...c, [key]: (c[key] || 0) + 1 }))
             setMine(prevMine)
             persist(prevMine)
+            setInfo('Reaksi belum bisa dibatalkan.')
+            setTimeout(() => setInfo(''), 2500)
           }
         } else {
           // id tak tercatat lokal: JANGAN hapus baris siapa pun (bisa milik pengunjung lain).
@@ -101,7 +107,8 @@ export default function Reactions({ itemId }) {
   }
 
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex flex-col items-center gap-1">
+    <div className="flex items-center justify-center gap-2" role="group" aria-label="Reaksi">
       {REACTIONS.map(({ key, code, label }) => {
         const active = has(key)
         return (
@@ -112,6 +119,8 @@ export default function Reactions({ itemId }) {
           </button>
         )
       })}
+    </div>
+    {info && <p role="status" className="text-[11px] font-bold text-milk/60">{info}</p>}
     </div>
   )
 }
