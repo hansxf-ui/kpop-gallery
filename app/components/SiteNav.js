@@ -19,6 +19,7 @@ const LINKS = [
 const EXTRA = [
   ['/linimasa', '🕰️ Linimasa era'],
   ['/koleksi', '📁 Koleksiku'],
+  ['/kuis', '❓ Tebak member'],
 ]
 
 function aktif(path, href) {
