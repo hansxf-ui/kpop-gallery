@@ -8,6 +8,11 @@ body { background: radial-gradient(circle at 15% 0%, #D6ECFA 0, transparent 45%)
 @media (prefers-reduced-motion: reduce) { .card { transition: none } .card:hover { transform: none } }
 
 html.dark body { background: radial-gradient(circle at 15% 0%, #1E3A5C 0, transparent 45%), radial-gradient(circle at 90% 10%, #122A44 0, transparent 40%), #0D1D31; color: #EAF3FA; }
+/* Kontrol bawaan browser (dropdown <select>, kalender tanggal, scrollbar) ikut tema.
+   Tanpa ini, pilihan di dropdown Urutkan album idol tampil teks terang di atas latar putih saat mode gelap. */
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+html.dark select option { background: #152A42; color: #EAF3FA; }
 html.dark .card { background: #152A42; box-shadow: 0 10px 30px -12px rgba(0,0,0,.6); outline-color: rgba(234,147,187,.35); }
 
 /* Background bergerak */

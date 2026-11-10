@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { sb, imgOpt } from '../lib/supabase'
 import ThemeToggle from './components/ThemeToggle'
+import SiteNav from './components/SiteNav'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
 // Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
@@ -64,7 +65,7 @@ function Kartu({ m, i, count }) {
                 <span>MEMBER / H2H</span><span>#{String(i + 1).padStart(2, '0')}</span>
               </div>
               <div className="mx-3 overflow-hidden rounded-xl" style={{ aspectRatio: '1 / 0.94' }}>
-                <img src={url} alt={`Foto ${m.name}`} className="h-full w-full object-cover" style={{ objectPosition: m.obj }} draggable={false} />
+                <img src={url} alt={`Foto ${m.name}`} decoding="async" className="h-full w-full object-cover" style={{ objectPosition: m.obj }} draggable={false} />
               </div>
               <div className="px-4 pt-3">
                 <h3 className="lc-fname font-display leading-tight text-plum dark:text-milk">{m.name}</h3>
@@ -78,7 +79,7 @@ function Kartu({ m, i, count }) {
             {/* BELAKANG — holografik */}
             <div className="lc-face lc-back lc-holo text-[#26232e]">
               <div className="lc-btop relative flex items-center">
-                <img src={url} alt="" className="lc-bthumb rounded-full border-2 border-white/80 object-cover" style={{ objectPosition: m.obj }} draggable={false} />
+                <img src={url} alt="" decoding="async" className="lc-bthumb rounded-full border-2 border-white/80 object-cover" style={{ objectPosition: m.obj }} draggable={false} />
                 <div>
                   <h4 className="lc-bname font-display leading-tight">{m.name}</h4>
                   <p className="lc-bpos text-[#5c5770]">{m.pos}</p>
@@ -101,7 +102,7 @@ function Kartu({ m, i, count }) {
               </Link>
               <div className="lc-btop relative mt-auto flex items-end justify-between">
                 <small className="lc-bsmall font-bold leading-[1.7] tracking-[0.18em] text-[#5c5770]">PINDAI BUAT BUKA<br />GALERI {m.name.toUpperCase()}</small>
-                <img src={`/qr/${m.key.toLowerCase()}.png`} alt={`QR galeri ${m.name}`} className="lc-bqr rounded-lg bg-white shadow" draggable={false} />
+                <img src={`/qr/${m.key.toLowerCase()}.png`} alt={`QR galeri ${m.name}`} loading="lazy" decoding="async" className="lc-bqr rounded-lg bg-white shadow" draggable={false} />
               </div>
             </div>
           </div>
@@ -138,8 +139,9 @@ export default function Landing() {
     })()
   }, [])
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-8 sm:px-8">
+    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-16 sm:px-8">
       <ThemeToggle />
+      <SiteNav className="mb-8" />
       <style>{`
         .lc-hang{ position:relative; width:min(240px,44vw); padding-top:58px; }
         .lc-string{ position:absolute; left:50%; top:0; width:1.5px; height:58px; transform:translateX(-50%); background:linear-gradient(#9db8cc,#c8d9e6); }
@@ -173,6 +175,11 @@ export default function Landing() {
         .lc-holo{ background:linear-gradient(125deg,#f6d9ec,#d9e4fb,#d5f3e3,#f7ecd2,#e6dbfa,#f6d9ec); background-size:320% 320%; }
         .lc-flip.lc-on .lc-holo{ animation:lcholo 9s ease infinite; }
         @keyframes lcholo{ 0%,100%{ background-position:0% 40%; } 50%{ background-position:100% 60%; } }
+        @media (prefers-reduced-motion: reduce){
+          .lc-sway{ animation:none; }
+          .lc-flip{ transition:none; }
+          .lc-flip.lc-on .lc-holo{ animation:none; }
+        }
         .lc-wire{ position:absolute; left:0; right:0; top:20px; width:100%; height:56px; pointer-events:none; }
         @media (max-width:700px){
           .lc-hang{ padding-top:40px; }
@@ -232,17 +239,11 @@ export default function Landing() {
         >
           Masuk ke Galeri →
         </Link>
-        <nav className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-bold text-plum/60 dark:text-milk/60">
-          <Link href="/jadwal" className="hover:text-gold">📅 Jadwal</Link>
-          <Link href="/voting" className="hover:text-gold">🗳️ Voting</Link>
-          <Link href="/favorit" className="hover:text-gold">❤️ Favorit</Link>
-          <Link href="/tentang" className="hover:text-gold">ℹ️ Tentang</Link>
-        </nav>
       </div>
 
       <footer className="mt-auto flex flex-wrap justify-between gap-2 pt-12 text-[9px] font-bold tracking-[0.22em] text-plum/40 dark:text-milk/40">
         <span>THE MEMBERS MAKE THE HEARTS</span>
-        <span>HOVER BUAT NGAYUN · KLIK / TAP BUAT BALIK KARTU</span>
+        <span>KLIK / TAP KARTU BUAT LIHAT PROFIL</span>
       </footer>
     </div>
   )

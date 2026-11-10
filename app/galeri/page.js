@@ -1,19 +1,16 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { sb, ytId, fetchAllItems, imgOpt } from '../../lib/supabase'
-import { getFavorites, toggleFavorite } from '../../lib/favorites'
+import { fetchAllItems, imgOpt } from '../../lib/supabase'
+import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
+import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
+import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
 import FeaturedCarousel from '../components/FeaturedCarousel'
+import GalleryCard from '../components/GalleryCard'
+import ScrollTopButton from '../components/ScrollTopButton'
 import Skeleton from '../components/Skeleton'
-
-const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/mqdefault.jpg` : it.url)
-
-// 8 member H2H — filter galeri per member, bukan per kombinasi unit
-const MEMBERS = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON']
-// Pecah string idol item jadi nama member: "JUUN & CARMEN" / "CARMEN, YUHA" -> ['JUUN', 'CARMEN']
-const namesOf = (it) => (it.idol || '').toUpperCase().split(/[,&]/).map((s) => s.trim()).filter(Boolean)
 
 function CameraIcon() {
   return (
@@ -50,6 +47,7 @@ export default function Home() {
   const [era, setEra] = useState('Semua')
   const [q, setQ] = useState('')
   const [sort, setSort] = useState('terbaru')
+  const [seed, setSeed] = useState(0) // kunci urutan "Acak" — hanya berganti saat Acak dipilih
   const [sortOpen, setSortOpen] = useState(false)
   const sortRef = useRef(null)
   const [mediaType, setMediaType] = useState('semua') // 'semua' | 'foto' | 'video'
@@ -70,6 +68,12 @@ export default function Home() {
     loadItems()
     setFavs(getFavorites())
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  // Favorit bisa berubah dari lightbox — samakan ikon hati di grid.
+  useEffect(() => {
+    const sync = () => setFavs(getFavorites())
+    window.addEventListener(FAVS_EVENT, sync)
+    return () => window.removeEventListener(FAVS_EVENT, sync)
   }, [])
 
   const idols = ['Semua', ...MEMBERS, 'Hearts2Hearts']
@@ -119,15 +123,17 @@ export default function Home() {
     if (mediaType !== 'semua') list = list.filter((i) => (mediaType === 'foto' ? i.type === 'photo' : i.type !== 'photo'))
     if (group !== 'Semua') list = list.filter((i) => i.group_name === group)
     if (era !== 'Semua') list = list.filter((i) => i.era === era)
-    if (q.trim()) {
-      const s = q.trim().toLowerCase()
-      list = list.filter((i) => (i.title || '').toLowerCase().includes(s) || i.idol.toLowerCase().includes(s))
-    }
+    if (q.trim()) list = list.filter((i) => matchesQuery(i, q))
     list = [...list]
     if (sort === 'terlama') list.reverse()
-    if (sort === 'acak') list.sort(() => Math.random() - 0.5)
+    if (sort === 'acak') list = shuffleStable(list, seed)
     return list
-  }, [items, idol, group, era, q, sort, mediaType])
+  }, [items, idol, group, era, q, sort, seed, mediaType])
+
+  const filtered = idol !== 'Semua' || group !== 'Semua' || era !== 'Semua' || mediaType !== 'semua' || q.trim() !== ''
+  function resetFilters() {
+    setIdol('Semua'); setGroup('Semua'); setEra('Semua'); setMediaType('semua'); setQ('')
+  }
 
   const fotoCount = shown.filter((i) => i.type === 'photo').length
   const videoCount = shown.length - fotoCount
@@ -144,17 +150,17 @@ export default function Home() {
     return () => { document.removeEventListener('mousedown', close); window.removeEventListener('keydown', onKey) }
   }, [sortOpen])
 
-  function onFav(it, e) {
-    e.stopPropagation(); e.preventDefault()
+  function onFav(it, x, y) {
     const wasFav = favs.includes(it.id)
     setFavs(toggleFavorite(it.id))
-    if (!wasFav) window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x: e.clientX, y: e.clientY } }))
+    if (!wasFav) window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x, y } }))
   }
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
       <ThemeToggle />
-      <header className="py-14 text-center">
+      <header className="pt-16 pb-12 text-center">
+        <SiteNav className="mb-8" />
         <p className="flex justify-center items-center" aria-hidden="true">
           <svg width="30" height="30" viewBox="0 0 24 24" className="text-rose" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           <svg width="30" height="30" viewBox="0 0 24 24" className="text-gold -ml-3 mt-2.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
@@ -162,24 +168,6 @@ export default function Home() {
         <h1 className="font-display text-5xl sm:text-7xl text-plum dark:text-milk mt-2">Hearts2Hearts Gallery</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Koleksi foto & video idol favoritku</p>
         <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{fotoCount} foto · {videoCount} video</p>
-        <p className="mt-4 flex justify-center gap-6 text-sm font-bold text-gold">
-          <Link href="/favorit" className="flex flex-col items-center">
-            <span aria-hidden="true">♥</span>
-            <span className="underline underline-offset-4 whitespace-nowrap">Favoritku ({favs.length})</span>
-          </Link>
-          <Link href="/jadwal" className="flex flex-col items-center">
-            <span aria-hidden="true">✦</span>
-            <span className="underline underline-offset-4">Jadwal</span>
-          </Link>
-          <Link href="/voting" className="flex flex-col items-center">
-            <span aria-hidden="true">✦</span>
-            <span className="underline underline-offset-4">Voting</span>
-          </Link>
-          <Link href="/tentang" className="flex flex-col items-center">
-            <span aria-hidden="true">✦</span>
-            <span className="underline underline-offset-4">Tentang</span>
-          </Link>
-        </p>
       </header>
 
       {featuredList.length > 0 && (
@@ -201,7 +189,7 @@ export default function Home() {
       <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
         <div className="search-group w-full max-w-xs">
           <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul atau nama idol…" type="search" className="search-input" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul, idol, atau era…" type="search" className="search-input" />
           {q && (
             <button onClick={() => setQ('')} aria-label="Hapus pencarian"
               className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 font-bold text-plum/50 dark:text-milk/50 hover:text-plum dark:hover:text-milk">✕</button>
@@ -219,7 +207,7 @@ export default function Home() {
               {sorts.map(([v, label]) => (
                 <li key={v}>
                   <button role="option" aria-selected={sort === v}
-                    onClick={() => { setSort(v); setSortOpen(false) }}
+                    onClick={() => { setSort(v); if (v === 'acak') setSeed(newSeed()); setSortOpen(false) }}
                     className={`w-full px-4 py-2.5 text-left text-sm font-bold flex items-center justify-between ${sort === v ? 'text-plum dark:text-milk bg-rose/25 dark:bg-white/10' : 'text-plum/70 dark:text-milk/70 hover:bg-rose/10 dark:hover:bg-white/5'}`}>
                     {label}
                     {sort === v && <span className="text-gold">✓</span>}
@@ -293,28 +281,22 @@ export default function Home() {
           <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Coba lagi</button>
         </div>
       )}
-      {items && !loadError && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>}
+      {items && !loadError && shown.length === 0 && (
+        <div className="py-6 text-center">
+          <p className="text-plum/60 dark:text-milk/60">Tidak ada yang cocok.</p>
+          {filtered && (
+            <button onClick={resetFilters} className="mt-3 rounded-full border border-rose/50 bg-white/80 px-4 py-1.5 text-sm font-bold dark:border-rose/25 dark:bg-white/10">
+              Reset filter
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (
-          <div key={it.id} className="card mb-4 w-full break-inside-avoid">
-            <button onClick={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }} className="block w-full text-left">
-              <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
-                {it.type === 'video'
-                  ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
-                  : <img src={imgOpt(thumb(it), 800)} alt={it.title || it.idol} loading="lazy" decoding="async" className="w-full" />}
-                {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
-                <span onClick={(e) => onFav(it, e)} role="button" aria-label="Favoritkan"
-                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
-                  {favs.includes(it.id) ? '❤️' : '🤍'}
-                </span>
-              </div>
-              <p className="font-bold text-sm truncate px-2 pt-2.5 dark:text-milk">{it.title || it.idol}</p>
-            </button>
-            <Link href={`/idol/${encodeURIComponent(it.idol)}`} className="block px-2 pb-2.5 text-xs text-gold font-bold hover:underline w-fit">
-              {it.idol}{it.group_name ? ` · ${it.group_name}` : ''}
-            </Link>
-          </div>
+          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)}
+            onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
+            onFav={(x, y) => onFav(it, x, y)} />
         ))}
       </div>
 
@@ -333,6 +315,7 @@ export default function Home() {
       {spot && (
         <Lightbox items={spot.items} index={spot.index} onIndexChange={(i) => setSpot({ ...spot, index: i })} onClose={() => setSpot(null)} />
       )}
+      <ScrollTopButton />
     </main>
   )
 }

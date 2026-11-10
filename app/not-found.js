@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import ThemeToggle from './components/ThemeToggle'
+import SiteNav from './components/SiteNav'
 
 export const metadata = { title: 'Tidak Ditemukan · Hearts2Hearts Gallery' }
 
@@ -7,7 +8,8 @@ export default function NotFound() {
   return (
     <main className="mx-auto max-w-3xl px-4 pb-20 page-fade-in">
       <ThemeToggle />
-      <div className="py-24 text-center">
+      <SiteNav className="pt-16" />
+      <div className="pt-16 pb-24 text-center">
         <p className="text-gold text-2xl" aria-hidden>✦ ✧ ✦</p>
         <h1 className="font-display text-6xl text-plum dark:text-milk mt-3">404</h1>
         <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">Halaman ini tidak ditemukan.</p>
