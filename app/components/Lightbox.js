@@ -1,10 +1,11 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ytId, imgOpt } from '../../lib/supabase'
+import { ytId, imgOpt, creditOf } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { itemShareUrl } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
+import { downloadBlob } from '../../lib/download'
 import Reactions from './Reactions'
 
 // Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
@@ -13,14 +14,14 @@ import Reactions from './Reactions'
 // object-contain: foto tampil utuh tanpa crop di dalam bingkai yang stabil.
 // URL aktif juga lewat imgOpt(1000) — versi lama memuat file asli ukuran penuh (lambat,
 // kedip kosong di HP) sementara tetangga cuma 700px.
-function Media({ it }) {
+function Media({ it, videoRef, onEnded }) {
   if (it.type === 'photo') return (
     <span className="relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto">
       <img src={imgOpt(it.url, 1000)} alt={it.title || it.idol} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
     </span>
   )
-  if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
-  return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
+  if (it.type === 'video') return <video ref={videoRef} onEnded={onEnded} src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
+  return <iframe title={`Video YouTube: ${it.title || it.idol || 'Hearts2Hearts'}`} src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
 }
 
 // Media tetangga di rel geser: versi ringan TANPA autoplay — video cuma bingkai pertama,
@@ -63,6 +64,8 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const timer = useRef(null)
   const commitTimer = useRef(null)
   const viewRef = useRef(null)
+  const dialogRef = useRef(null)
+  const videoRef = useRef(null)
   const startX = useRef(null)
   const activePointer = useRef(null) // pointerId pemilik geseran aktif — jari lain tidak boleh menimpa
   const lastDragEnd = useRef(0) // cap waktu akhir geseran; klik backdrop tepat sesudahnya diabaikan
@@ -72,7 +75,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const commitRef = useRef(null)
   const live = useRef({})
   const it = items[index]
-  live.current = { it, index, controlsOn, onIndexChange, items }
+  live.current = { it, index, controlsOn, onIndexChange, items, playing }
   const multi = items.length > 1
 
   // Jendela 3 slot di sekitar item aktif: [sebelum, aktif, sesudah] — navigasi melingkar seperti sebelumnya.
@@ -193,6 +196,24 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     return () => { document.body.style.overflow = prev }
   }, [])
 
+  // Fokus keyboard: pindah ke lightbox saat dibuka, kembali ke kartu asal saat ditutup.
+  // Dulu fokus tertinggal di grid di belakang, jadi Tab berjalan di elemen yang tertutup lightbox.
+  useEffect(() => {
+    const prev = document.activeElement
+    dialogRef.current?.focus({ preventScroll: true })
+    return () => { if (prev && typeof prev.focus === 'function' && document.contains(prev)) prev.focus({ preventScroll: true }) }
+  }, [])
+  // Tab / Shift+Tab berputar di dalam lightbox saja.
+  function trapTab(e) {
+    if (e.key !== 'Tab' || !dialogRef.current) return
+    const els = [...dialogRef.current.querySelectorAll('button:not([disabled]), a[href], iframe, video[controls], textarea, input')]
+      .filter((el) => el.offsetParent !== null || el === document.activeElement)
+    if (els.length === 0) return
+    const first = els[0], last = els[els.length - 1]
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { e.preventDefault(); last.focus() }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+  }
+
   // Favorit dari dalam lightbox — tetap sinkron dengan grid & nav lewat FAVS_EVENT.
   useEffect(() => {
     const sync = () => setFavIds(getFavorites())
@@ -220,6 +241,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
 
   async function makeWallpaper() {
     setMaking(true)
+    setShareMsg('')
     try {
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -235,17 +257,26 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
       const w = img.width * scale, h = img.height * scale
       ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h)
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url; a.download = 'wallpaper-h2h.jpg'; a.click()
-      URL.revokeObjectURL(url)
-    } catch { /* gambar dari sumber luar mungkin memblokir unduhan langsung */ }
+      if (!blob) throw new Error('kosong')
+      downloadBlob(blob, 'wallpaper-h2h.jpg')
+    } catch {
+      // Gambar dari sumber luar bisa memblokir pengolahan di browser — dulu gagal tanpa pesan.
+      setShareMsg('Wallpaper gagal dibuat untuk foto ini.')
+      clearTimeout(shareTimer.current)
+      shareTimer.current = setTimeout(() => setShareMsg(''), 2500)
+    }
     setMaking(false)
   }
 
+  // Slideshow: foto & YouTube 4 detik. Video upload diputar sampai selesai (onEnded) — dulu
+  // dipotong setelah 4 detik. Kalau video tidak berjalan (autoplay diblokir browser), lanjut
+  // setelah 4 detik seperti sebelumnya supaya slideshow tidak macet.
   useEffect(() => {
     if (!playing || items.length < 2) return
-    timer.current = setTimeout(() => maju(1), 4000)
+    timer.current = setTimeout(() => {
+      if (it && it.type === 'video' && videoRef.current && !videoRef.current.paused && !videoRef.current.ended) return
+      maju(1)
+    }, 4000)
     return () => clearTimeout(timer.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, index, items])
@@ -265,8 +296,9 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={it.title || it.idol || 'Tampilan penuh'}
-      onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4">
+    <div ref={dialogRef} tabIndex={-1} onKeyDown={trapTab}
+      role="dialog" aria-modal="true" aria-label={it.title || it.idol || 'Tampilan penuh'}
+      onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4 outline-none">
       {/* Kolom WAJIB min-w-0 + max-w: tanpa itu lebar kolom ditentukan max-content rel geser
           (3 slot × lebar bingkai ≈ 889px) — lightbox jadi lebih lebar dari layar HP dan bisa
           kegeser menyamping, foto diamnya pun di luar tengah. Terukur pakai Chromium 390px. */}
@@ -290,7 +322,9 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
                     {s.active && (
                       <button onClick={onClose} aria-label="Tutup" className="relative z-20 mb-2 self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
                     )}
-                    {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
+                    {s.active
+                      ? <Media it={s.it} videoRef={videoRef} onEnded={() => { if (live.current.playing) maju(1) }} />
+                      : <MediaTetangga it={s.it} />}
                     {s.active && s.it.type === 'youtube' && !controlsOn && (
                       <div className="absolute inset-0 z-10" aria-hidden="true" />
                     )}
@@ -306,9 +340,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
         <div className="w-full min-w-0 text-center px-4">
           <p className="font-bold text-milk break-words">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
-          {it.note && it.note.trim().startsWith('📷') && (
-            <p className="text-[11px] text-milk/60 mt-1">{it.note.trim()}</p>
-          )}
+          {creditOf(it) && <p className="text-[11px] text-milk/60 mt-1">{creditOf(it)}</p>}
           {multi && <p className="mt-1 text-[11px] font-bold tabular-nums text-milk/50">{index + 1} / {items.length}</p>}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">

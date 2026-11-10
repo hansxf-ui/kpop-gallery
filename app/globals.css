@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { background: radial-gradient(circle at 15% 0%, #D6ECFA 0, transparent 45%), radial-gradient(circle at 90% 10%, #F6DCE9 0, transparent 40%), #F5FAFE; color: #173A56; font-family: Quicksand, sans-serif; min-height: 100vh; transition: background .3s, color .3s; }
+body { background: radial-gradient(circle at 15% 0%, #D6ECFA 0, transparent 45%), radial-gradient(circle at 90% 10%, #F6DCE9 0, transparent 40%), #F5FAFE; color: #173A56; font-family: var(--font-body), Quicksand, sans-serif; min-height: 100vh; transition: background .3s, color .3s; }
 .card { background: #fff; padding: 8px 8px 0; border-radius: 22px; box-shadow: 0 10px 30px -12px rgba(127,196,232,.65); outline: 1px solid rgba(234,147,187,.5); outline-offset: -5px; transition: transform .25s, background .3s; }
 .card:hover { transform: translateY(-4px) rotate(-.6deg); }
 :focus-visible { outline: 3px solid #EA93BB; outline-offset: 2px; }
@@ -69,7 +69,7 @@ html.party .card { outline-color: rgba(201,162,75,.9); box-shadow: 0 10px 34px -
 html.party .orb { opacity: .55; }
 html.party.dark .orb { opacity: .3; }
 
-/* Toggle dark mode — switch dari Uiverse.io by juanpabl0svn (dikirim Ryan, dipasang 18 Okt 2026) */
+/* Toggle dark mode — switch dari Uiverse.io by juanpabl0svn (dikirim pemilik, dipasang 18 Okt 2026) */
 .switch {
   font-size: 17px;
   position: relative;
@@ -154,7 +154,7 @@ label.switch {
 }
 label.switch .slider { box-shadow: 0 2px 10px rgba(13, 29, 49, .35); }
 
-/* Kolom pencarian — desain dari Uiverse.io by alexruix (dikirim Ryan, dipasang 18 Okt 2026).
+/* Kolom pencarian — desain dari Uiverse.io by alexruix (dikirim pemilik, dipasang 18 Okt 2026).
    Nama kelas diberi awalan search- supaya tidak tabrakan dengan kelas generik situs lain. */
 .search-group {
   display: flex;

@@ -1,6 +1,7 @@
 'use client'
 import { useRef, useState } from 'react'
 import { getFavorites, setFavorites } from '../../lib/favorites'
+import { downloadBlob } from '../../lib/download'
 import { encodeFavCode, decodeFavCode, favFileContent, parseFavFile, mergeFavorites } from '../../lib/favoritesTransfer'
 
 // Ekspor/impor favorit (fitur 5). Impor MENGGABUNGKAN — favorit yang sudah ada tidak hilang.
@@ -18,12 +19,7 @@ export default function FavTransfer({ onImported }) {
 
   function unduhFile() {
     const blob = new Blob([favFileContent(getFavorites())], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `favorit-h2h-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadBlob(blob, `favorit-h2h-${new Date().toISOString().slice(0, 10)}.json`)
   }
 
   function terapkan(ids) {

@@ -25,7 +25,8 @@ const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
 function Kartu({ m, i, count }) {
   const [flip, setFlip] = useState(false)
   const kickRef = useRef(null)
-  const url = imgOpt(SB + m.file, 800)
+  // Kartu maksimal 240px lebar → 480px cukup untuk layar 2x (dulu 800px, ±2,5× lebih berat).
+  const url = imgOpt(SB + m.file, 480)
   // Tendangan ayun dijalankan via Web Animations API di pembungkus yang STABIL —
   // versi lama memakai key={kick} yang me-remount seluruh subtree tiap klik,
   // sehingga .lc-flip lahir langsung di posisi akhir dan transisi baliknya mati total.
@@ -222,7 +223,7 @@ export default function Landing() {
       <div className="mt-12 text-center">
         <Link
           href="/galeri"
-          className="inline-block rounded-full bg-gold px-9 py-3.5 text-base font-bold text-white shadow-[0_10px_26px_rgba(234,147,187,0.45)] transition hover:scale-[1.03]"
+          className="inline-block rounded-full bg-gold px-9 py-3.5 text-base font-bold text-plum shadow-[0_10px_26px_rgba(234,147,187,0.45)] transition hover:scale-[1.03]"
         >
           Masuk ke Galeri →
         </Link>

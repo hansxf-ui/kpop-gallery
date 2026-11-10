@@ -84,7 +84,9 @@ async function trim(cache) {
 async function page(req, url) {
   try {
     const res = await fetch(req)
-    if (res.ok && res.type === 'basic' && PAGE_OK(url.pathname) && (res.headers.get('content-type') || '').includes('text/html')) {
+    // Respons hasil redirect tidak disimpan: menyajikannya lagi untuk navigasi membuat browser
+    // menolak halaman ("redirected response was used for a request whose redirect mode is not follow").
+    if (res.ok && res.type === 'basic' && !res.redirected && PAGE_OK(url.pathname) && (res.headers.get('content-type') || '').includes('text/html')) {
       const cache = await caches.open(PAGES)
       await cache.put(url.origin + url.pathname, res.clone()) // tanpa query: /galeri?item=… disimpan sebagai /galeri
     }
@@ -140,7 +142,7 @@ async function simpanHalaman(path) {
   lastPageSave = Date.now()
   try {
     const res = await fetch(path, { credentials: 'same-origin' })
-    if (!res.ok) return
+    if (!res.ok || res.redirected) return
     const html = await res.clone().text()
     await (await caches.open(PAGES)).put(self.location.origin + path, res)
     const st = await caches.open(STATIC)

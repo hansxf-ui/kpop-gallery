@@ -12,7 +12,7 @@ export default function ThemeToggle() {
     localStorage.theme = next ? 'dark' : 'light'
   }
 
-  // Switch Uiverse (juanpabl0svn), dipasang atas kiriman Ryan 18 Okt 2026:
+  // Switch Uiverse (juanpabl0svn), dipasang atas kiriman pemilik 18 Okt 2026:
   // tercentang = siang (matahari + awan, tema terang), tak tercentang = malam (bulan + bintang, tema gelap).
   return (
     <label htmlFor="switch" className="switch fixed top-4 right-4 z-40">

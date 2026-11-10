@@ -7,6 +7,7 @@ import { measureFile, measureImage, isMissingColumnError } from '../../lib/image
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
+import { downloadBlob } from '../../lib/download'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
@@ -26,6 +27,8 @@ function canonIdol(v) {
 
 export default function Admin() {
   const [user, setUser] = useState(undefined)
+  // null = belum dicek / fungsi is_admin belum ada (migrasi 03 belum dijalankan) → perilaku lama.
+  const [isAdmin, setIsAdmin] = useState(null)
   const [items, setItems] = useState([])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
@@ -36,22 +39,43 @@ export default function Admin() {
   const [editVal, setEditVal] = useState({})
   const [pendingDelete, setPendingDelete] = useState(null) // item yang menunggu konfirmasi hapus
   const [announcement, setAnnouncement] = useState('')
+  const [annMsg, setAnnMsg] = useState('')
   const [dimMsg, setDimMsg] = useState('')
   const [dimBusy, setDimBusy] = useState(false)
   const fileInput = useRef(null)
 
-  const load = () => fetchAllItems().then(setItems).catch(() => setItems([]))
+  // Admin memuat semua kolom (termasuk catatan pribadi) — hanya bisa setelah login (migrasi 04).
+  const load = () => fetchAllItems({ columns: '*' }).then(setItems).catch(() => setItems([]))
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
     const { data } = sb.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null))
-    load()
     sb.from('settings').select('value').eq('key', 'announcement').maybeSingle().then(({ data }) => setAnnouncement(data?.value || ''))
     return () => data.subscription.unsubscribe()
   }, [])
 
+  // Daftar item dimuat ulang tiap kali status login berubah (dulu hanya sekali saat halaman dibuka,
+  // jadi setelah login dari form, daftar bisa kosong sampai halaman dimuat ulang).
+  useEffect(() => {
+    if (user) load()
+    else setItems([])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Migrasi 03: hanya akun di tabel admins yang boleh mengubah galeri. Akun lain diberi tahu
+  // di sini, alih-alih mendapati setiap simpan/hapus gagal tanpa alasan.
+  useEffect(() => {
+    if (!user) { setIsAdmin(null); return }
+    let alive = true
+    sb.rpc('is_admin').then(({ data, error }) => { if (alive) setIsAdmin(error ? null : data === true) })
+    return () => { alive = false }
+  }, [user])
+
+  // Dulu hasil simpan tidak dicek — gagal (mis. bukan admin / koneksi putus) tetap terlihat berhasil.
   async function saveAnnouncement(text) {
     setAnnouncement(text)
-    await sb.from('settings').upsert({ key: 'announcement', value: text })
+    setAnnMsg('Menyimpan…')
+    const { error } = await sb.from('settings').upsert({ key: 'announcement', value: text })
+    setAnnMsg(error ? 'Gagal menyimpan pengumuman: ' + error.message : text.trim() ? 'Pengumuman tersimpan ✓' : 'Pengumuman dimatikan ✓')
   }
 
   async function login(e) {
@@ -217,12 +241,7 @@ export default function Admin() {
 
   function exportData() {
     const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `hearts2hearts-gallery-backup-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadBlob(blob, `hearts2hearts-gallery-backup-${new Date().toISOString().slice(0, 10)}.json`)
   }
 
   const stats = Object.entries(
@@ -236,10 +255,16 @@ export default function Admin() {
       <ThemeToggle />
       <SiteNav className="mb-8" />
       <h1 className="font-display text-4xl mb-6 text-plum dark:text-milk">Admin ✦</h1>
-      {!user ? (
+      {user && isAdmin === false ? (
+        <div className="rounded-3xl border border-rose/40 bg-white/70 p-5 text-center dark:border-rose/20 dark:bg-white/5">
+          <p className="font-bold text-plum dark:text-milk">Akun ini bukan admin galeri.</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Perubahan hanya bisa dilakukan oleh akun yang terdaftar sebagai admin.</p>
+          <button onClick={() => sb.auth.signOut()} className={`${btn} mt-4`}>Keluar</button>
+        </div>
+      ) : !user ? (
         <form onSubmit={login} className="space-y-3">
-          <input name="email" type="email" placeholder="Email" required className={box} />
-          <input name="password" type="password" placeholder="Password" required className={box} />
+          <input name="email" type="email" placeholder="Email" aria-label="Email" autoComplete="username" required className={box} />
+          <input name="password" type="password" placeholder="Password" aria-label="Password" autoComplete="current-password" required className={box} />
           <button className={btn}>Masuk</button>
         </form>
       ) : (
@@ -304,9 +329,10 @@ export default function Admin() {
             <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 Pengumuman comeback</h2>
             <p className="text-xs text-plum/50 dark:text-milk/50 mb-2">Muncul sebagai banner di atas beranda. Kosongkan lalu simpan untuk mematikannya.</p>
             <div className="flex gap-2">
-              <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} placeholder="mis. Comeback baru: Lemon Tang! 🍋" className={box} />
+              <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} aria-label="Teks pengumuman" placeholder="mis. Comeback baru: Lemon Tang! 🍋" className={box} />
               <button onClick={() => saveAnnouncement(announcement)} className="rounded-full bg-gold text-plum font-bold px-4 shrink-0 text-sm">Simpan</button>
             </div>
+            {annMsg && <p className="mt-2 text-sm font-bold dark:text-milk" role="status">{annMsg}</p>}
           </div>
 
           <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">

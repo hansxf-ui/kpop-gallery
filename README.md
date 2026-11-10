@@ -84,6 +84,12 @@ File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan ti
    Sebelum dijalankan, beranda tetap memakai cara hitung lama.
 2. `20261110_02_item_dimensions.sql` — kolom `width`/`height` foto. Sesudahnya, buka `/admin` →
    "Ukur dimensi foto lama" untuk mengisi foto yang sudah ada (upload baru terisi otomatis).
+3. `20261111_03_admin_only_writes.sql` — hanya akun di tabel `admins` yang boleh mengubah galeri.
+   Jalankan sekali, masukkan akun admin (`insert into public.admins ...`, contoh ada di file), lalu
+   jalankan sekali lagi. Matikan juga pendaftaran akun baru di Authentication → Email.
+4. `20261111_04_hide_admin_notes.sql` — catatan pribadi admin tidak bisa dibaca pengunjung.
+   **Deploy kode terbaru dulu**, baru jalankan file ini.
+5. `20261111_05_reactions_emoji_check.sql` — reaksi baru hanya boleh 😍 🔥 😭 👏.
 
 ## Pasang domain sendiri (opsional)
 Kalau punya domain sendiri (mis. dari Niagahoster/Namecheap): buka project di Vercel → tab **Domains** → tambahkan domainmu, lalu ikuti instruksi untuk mengarahkan DNS-nya. Vercel akan otomatis pasang HTTPS.

@@ -70,7 +70,8 @@ export default function GaleriClient() {
     setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setLoadError(true) })
   }
-  useEffect(() => { document.title = 'Galeri · Hearts2Hearts Gallery' }, [])
+  // Judul tab diatur server (generateMetadata di page.js), termasuk judul item untuk ?item=.
+  // Dulu efek di sini menimpanya jadi "Galeri · …" begitu halaman aktif.
   useEffect(() => {
     loadItems()
     setFavs(getFavorites())
@@ -112,7 +113,8 @@ export default function GaleriClient() {
 
   const idolCover = useMemo(() => {
     const map = {}
-    const photos = (items || []).filter((it) => it.type !== 'youtube')
+    // Hanya foto: dulu video upload ikut terpilih, dan URL .mp4-nya dipasang di <img> → avatar rusak.
+    const photos = (items || []).filter((it) => it.type === 'photo')
     // Pass 1: utamakan foto solo member / foto grup persis buat avatar chip
     for (const it of photos) {
       const names = namesOf(it)
@@ -240,14 +242,14 @@ export default function GaleriClient() {
       <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
         <div className="search-group w-full max-w-xs">
           <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul, idol, atau era…" type="search" className="search-input" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul, idol, atau era…" type="search" aria-label="Cari di galeri" className="search-input" />
           {q && (
             <button onClick={() => setQ('')} aria-label="Hapus pencarian"
               className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 font-bold text-plum/50 dark:text-milk/50 hover:text-plum dark:hover:text-milk">✕</button>
           )}
         </div>
         <div ref={sortRef} className="relative">
-          <button onClick={() => setSortOpen((o) => !o)} aria-haspopup="listbox" aria-expanded={sortOpen}
+          <button onClick={() => setSortOpen((o) => !o)} aria-haspopup="listbox" aria-expanded={sortOpen} aria-label={`Urutkan: ${sorts.find((s) => s[0] === sort)[1]}`}
             className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold inline-flex items-center gap-1.5">
             {sorts.find((s) => s[0] === sort)[1]}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`transition ${sortOpen ? 'rotate-180' : ''}`}><path d="M6 9l6 6 6-6" /></svg>
@@ -256,7 +258,7 @@ export default function GaleriClient() {
             <ul role="listbox" aria-label="Urutkan"
               className="absolute z-30 mt-2 left-0 w-36 overflow-hidden rounded-2xl border border-rose/50 dark:border-rose/25 bg-milk dark:bg-plum shadow-xl page-fade-in">
               {sorts.map(([v, label]) => (
-                <li key={v}>
+                <li key={v} role="none">
                   <button role="option" aria-selected={sort === v}
                     onClick={() => { setSort(v); if (v === 'acak') setSeed(newSeed()); setSortOpen(false) }}
                     className={`w-full px-4 py-2.5 text-left text-sm font-bold flex items-center justify-between ${sort === v ? 'text-plum dark:text-milk bg-rose/25 dark:bg-white/10' : 'text-plum/70 dark:text-milk/70 hover:bg-rose/10 dark:hover:bg-white/5'}`}>
@@ -275,7 +277,7 @@ export default function GaleriClient() {
 
       <div className="flex flex-wrap justify-center gap-2 mb-3">
         {[['semua', 'Semua', null], ['foto', 'Foto', CameraIcon], ['video', 'Video', FilmIcon]].map(([v, label, Icon]) => (
-          <button key={v} onClick={() => setMediaType(v)}
+          <button key={v} onClick={() => setMediaType(v)} aria-pressed={mediaType === v}
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${mediaType === v ? 'bg-rose text-plum border-rose' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
             {Icon && <Icon />}{label}
           </button>
@@ -284,10 +286,10 @@ export default function GaleriClient() {
 
       <div className="flex flex-wrap justify-center gap-2 mb-3">
         {idols.map((n) => (
-          <button key={n} onClick={() => setIdol(n)}
+          <button key={n} onClick={() => setIdol(n)} aria-pressed={idol === n}
             className={`flex items-center gap-1.5 pl-1.5 pr-4 py-1.5 rounded-full font-bold text-sm border transition ${idol === n ? 'bg-plum text-milk border-plum' : 'bg-white/70 dark:bg-white/10 border-rose/50 dark:border-rose/20 hover:bg-rose/20'}`}>
             {n !== 'Semua' && idolCover[n] ? (
-              <img src={idolCover[n]} alt="" className="h-6 w-6 rounded-full object-cover" />
+              <img src={idolCover[n]} alt="" width={24} height={24} loading="lazy" decoding="async" className="h-6 w-6 rounded-full object-cover" />
             ) : n === 'Semua' ? <span className="h-6 w-6 rounded-full bg-gold/30 grid place-items-center text-xs">✦</span> : null}
             {n}
           </button>
@@ -297,7 +299,7 @@ export default function GaleriClient() {
       {groups.length > 0 && (
         <div className="flex flex-wrap justify-center gap-2 mb-3">
           {['Semua', ...groups].map((n) => (
-            <button key={n} onClick={() => setGroup(n)}
+            <button key={n} onClick={() => setGroup(n)} aria-pressed={group === n}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${group === n ? 'bg-gold text-plum border-gold' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
               {n}
             </button>
@@ -308,7 +310,7 @@ export default function GaleriClient() {
       {eras.length > 0 && (
         <div className="flex flex-wrap justify-center gap-2 mb-4">
           {['Semua', ...eras].map((n) => (
-            <button key={n} onClick={() => setEra(n)}
+            <button key={n} onClick={() => setEra(n)} aria-pressed={era === n}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
               {n}
             </button>
