@@ -132,3 +132,12 @@ test('banner hari spesial: semua ucapan punya terjemahan', async () => {
   const { SPECIAL_DATES } = await loadData('specialDates')
   assert.deepEqual(SPECIAL_DATES.map((d) => d.label).filter((k) => !(k in ALL)), [])
 })
+
+test('kamus Inggris tidak ikut bundle bawaan (hanya dimuat dengan import() untuk pengunjung EN)', () => {
+  for (const p of [...walk(join(root, 'app')), ...walk(join(root, 'lib'))]) {
+    if (/i18n-en(-data)?\.js$/.test(p)) continue
+    const s = readFileSync(p, 'utf8')
+    assert.doesNotMatch(s, /^\s*import[^\n]*from\s+['"][^'"]*i18n-en(-data)?['"]/m, `${p} mengimpor kamus EN secara statis`)
+  }
+  assert.match(readFileSync(join(root, 'lib/i18n.js'), 'utf8'), /import\('\.\/i18n-en'\)/)
+})
