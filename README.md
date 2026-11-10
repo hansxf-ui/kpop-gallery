@@ -72,6 +72,18 @@ create policy "admin update settings" on settings for update to authenticated us
 - Satu navigasi yang sama di semua halaman (Beranda, Galeri, Favoritku + jumlahnya, Jadwal, Voting, Tentang)
 - Favoritkan langsung dari tampilan penuh (lightbox), plus penanda posisi "3 / 120"
 - Tombol "Reset filter" saat hasil kosong, dan tombol ↑ kembali ke atas di grid panjang
+- Link langsung per item (`/galeri?item=<id>`, tombol 🔗 Bagikan di lightbox) dengan preview foto saat dibagikan
+- Filter galeri tersimpan di URL (`/galeri?idol=CARMEN&era=Focus&jenis=foto`) — tampilan terfilter bisa dibagikan
+- Scroll tak terbatas di galeri & album idol (tombol "Muat lebih banyak" tetap ada sebagai cadangan)
+- Ekspor/impor favorit lewat kode `H2H1-…` atau file .json (di halaman Favoritku)
+- Mode offline: foto favorit disimpan di perangkat (service worker `public/sw.js`)
+
+## Migrasi database (jalankan sekali di Supabase → SQL Editor)
+File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan tidak mengubah data yang ada.
+1. `20261110_01_member_counts.sql` — view `member_counts` untuk jumlah item per member di beranda.
+   Sebelum dijalankan, beranda tetap memakai cara hitung lama.
+2. `20261110_02_item_dimensions.sql` — kolom `width`/`height` foto. Sesudahnya, buka `/admin` →
+   "Ukur dimensi foto lama" untuk mengisi foto yang sudah ada (upload baru terisi otomatis).
 
 ## Pasang domain sendiri (opsional)
 Kalau punya domain sendiri (mis. dari Niagahoster/Namecheap): buka project di Vercel → tab **Domains** → tambahkan domainmu, lalu ikuti instruksi untuk mengarahkan DNS-nya. Vercel akan otomatis pasang HTTPS.
