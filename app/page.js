@@ -7,6 +7,7 @@ import { fetchMemberCounts } from '../lib/counts'
 import ThemeToggle from './components/ThemeToggle'
 import SiteNav from './components/SiteNav'
 import SpecialCountdown from './components/SpecialCountdown'
+import FandomStats from './components/FandomStats'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
 // Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
@@ -229,6 +230,7 @@ export default function Landing() {
       <p className="mt-4 text-center">
         <Link href="/hari-ini" className="text-sm font-bold text-gold underline underline-offset-4">☀️ {t('Lihat semua yang terjadi hari ini →')}</Link>
       </p>
+      <FandomStats />
 
       <div className="mt-12 text-center">
         <Link
