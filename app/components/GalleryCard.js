@@ -57,7 +57,7 @@ export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true,
         <p className={`truncate px-2 text-sm font-bold dark:text-milk ${showIdol ? 'pt-2.5' : 'py-2.5'}`}>{label}</p>
       </button>
       <button type="button" onClick={fav} aria-pressed={isFav}
-        aria-label={favLabel || (isFav ? 'Hapus dari favorit' : 'Favoritkan')}
+        aria-label={favLabel || `Favoritkan ${label}`}
         className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-base shadow-sm transition hover:scale-110">
         {isFav ? '❤️' : '🤍'}
       </button>
