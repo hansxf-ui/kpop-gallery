@@ -75,7 +75,7 @@ function KartuEvent({ event, now }) {
       </div>
       <div className="mt-4">
         {isHariIni && (
-          <p className="inline-flex items-center gap-2 font-bold text-rose-600 dark:text-rose text-lg">
+          <p className="inline-flex items-center gap-2 font-bold text-red-600 dark:text-rose text-lg">
             <span className="relative flex h-3 w-3" aria-hidden>
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />

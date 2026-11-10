@@ -43,7 +43,7 @@ function KartuVoting({ v, now }) {
 
   const badge =
     st === 'buka' ? (
-      <span className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-rose-600 dark:text-rose">
+      <span className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-red-600 dark:text-rose">
         <span className="relative flex h-2.5 w-2.5" aria-hidden>
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
@@ -82,7 +82,7 @@ function KartuVoting({ v, now }) {
       {v.link && (
         <p className="mt-4">
           <a href={v.link.url} target="_blank" rel="noopener noreferrer"
-             className="inline-block bg-rose text-white text-sm font-extrabold px-5 py-2.5 rounded-full">
+             className="inline-block bg-rose text-plum text-sm font-extrabold px-5 py-2.5 rounded-full">
             {v.link.label} →
           </a>
         </p>

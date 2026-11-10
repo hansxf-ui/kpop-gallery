@@ -222,7 +222,7 @@ export default function Landing() {
       <div className="mt-12 text-center">
         <Link
           href="/galeri"
-          className="inline-block rounded-full bg-gold px-9 py-3.5 text-base font-bold text-white shadow-[0_10px_26px_rgba(234,147,187,0.45)] transition hover:scale-[1.03]"
+          className="inline-block rounded-full bg-gold px-9 py-3.5 text-base font-bold text-plum shadow-[0_10px_26px_rgba(234,147,187,0.45)] transition hover:scale-[1.03]"
         >
           Masuk ke Galeri →
         </Link>
