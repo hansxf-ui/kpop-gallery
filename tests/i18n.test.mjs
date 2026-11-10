@@ -43,6 +43,8 @@ const DYNAMIC = [
   // jenis rilisan, kredit
   'Single album debut', 'Single digital', 'Pre-release Focus', 'Mini album pertama', 'Mini album kedua', 'Single album',
   'Sumber resmi', 'Fansite & sumber lain',
+  // judul tab lewat useDocTitle(…)
+  'Tidak Ditemukan', 'Admin',
   // pesan dari lib/
   'Link disalin ✓', 'Gagal menyalin link', 'Kode tidak dikenali — kode favorit diawali "H2H1-".', 'Kode rusak — pastikan tersalin utuh.',
   'Kode terpotong — pastikan tersalin utuh.', 'File bukan file favorit yang valid.', 'Kode tidak dikenali — kode koleksi diawali "H2HK1-".',
@@ -123,4 +125,9 @@ test('teks data Inggris: angka ribuan memakai koma, bukan titik (mis. 76,789,533
     if (typeof v !== 'string') continue
     assert.doesNotMatch(v, /\b\d{1,3}(?:\.\d{3})+\b/, k.slice(0, 50))
   }
+})
+
+test('banner hari spesial: semua ucapan punya terjemahan', async () => {
+  const { SPECIAL_DATES } = await loadData('specialDates')
+  assert.deepEqual(SPECIAL_DATES.map((d) => d.label).filter((k) => !(k in ALL)), [])
 })

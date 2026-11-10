@@ -67,6 +67,7 @@ export default function Admin() {
   const [editVal, setEditVal] = useState({})
   const [pendingDelete, setPendingDelete] = useState(null) // item yang menunggu konfirmasi hapus
   const [announcement, setAnnouncement] = useState('')
+  const [announcementEn, setAnnouncementEn] = useState('')
   const [annMsg, setAnnMsg] = useState('')
   const [dimMsg, setDimMsg] = useState('')
   const [dimBusy, setDimBusy] = useState(false)
@@ -77,7 +78,10 @@ export default function Admin() {
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
     const { data } = sb.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null))
-    sb.from('settings').select('value').eq('key', 'announcement').maybeSingle().then(({ data }) => setAnnouncement(data?.value || ''))
+    sb.from('settings').select('key, value').in('key', ['announcement', 'announcement_en']).then(({ data }) => {
+      setAnnouncement((data || []).find((r) => r.key === 'announcement')?.value || '')
+      setAnnouncementEn((data || []).find((r) => r.key === 'announcement_en')?.value || '')
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
@@ -99,10 +103,11 @@ export default function Admin() {
   }, [user])
 
   // Dulu hasil simpan tidak dicek — gagal (mis. bukan admin / koneksi putus) tetap terlihat berhasil.
-  async function saveAnnouncement(text) {
+  async function saveAnnouncement(text, textEn) {
     setAnnouncement(text)
     setAnnMsg(t('Menyimpan…'))
-    const { error } = await sb.from('settings').upsert({ key: 'announcement', value: text })
+    // announcement_en = versi Inggris opsional (baris baru di tabel settings yang sudah ada, tanpa ubah skema).
+    const { error } = await sb.from('settings').upsert([{ key: 'announcement', value: text }, { key: 'announcement_en', value: (textEn || '').trim() }])
     setAnnMsg(error ? t('Gagal menyimpan pengumuman: {pesan}', { pesan: error.message }) : text.trim() ? t('Pengumuman tersimpan ✓') : t('Pengumuman dimatikan ✓'))
   }
 
@@ -366,8 +371,11 @@ export default function Admin() {
             <p className="text-xs text-plum/50 dark:text-milk/50 mb-2">{t('Muncul sebagai banner di atas beranda. Kosongkan lalu simpan untuk mematikannya.')}</p>
             <div className="flex gap-2">
               <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} aria-label={t('Teks pengumuman')} placeholder={t('mis. Comeback baru: Lemon Tang! 🍋')} className={box} />
-              <button onClick={() => saveAnnouncement(announcement)} className="rounded-full bg-gold text-plum font-bold px-4 shrink-0 text-sm">{t('Simpan')}</button>
+              <button onClick={() => saveAnnouncement(announcement, announcementEn)} className="rounded-full bg-gold text-plum font-bold px-4 shrink-0 text-sm">{t('Simpan')}</button>
             </div>
+            <input value={announcementEn} onChange={(e) => setAnnouncementEn(e.target.value)} aria-label={t('Teks pengumuman bahasa Inggris (opsional)')}
+              placeholder={t('Versi bahasa Inggris (opsional), mis. New comeback: Lemon Tang! 🍋')} className={`${box} mt-2`} />
+            <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Kalau dikosongkan, pengunjung yang memilih EN tetap melihat teks Indonesia.')}</p>
             {annMsg && <p className="mt-2 text-sm font-bold dark:text-milk" role="status">{annMsg}</p>}
           </div>
 
