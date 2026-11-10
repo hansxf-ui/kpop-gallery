@@ -24,13 +24,15 @@ export default function AdminReports({ items, onEdit }) {
   useEffect(() => { load() }, [lihatSelesai]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function tandai(r, status) {
-    const { error } = await sb.from('reports').update({ status }).eq('id', r.id)
+    const { data, error } = await sb.from('reports').update({ status }).eq('id', r.id).select('id')
     if (error) return setMsg(t('Gagal mengubah laporan: {pesan}', { pesan: error.message }))
+    if (!data || data.length === 0) return setMsg(t('Perubahan tidak tersimpan — akun ini tidak punya izin, atau sesi sudah habis. Masuk ulang lalu coba lagi.'))
     load()
   }
   async function hapus(r) {
-    const { error } = await sb.from('reports').delete().eq('id', r.id)
+    const { data, error } = await sb.from('reports').delete().eq('id', r.id).select('id')
     if (error) return setMsg(t('Gagal menghapus laporan: {pesan}', { pesan: error.message }))
+    if (!data || data.length === 0) return setMsg(t('Perubahan tidak tersimpan — akun ini tidak punya izin, atau sesi sudah habis. Masuk ulang lalu coba lagi.'))
     load()
   }
 

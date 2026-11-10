@@ -206,8 +206,10 @@ export default function Admin() {
   async function del(it) {
     // Hapus baris DB DULU dan cek errornya: bila gagal, item utuh (jangan tinggalkan
     // item publik bergambar mati gara-gara file storage sudah terhapus duluan).
-    const { error } = await sb.from('items').delete().eq('id', it.id)
-    if (error) {
+    // .select() = baris yang benar-benar terhapus. Kalau RLS menolak, Supabase TIDAK mengembalikan
+    // error (hanya 0 baris) — dulu dianggap berhasil, lalu file storage-nya ikut dihapus.
+    const { data: gone, error } = await sb.from('items').delete().eq('id', it.id).select('id')
+    if (error || !gone || gone.length === 0) {
       setPendingDelete(null)
       setMsg(t('Gagal menghapus item dari database — item TIDAK dihapus. Coba lagi.'))
       return
@@ -245,11 +247,13 @@ export default function Admin() {
       }
     }
     payload.tags = editVal.tags || []
-    let { error } = await sb.from('items').update(payload).eq('id', id)
+    let { data: saved, error } = await sb.from('items').update(payload).eq('id', id).select('id')
     if (error && isMissingColumnError(error)) { // migrasi 06 belum jalan -> simpan tanpa tags
       delete payload.tags
-      ;({ error } = await sb.from('items').update(payload).eq('id', id))
+      ;({ data: saved, error } = await sb.from('items').update(payload).eq('id', id).select('id'))
     }
+    // 0 baris tanpa error = ditolak RLS (bukan admin / sesi habis) — jangan tutup form seolah tersimpan.
+    if (!error && (!saved || saved.length === 0)) return setMsg(t('Perubahan tidak tersimpan — akun ini tidak punya izin, atau sesi sudah habis. Masuk ulang lalu coba lagi.'))
     if (error) return setMsg(t('Gagal menyimpan perubahan: {pesan}', { pesan: error.message }))
     setEditing(null); load()
   }
