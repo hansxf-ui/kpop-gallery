@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import { ytId, imgOpt } from '../../lib/supabase'
 import { thumbOf as thumb } from '../../lib/gallery'
 
-// Carousel sorotan beranda — adaptasi demo Carousel shadcn/ui kiriman Ryan (18 Okt 2026)
+// Carousel sorotan beranda — adaptasi demo Carousel shadcn/ui kiriman pemilik (18 Okt 2026)
 // ke stack situs ini (galeri tidak memakai shadcn/embla): rel geser scroll-snap + panah prev/next,
 // kartu persegi seperti demo, isi = item sorotan beneran (bukan angka contoh).
 export default function FeaturedCarousel({ items, onOpen }) {
