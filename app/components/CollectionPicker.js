@@ -33,7 +33,13 @@ export default function CollectionPicker({ itemId }) {
         📁 {t('Koleksi')}{inCount ? ` (${inCount})` : ''}
       </button>
       {open && (
-        <div className="absolute bottom-full left-1/2 z-30 mb-2 w-64 -translate-x-1/2 rounded-2xl bg-milk p-3 text-left text-sm text-plum shadow-xl dark:bg-plum dark:text-milk">
+        // HP: panel di bawah layar selebar layar (dulu popup 256px di tengah tombol terpotong di tepi
+        // kiri/kanan karena lightbox overflow-x-hidden). Layar lebar: popup di atas tombol seperti semula.
+        <div role="dialog" aria-label={t('Koleksi')}
+          // Escape menutup panel ini saja (dulu langsung menutup seluruh lightbox).
+          onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false) } }}
+          className="fixed inset-x-3 bottom-3 z-[60] rounded-2xl bg-milk p-3 text-left text-sm text-plum shadow-xl dark:bg-plum dark:text-milk sm:absolute sm:inset-x-auto sm:bottom-full sm:left-1/2 sm:mb-2 sm:w-64 sm:-translate-x-1/2">
+          <button type="button" onClick={() => setOpen(false)} aria-label={t('Tutup')} className="float-right -mt-1 px-1 font-bold opacity-60 hover:opacity-100">✕</button>
           {list.length === 0 && <p className="mb-2 text-xs opacity-70">{t('Belum ada koleksi. Buat yang pertama:')}</p>}
           <ul className="max-h-48 space-y-1 overflow-y-auto">
             {list.map((c) => (

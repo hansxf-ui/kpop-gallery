@@ -37,6 +37,7 @@ const DYNAMIC = [
   // reaksi & laporan
   'Suka banget', 'Keren', 'Terharu', 'Tepuk tangan', 'Salah member', 'Gambar rusak / tidak muncul', 'Salah era', 'Lainnya',
   'Pilih alasan laporan.', 'Laporan gagal dikirim. Coba lagi nanti.',
+  'Foto ini sudah dilaporkan beberapa kali dan sedang ditinjau. Terima kasih!',
   // profil
   'Debut', 'Agensi', 'Member', 'Fandom', 'Posisi', 'Ulang tahun', 'Asal', 'Era terbanyak di galeri', 'Koleksi di galeri',
   'Lahir di Vancouver, Kanada', 'Denpasar, Bali, Indonesia', 'Idol Indonesia pertama yang debut di SM Entertainment.', '24 Februari 2025 (The Chase)',
@@ -83,8 +84,8 @@ test('isian {…} dipertahankan di setiap terjemahan', () => {
 })
 
 test('bentuk tunggal/jamak', () => {
-  assert.equal(EN['{j} reaksi']({ j: 1 }), '1 reaction')
-  assert.equal(EN['{j} reaksi']({ j: 3 }), '3 reactions')
+  assert.equal(EN['Peringkat {n}: {judul}, {j} reaksi minggu ini']({ n: 1, judul: 'X', j: 1 }), '#1: X, 1 reaction this week')
+  assert.equal(EN['Peringkat {n}: {judul}, {j} reaksi minggu ini']({ n: 2, judul: 'X', j: 3 }), '#2: X, 3 reactions this week')
   assert.equal(EN['{n} hari lagi']({ n: 1 }), 'in 1 day')
   assert.equal(EN['Anniversary debut ke-{n}']({ n: 2 }), '2nd debut anniversary')
   assert.equal(EN['Anniversary debut ke-{n}']({ n: 11 }), '11th debut anniversary')
@@ -130,4 +131,13 @@ test('teks data Inggris: angka ribuan memakai koma, bukan titik (mis. 76,789,533
 test('banner hari spesial: semua ucapan punya terjemahan', async () => {
   const { SPECIAL_DATES } = await loadData('specialDates')
   assert.deepEqual(SPECIAL_DATES.map((d) => d.label).filter((k) => !(k in ALL)), [])
+})
+
+test('kamus Inggris tidak ikut bundle bawaan (hanya dimuat dengan import() untuk pengunjung EN)', () => {
+  for (const p of [...walk(join(root, 'app')), ...walk(join(root, 'lib'))]) {
+    if (/i18n-en(-data)?\.js$/.test(p)) continue
+    const s = readFileSync(p, 'utf8')
+    assert.doesNotMatch(s, /^\s*import[^\n]*from\s+['"][^'"]*i18n-en(-data)?['"]/m, `${p} mengimpor kamus EN secara statis`)
+  }
+  assert.match(readFileSync(join(root, 'lib/i18n.js'), 'utf8'), /import\('\.\/i18n-en'\)/)
 })

@@ -292,6 +292,10 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
 
   useEffect(() => {
     function onKey(e) {
+      // Saat mengetik di form laporan / nama koleksi, panah & Escape milik kolom itu — dulu panah
+      // memindah foto (isi form hilang) dan Escape menutup lightbox di tengah mengetik.
+      const el = e.target
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return
       if (e.key === 'Escape') onClose()
       if (e.key === 'ArrowRight') maju(1)
       if (e.key === 'ArrowLeft') maju(-1)

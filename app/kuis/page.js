@@ -22,7 +22,8 @@ export default function Kuis() {
   useDocTitle('Tebak Member')
   function load() {
     setError(false); setItems(null)
-    fetchAllItems().then(setItems).catch(() => { setItems([]); setError(true) })
+    // Kuis hanya memakai foto — video & YouTube tidak perlu dimuat.
+    fetchAllItems({ filter: (q) => q.eq('type', 'photo') }).then(setItems).catch(() => { setItems([]); setError(true) })
   }
   useEffect(() => { load(); setBest(getBest()) }, [])
   const pool = useMemo(() => quizPool(items || []), [items])

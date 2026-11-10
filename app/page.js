@@ -1,5 +1,5 @@
 'use client'
-import { useT } from '../lib/i18n'
+import { useT, useLocale } from '../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { imgOpt } from '../lib/supabase'
@@ -119,6 +119,7 @@ function Kartu({ m, i, count }) {
 
 export default function Landing() {
   const t = useT()
+  const loc = useLocale()
   // Jumlah item per member + total dihitung di database (view member_counts, lihat lib/counts.js)
   // — angka bawaan di MEMBERS hanya cadangan tampilan awal / saat gagal memuat.
   const [liveCounts, setLiveCounts] = useState(null)
@@ -198,7 +199,7 @@ export default function Landing() {
         </div>
         <p className="max-w-[260px] pt-2 text-xs leading-relaxed text-plum/55 dark:text-milk/55 sm:pt-6">
           {t('Delapan member Hearts2Hearts yang mengisi galeri ini — balik kartunya buat lihat profil singkat tiap member.')}
-          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; {t('8 MEMBER · {n} ITEM KOLEKSI', { n: liveTotal.toLocaleString('id-ID') })}</b>
+          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; {t('8 MEMBER · {n} ITEM KOLEKSI', { n: liveTotal.toLocaleString(loc) })}</b>
         </p>
       </header>
 
