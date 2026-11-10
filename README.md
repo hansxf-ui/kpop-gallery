@@ -88,7 +88,11 @@ create policy "admin update settings" on settings for update to authenticated us
 - Laporan foto dari pengunjung → antrean "🚩 Laporan foto" di admin
 - Reaksi bisa dibatalkan dengan aman (token rahasia per perangkat)
 - `/kuis` — kuis "Tebak member" dari foto solo
-- Pilihan bahasa Inggris (ID · EN di navigasi); bahasa Indonesia tetap bawaan
+- Pilihan bahasa Inggris (ID · EN di navigasi); bahasa Indonesia tetap bawaan. Kamus antarmuka di
+  `lib/i18n-en.js`, kamus teks data (jadwal, voting, Tentang, ucapan hari spesial) di `lib/i18n-en-data.js`.
+  **Kalau teks Indonesia di `lib/jadwal.js` / `lib/voting.js` diubah, terjemahannya ikut ditambahkan** —
+  sebelum itu pengunjung EN melihat teks Indonesia (bukan terjemahan lama yang basi).
+  Pengumuman banner punya kolom versi Inggris opsional di admin.
 - Tombol "Tambah ke kalender" (.ics) di setiap acara `/jadwal`
 - `/kredit` — daftar sumber/kredit foto dari kolom credit
 
@@ -108,6 +112,10 @@ File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan ti
 7. `20261112_07_top_reacted_week.sql` — view "Paling disukai minggu ini".
 8. `20261112_08_reports.sql` — tabel laporan foto (pengunjung hanya kirim, admin baca). Butuh migrasi 03.
 9. `20261112_09_reaction_tokens.sql` — reaksi dengan token + RPC `add_reaction`/`remove_reaction`. Butuh migrasi 05.
+
+## Tes
+`npm test` — logika kuis (tanpa foto ganda dalam satu ronde) dan kelengkapan kamus bahasa Inggris
+(memakai `node:test` bawaan Node, tanpa paket tambahan).
 
 ## Pasang domain sendiri (opsional)
 Kalau punya domain sendiri (mis. dari Niagahoster/Namecheap): buka project di Vercel → tab **Domains** → tambahkan domainmu, lalu ikuti instruksi untuk mengarahkan DNS-nya. Vercel akan otomatis pasang HTTPS.
