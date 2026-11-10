@@ -7,6 +7,7 @@ import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } 
 import { shareOrCopy } from '../../lib/share'
 import { useT } from '../../lib/i18n'
 import { sameEra } from '../../lib/eras'
+import { colorsInItems, colorKeyOf } from '../../lib/tagSuggest'
 import { visitBaseline, isNewSince } from '../../lib/lastVisit'
 import { fetchTopReacted } from '../../lib/topReacted'
 import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf } from '../../lib/gallery'
@@ -123,6 +124,8 @@ export default function GaleriClient() {
   const groups = [...new Set((items || []).map((i) => i.group_name).filter(Boolean))]
   const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
   // Chip tag hanya muncul untuk tag yang benar-benar dipakai (sebelum admin menandai apa pun = tersembunyi).
+  // Fitur 4: chip warna, hanya warna yang memang disebut di judul koleksi.
+  const usedColors = useMemo(() => colorsInItems(items || []), [items])
   const usedTags = TAGS.filter(([k]) => (items || []).some((i) => tagsOf(i).includes(k)))
 
   const idolCover = useMemo(() => {
@@ -381,6 +384,18 @@ export default function GaleriClient() {
             <button key={n} onClick={() => setEra(n)} aria-pressed={era === n}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
               {n === 'Semua' ? t('Semua') : n}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {usedColors.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-1.5 mb-3" role="group" aria-label={t('Cari per warna')}>
+          <span className="self-center text-xs font-bold text-plum/50 dark:text-milk/50" aria-hidden>🎨</span>
+          {usedColors.map((k) => (
+            <button key={k} onClick={() => setQ(colorKeyOf(q) === k ? '' : k)} aria-pressed={colorKeyOf(q) === k}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize ${colorKeyOf(q) === k ? 'bg-plum text-milk border-plum dark:bg-milk dark:text-plum dark:border-milk' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
+              {t(k)}
             </button>
           ))}
         </div>

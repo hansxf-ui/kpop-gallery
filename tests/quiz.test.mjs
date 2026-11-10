@@ -14,7 +14,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dir = mkdtempSync(join(tmpdir(), 'h2h-quiz-'))
 writeFileSync(join(dir, 'supabase.mjs'), "export const ytId = () => 'x'\nexport const imgOpt = (u) => u\n")
-writeFileSync(join(dir, 'gallery.mjs'), readFileSync(join(root, 'lib/gallery.js'), 'utf8').replace("from './supabase'", "from './supabase.mjs'"))
+writeFileSync(join(dir, 'tagSuggest.mjs'), readFileSync(join(root, 'lib/tagSuggest.js'), 'utf8'))
+writeFileSync(join(dir, 'gallery.mjs'), readFileSync(join(root, 'lib/gallery.js'), 'utf8').replace("from './supabase'", "from './supabase.mjs'").replace("from './tagSuggest'", "from './tagSuggest.mjs'"))
 writeFileSync(join(dir, 'quiz.mjs'), readFileSync(join(root, 'lib/quiz.js'), 'utf8').replace("from './gallery'", "from './gallery.mjs'"))
 const { quizPool, makeRound, fileKey } = await import(pathToFileURL(join(dir, 'quiz.mjs')).href)
 
