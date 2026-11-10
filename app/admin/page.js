@@ -26,6 +26,8 @@ function canonIdol(v) {
 
 export default function Admin() {
   const [user, setUser] = useState(undefined)
+  // null = belum dicek / fungsi is_admin belum ada (migrasi 03 belum dijalankan) → perilaku lama.
+  const [isAdmin, setIsAdmin] = useState(null)
   const [items, setItems] = useState([])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
@@ -48,6 +50,15 @@ export default function Admin() {
     sb.from('settings').select('value').eq('key', 'announcement').maybeSingle().then(({ data }) => setAnnouncement(data?.value || ''))
     return () => data.subscription.unsubscribe()
   }, [])
+
+  // Migrasi 03: hanya akun di tabel admins yang boleh mengubah galeri. Akun lain diberi tahu
+  // di sini, alih-alih mendapati setiap simpan/hapus gagal tanpa alasan.
+  useEffect(() => {
+    if (!user) { setIsAdmin(null); return }
+    let alive = true
+    sb.rpc('is_admin').then(({ data, error }) => { if (alive) setIsAdmin(error ? null : data === true) })
+    return () => { alive = false }
+  }, [user])
 
   async function saveAnnouncement(text) {
     setAnnouncement(text)
@@ -236,7 +247,13 @@ export default function Admin() {
       <ThemeToggle />
       <SiteNav className="mb-8" />
       <h1 className="font-display text-4xl mb-6 text-plum dark:text-milk">Admin ✦</h1>
-      {!user ? (
+      {user && isAdmin === false ? (
+        <div className="rounded-3xl border border-rose/40 bg-white/70 p-5 text-center dark:border-rose/20 dark:bg-white/5">
+          <p className="font-bold text-plum dark:text-milk">Akun ini bukan admin galeri.</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Perubahan hanya bisa dilakukan oleh akun yang terdaftar sebagai admin.</p>
+          <button onClick={() => sb.auth.signOut()} className={`${btn} mt-4`}>Keluar</button>
+        </div>
+      ) : !user ? (
         <form onSubmit={login} className="space-y-3">
           <input name="email" type="email" placeholder="Email" required className={box} />
           <input name="password" type="password" placeholder="Password" required className={box} />
