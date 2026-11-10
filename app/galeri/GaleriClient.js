@@ -133,7 +133,7 @@ export default function GaleriClient() {
     for (const it of photos) {
       const names = namesOf(it)
       if (names.length === 1 && !map[names[0]]) map[names[0]] = imgOpt(thumb(it), 100)
-      if (it.idol === 'Hearts2Hearts' && !map['Hearts2Hearts']) map['Hearts2Hearts'] = imgOpt(thumb(it), 100)
+      if (names.length === 1 && names[0] === 'HEARTS2HEARTS' && !map['Hearts2Hearts']) map['Hearts2Hearts'] = imgOpt(thumb(it), 100)
     }
     // Pass 2: fallback — foto unit apa pun yang memuat membernya
     for (const it of photos) for (const n of namesOf(it)) if (!map[n]) map[n] = imgOpt(thumb(it), 100)
@@ -173,7 +173,8 @@ export default function GaleriClient() {
   const shown = useMemo(() => {
     let list = (items || []).filter((i) => {
       if (idol === 'Semua') return true
-      if (idol === 'Hearts2Hearts') return i.idol === 'Hearts2Hearts'
+      // Sama dengan album /idol/HEARTS2HEARTS dan view member_counts: tanpa peduli huruf besar/kecil.
+      if (idol === 'Hearts2Hearts') return namesOf(i).includes('HEARTS2HEARTS')
       return namesOf(i).includes(idol) // member: cocokkan solo maupun unit yang memuat dia
     })
     if (mediaType !== 'semua') list = list.filter((i) => (mediaType === 'foto' ? i.type === 'photo' : i.type !== 'photo'))
