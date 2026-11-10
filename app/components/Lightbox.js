@@ -8,7 +8,7 @@ import { itemShareUrl } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
 import { downloadBlob } from '../../lib/download'
 import { makeWallpaperBlob, makePhotocardBlob } from '../../lib/cardMaker'
-import { albumKeysOf, DISPLAY_NAME } from '../../lib/gallery'
+import { albumKeysOf, DISPLAY_NAME, altOf } from '../../lib/gallery'
 import { tagsOf, tagLabel } from '../../lib/gallery'
 import Reactions from './Reactions'
 import CollectionPicker from './CollectionPicker'
@@ -23,7 +23,7 @@ import ReportButton from './ReportButton'
 function Media({ it, videoRef, onEnded, ytTitle }) {
   if (it.type === 'photo') return (
     <span className="relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto">
-      <img src={imgOpt(it.url, 1000)} alt={it.title || it.idol} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
+      <img src={imgOpt(it.url, 1000)} alt={altOf(it)} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
     </span>
   )
   if (it.type === 'video') return <video ref={videoRef} onEnded={onEnded} src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
@@ -38,7 +38,7 @@ function MediaTetangga({ it }) {
   const frame = "relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto pointer-events-none"
   if (it.type === 'photo') return (
     <span className={frame}>
-      <img src={imgOpt(it.url, 700)} alt={it.title || it.idol} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+      <img src={imgOpt(it.url, 700)} alt={altOf(it)} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
     </span>
   )
   if (it.type === 'video') return (
@@ -52,7 +52,7 @@ function MediaTetangga({ it }) {
       {/* maxresdefault tidak tersedia untuk semua video — jatuh ke hqdefault (selalu ada) supaya slot tidak kosong. */}
       <img src={`https://img.youtube.com/vi/${ytId(it.url)}/maxresdefault.jpg`}
         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `https://img.youtube.com/vi/${ytId(it.url)}/hqdefault.jpg` }}
-        alt={it.title || it.idol} draggable={false} className="w-full max-h-[calc(100dvh-300px)] aspect-video object-cover rounded-2xl" />
+        alt={altOf(it)} draggable={false} className="w-full max-h-[calc(100dvh-300px)] aspect-video object-cover rounded-2xl" />
       <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>
     </span>
   )

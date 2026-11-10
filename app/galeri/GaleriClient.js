@@ -7,9 +7,13 @@ import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } 
 import { shareOrCopy } from '../../lib/share'
 import { useT } from '../../lib/i18n'
 import { sameEra } from '../../lib/eras'
+import { colorsInItems, colorKeyOf } from '../../lib/tagSuggest'
+import { useBias, biasFirst } from '../../lib/bias'
+import { markFavNewSeen } from '../../lib/favNew'
+import BiasPicker from '../components/BiasPicker'
 import { visitBaseline, isNewSince } from '../../lib/lastVisit'
 import { fetchTopReacted } from '../../lib/topReacted'
-import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf } from '../../lib/gallery'
+import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf, altOf } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
@@ -45,6 +49,16 @@ function weekNumber(d) {
   t.setUTCDate(t.getUTCDate() + 4 - day)
   const yStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1))
   return Math.ceil(((t - yStart) / 86400000 + 1) / 7)
+}
+
+// "Pilihan minggu ini": 5 item menyebar dari daftar, titik mulai bergeser tiap minggu (logika lama).
+function pickWeekly(items) {
+  const n = Math.min(5, items.length)
+  const step = Math.max(1, Math.floor(items.length / n))
+  const start = weekNumber(new Date()) % items.length
+  const out = []
+  for (let i = 0; i < n; i++) out.push(items[(start + i * step) % items.length])
+  return out
 }
 
 export default function GaleriClient() {
@@ -97,6 +111,7 @@ export default function GaleriClient() {
   }, [])
 
   const idols = ['Semua', ...MEMBERS, 'Hearts2Hearts']
+  const bias = useBias() // fitur 5: mode fokus member (disimpan di perangkat)
 
   // Fitur 7: filter dibaca dari URL sekali saat halaman dibuka (di efek, bukan saat render,
   // supaya HTML server dan klien sama), lalu setiap perubahan filter ditulis balik ke URL.
@@ -123,6 +138,8 @@ export default function GaleriClient() {
   const groups = [...new Set((items || []).map((i) => i.group_name).filter(Boolean))]
   const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
   // Chip tag hanya muncul untuk tag yang benar-benar dipakai (sebelum admin menandai apa pun = tersembunyi).
+  // Fitur 4: chip warna, hanya warna yang memang disebut di judul koleksi.
+  const usedColors = useMemo(() => colorsInItems(items || []), [items])
   const usedTags = TAGS.filter(([k]) => (items || []).some((i) => tagsOf(i).includes(k)))
 
   const idolCover = useMemo(() => {
@@ -141,15 +158,17 @@ export default function GaleriClient() {
   }, [items])
 
   // "Pilihan minggu ini" (dulu "Sorotan Minggu Ini"): 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
+  // Fitur 5: dengan mode fokus, sampel mingguan diambil dari item member itu (cara pilih sama),
+  // kecuali itemnya kurang dari 5. Tanpa mode fokus: persis seperti sebelumnya.
   const featuredList = useMemo(() => {
     if (!items || items.length === 0) return []
-    const n = Math.min(5, items.length)
-    const step = Math.max(1, Math.floor(items.length / n))
-    const start = weekNumber(new Date()) % items.length
-    const out = []
-    for (let i = 0; i < n; i++) out.push(items[(start + i * step) % items.length])
-    return out
-  }, [items])
+    const biasItems = bias ? items.filter((it) => namesOf(it).includes(bias)) : []
+    const items_ = biasItems.length >= 5 ? biasItems : items
+    return pickWeekly(items_)
+  }, [items, bias])
+
+  // Fitur 12: galeri yang sudah dimuat = foto baru sudah "dilihat" → lencana di navigasi hilang.
+  useEffect(() => { if (items && items.length) markFavNewSeen() }, [items])
 
   // Baru ditambahkan sejak kunjungan terakhir (fitur 5). items sudah urut terbaru dulu.
   const newItems = useMemo(() => (items || []).filter((it) => isNewSince(it, baseline)), [items, baseline])
@@ -185,8 +204,10 @@ export default function GaleriClient() {
     list = [...list]
     if (sort === 'terlama') list.reverse()
     if (sort === 'acak') list = shuffleStable(list, seed)
+    // Fitur 5: di tampilan "Semua", foto member fokus tampil lebih dulu (urutan pilihan tetap berlaku).
+    if (bias && idol === 'Semua') list = biasFirst(list, bias, namesOf)
     return list
-  }, [items, idol, group, era, tag, q, sort, seed, mediaType])
+  }, [items, idol, group, era, tag, q, sort, seed, mediaType, bias])
 
   const filtered = idol !== 'Semua' || group !== 'Semua' || era !== 'Semua' || tag !== 'Semua' || mediaType !== 'semua' || q.trim() !== ''
   function resetFilters() {
@@ -262,7 +283,7 @@ export default function GaleriClient() {
           <ol className="mx-auto grid max-w-3xl grid-cols-3 gap-3 sm:grid-cols-6">
             {topItems.map(({ it, jumlah }, i) => (
               <li key={it.id}>
-                <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={t('Peringkat {n}: {judul}, {j} reaksi minggu ini', { n: i + 1, judul: it.title || it.idol, j: jumlah })}>
+                <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={t('Peringkat {n}: {judul}, {j} reaksi minggu ini', { n: i + 1, judul: altOf(it), j: jumlah })}>
                   {it.type === 'video'
                     ? <span className="grid aspect-[3/4] w-full place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
                     : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
@@ -282,7 +303,7 @@ export default function GaleriClient() {
           </p>
           <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-1 pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
             {newItems.slice(0, 12).map((it, i) => (
-              <button key={it.id} onClick={() => setSpot({ items: newItems, index: i })} className="relative shrink-0" aria-label={t('Buka {judul}', { judul: it.title || it.idol })}>
+              <button key={it.id} onClick={() => setSpot({ items: newItems, index: i })} className="relative shrink-0" aria-label={t('Buka {judul}', { judul: altOf(it) })}>
                 {it.type === 'video'
                   ? <span className="grid h-32 w-24 place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
                   : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" width={96} height={128} className="h-32 w-24 rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
@@ -341,6 +362,7 @@ export default function GaleriClient() {
         {shown.length > 1 && (
           <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
         )}
+        <BiasPicker />
       </div>
 
       <div className="flex flex-wrap justify-center gap-2 mb-3">
@@ -381,6 +403,18 @@ export default function GaleriClient() {
             <button key={n} onClick={() => setEra(n)} aria-pressed={era === n}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
               {n === 'Semua' ? t('Semua') : n}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {usedColors.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-1.5 mb-3" role="group" aria-label={t('Cari per warna')}>
+          <span className="self-center text-xs font-bold text-plum/50 dark:text-milk/50" aria-hidden>🎨</span>
+          {usedColors.map((k) => (
+            <button key={k} onClick={() => setQ(colorKeyOf(q) === k ? '' : k)} aria-pressed={colorKeyOf(q) === k}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize ${colorKeyOf(q) === k ? 'bg-plum text-milk border-plum dark:bg-milk dark:text-plum dark:border-milk' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
+              {t(k)}
             </button>
           ))}
         </div>

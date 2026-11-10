@@ -31,7 +31,7 @@ function walk(d, out = []) {
 // Teks yang diterjemahkan lewat variabel t(label), t(k), t(e.judul), dst. — bukan literal.
 const DYNAMIC = [
   // navigasi
-  'Beranda', 'Galeri', 'Favoritku', 'Jadwal', 'Voting', 'Tentang', 'Linimasa era', 'Koleksiku', 'Tebak member', 'Kredit foto',
+  'Beranda', 'Galeri', 'Favoritku', 'Jadwal', 'Voting', 'Tentang', 'Linimasa era', 'Koleksiku', 'Tebak member', 'Kredit foto', 'Hari ini di H2H', 'Bandingkan era', 'Tebak era', 'Foto potongan', 'Daftar', 'Kalender',
   // urutan, jenis media, tag
   'Terbaru', 'Terlama', 'Acak', 'Semua', 'Foto', 'Video', 'Semua konsep', 'Panggung', 'MV', 'Fansign', 'Bandara', 'Di balik layar',
   // reaksi & laporan
@@ -46,6 +46,13 @@ const DYNAMIC = [
   'Sumber resmi', 'Fansite & sumber lain',
   // judul tab lewat useDocTitle(…)
   'Tidak Ditemukan', 'Admin',
+  // .ics (lib/ics.js memanggil tr(…))
+  'Jam selesai belum diumumkan.', 'Jadwal lengkap: {url}', 'Vote Hearts2Hearts — {acara}', 'Info voting lengkap: {url}', 'Pengingat voting Hearts2Hearts', 'Saatnya vote hari ini: {acara}',
+  // warna (lib/tagSuggest.js COLORS)
+  'merah', 'pink', 'ungu', 'biru', 'hijau', 'kuning', 'oranye', 'cokelat', 'hitam', 'putih', 'abu-abu', 'emas', 'perak',
+  // pesan dari lib/turnstile.js
+  'Verifikasi anti-spam gagal. Coba lagi.', 'Reaksi gagal dikirim. Coba lagi.',
+  'File bukan file cadangan yang valid.',
   // pesan dari lib/
   'Link disalin ✓', 'Gagal menyalin link', 'Kode tidak dikenali — kode favorit diawali "H2H1-".', 'Kode rusak — pastikan tersalin utuh.',
   'Kode terpotong — pastikan tersalin utuh.', 'File bukan file favorit yang valid.', 'Kode tidak dikenali — kode koleksi diawali "H2HK1-".',

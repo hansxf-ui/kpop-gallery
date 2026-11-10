@@ -14,9 +14,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dir = mkdtempSync(join(tmpdir(), 'h2h-quiz-'))
 writeFileSync(join(dir, 'supabase.mjs'), "export const ytId = () => 'x'\nexport const imgOpt = (u) => u\n")
-writeFileSync(join(dir, 'gallery.mjs'), readFileSync(join(root, 'lib/gallery.js'), 'utf8').replace("from './supabase'", "from './supabase.mjs'"))
-writeFileSync(join(dir, 'quiz.mjs'), readFileSync(join(root, 'lib/quiz.js'), 'utf8').replace("from './gallery'", "from './gallery.mjs'"))
-const { quizPool, makeRound, fileKey } = await import(pathToFileURL(join(dir, 'quiz.mjs')).href)
+writeFileSync(join(dir, 'tagSuggest.mjs'), readFileSync(join(root, 'lib/tagSuggest.js'), 'utf8'))
+writeFileSync(join(dir, 'gallery.mjs'), readFileSync(join(root, 'lib/gallery.js'), 'utf8').replace("from './supabase'", "from './supabase.mjs'").replace("from './tagSuggest'", "from './tagSuggest.mjs'"))
+writeFileSync(join(dir, 'eras.mjs'), readFileSync(join(root, 'lib/eras.js'), 'utf8'))
+writeFileSync(join(dir, 'quiz.mjs'), readFileSync(join(root, 'lib/quiz.js'), 'utf8').replace("from './gallery'", "from './gallery.mjs'").replace("from './eras'", "from './eras.mjs'"))
+const { quizPool, makeRound, fileKey, pickUnique, eraPool, makeEraRound, makeCropRound, eraOf } = await import(pathToFileURL(join(dir, 'quiz.mjs')).href)
 
 const B = 'https://x.supabase.co/storage/v1/object/public/gallery/'
 const MEMBERS = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON']
@@ -70,4 +72,49 @@ test('ronde tidak pernah berisi file yang sama dua kali (300 ronde, pool mentah)
 
 test('jumlah soal dibatasi jumlah file unik', () => {
   assert.equal(makeRound(quizPool(dupItems)).length, 9)
+})
+
+test('mode fokus: sampai 4 soal dari member fokus, tanpa file berulang', () => {
+  const pool = quizPool([...solo, ...MEMBERS.map((m, i) => ({ id: 'x' + i, idol: 'CARMEN', type: 'photo', url: `${B}c${i}.jpg` }))])
+  for (let t = 0; t < 100; t++) {
+    const r = makeRound(pool, 10, Math.random, { prefer: (it) => it.idol === 'CARMEN', preferCount: 4 })
+    assert.equal(r.length, 10)
+    assert.ok(r.filter((q) => q.answer === 'CARMEN').length >= 4)
+    assert.equal(new Set(r.map((q) => fileKey(q.it.url))).size, 10)
+  }
+  assert.equal(pickUnique(dupItems, 10, Math.random, { prefer: (it) => it.idol === 'JUUN', preferCount: 4 }).filter((it) => it.url.includes('iconic-3')).length <= 1, true)
+})
+
+const ERAS = ['The Chase', 'Focus', 'focus', 'RUDE!', 'Lemon Tang', 'ICONIC HEART']
+const eraItems = [
+  ...ERAS.flatMap((e, i) => [0, 1, 2].map((k) => ({ id: `e${i}${k}`, idol: k ? 'JIWOO' : 'JIWOO & IAN', type: 'photo', era: e, url: `${B}era-${i}-${k}.jpg` }))),
+  { id: 'dupe', idol: 'IAN', type: 'photo', era: 'Focus', url: `${B}era-1-0.jpg` }, // file sama dengan e10
+  { id: 'noera', idol: 'IAN', type: 'photo', era: 'Era Fiktif', url: `${B}x.jpg` },
+  { id: 'vid', idol: 'IAN', type: 'video', era: 'Focus', url: `${B}v.mp4` },
+]
+
+test('tebak era: hanya era dari daftar rilisan, jawaban benar, pilihan unik, tanpa file berulang', () => {
+  const pool = eraPool(eraItems)
+  assert.ok(!pool.some((it) => it.id === 'noera' || it.id === 'vid' || it.id === 'dupe'))
+  for (let t = 0; t < 200; t++) {
+    const r = makeEraRound(pool)
+    assert.equal(r.length, 10)
+    assert.equal(new Set(r.map((q) => fileKey(q.it.url))).size, 10)
+    for (const q of r) {
+      assert.equal(q.answer, eraOf(q.it))
+      assert.ok(q.options.includes(q.answer))
+      assert.equal(new Set(q.options).size, q.options.length)
+      assert.ok(q.options.length >= 2 && q.options.length <= 4)
+    }
+  }
+  assert.deepEqual(makeEraRound(eraPool([eraItems[0]])), [], 'butuh minimal 2 era')
+})
+
+test('foto potongan: soal mode biasa + titik zoom dalam batas, tanpa file berulang', () => {
+  const r = makeCropRound(quizPool(dupItems))
+  assert.equal(new Set(r.map((q) => fileKey(q.it.url))).size, r.length)
+  for (const q of r) {
+    assert.ok(q.crop.zoom > 1 && q.crop.x >= 20 && q.crop.x <= 80 && q.crop.y >= 12 && q.crop.y <= 62)
+    assert.equal(q.answer, q.it.idol)
+  }
 })

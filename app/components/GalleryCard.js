@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { imgOpt } from '../../lib/supabase'
 import { supabaseLoader, hasDimensions } from '../../lib/imageLoader'
-import { thumbOf, albumKeysOf } from '../../lib/gallery'
+import { thumbOf, albumKeysOf, altOf } from '../../lib/gallery'
 
 // Kartu grid bersama untuk /galeri, /idol/[name], dan /favorit.
 // - Tombol hati = <button> sendiri (dulu <span role="button"> di dalam <button>: tidak bisa
@@ -44,14 +44,14 @@ export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true,
         <div className={`relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049] ${placeholder}`}>
           {sized
             ? <Image loader={supabaseLoader} src={it.url} width={Number(it.width)} height={Number(it.height)} sizes={SIZES}
-                alt={label} onLoad={() => setLoaded(true)} onError={() => setLoaded(true)}
+                alt={altOf(it)} onLoad={() => setLoaded(true)} onError={() => setLoaded(true)}
                 className={`h-auto w-full transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`} />
             : it.type === 'video'
             ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline onLoadedData={() => setLoaded(true)} onError={() => setLoaded(true)} className="w-full" />
             : <img
                 ref={(el) => { if (el && el.complete && el.naturalWidth && !loaded) setLoaded(true) }}
                 src={big} srcSet={srcSet} sizes={srcSet ? SIZES : undefined}
-                alt={label} loading="lazy" decoding="async"
+                alt={altOf(it)} loading="lazy" decoding="async"
                 onLoad={() => setLoaded(true)} onError={() => setLoaded(true)}
                 className={`w-full transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`} />}
           {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}

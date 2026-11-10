@@ -6,23 +6,25 @@ import { nextOccurrences } from '../../lib/specialDates'
 // Hitung mundur ulang tahun member & anniversary debut (fitur 1).
 // Dirender setelah mount saja: tanggal "hari ini" bergantung zona waktu pengunjung,
 // jadi tidak boleh dihitung di server (hindari hydration mismatch).
-export default function SpecialCountdown({ count = 3 }) {
+// now (opsional): tanggal patokan — dipakai /hari-ini?tanggal=… untuk mencoba hari lain.
+export default function SpecialCountdown({ count = 3, now = null, className = 'mt-10' }) {
   const t = useT()
+  const { lang } = useLang() // dipanggil sebelum return awal (aturan hooks)
   const [list, setList] = useState(null)
+  const nowMs = now ? now.getTime() : null
   useEffect(() => {
-    const update = () => setList(nextOccurrences().slice(0, count))
+    const update = () => setList(nextOccurrences(nowMs ? new Date(nowMs) : new Date()).slice(0, count))
     update()
-    const t = setInterval(update, 60 * 60 * 1000) // ganti hari saat halaman lama terbuka
-    return () => clearInterval(t)
-  }, [count])
+    const timer = setInterval(update, 60 * 60 * 1000) // ganti hari saat halaman lama terbuka
+    return () => clearInterval(timer)
+  }, [count, nowMs])
   // Ruang cadangan seukuran hasil akhir (judul + 3 kartu): bertumpuk di HP, berjajar di layar lebar.
   // Dulu tingginya 118px di semua layar, jadi di HP konten di bawahnya melompat ±300px.
-  if (!list) return <div className="mt-10 h-[470px] sm:h-[150px]" aria-hidden />
+  if (!list) return <div className={`${className} h-[470px] sm:h-[150px]`} aria-hidden />
 
-  const { lang } = useLang()
   const fmt = (d) => d.toLocaleDateString(lang === 'en' ? 'en-GB' : 'id-ID', { day: 'numeric', month: 'long' })
   return (
-    <section className="mt-10" aria-labelledby="hitung-mundur">
+    <section className={className} aria-labelledby="hitung-mundur">
       <h2 id="hitung-mundur" className="mb-3 text-center text-[10px] font-bold tracking-[0.22em] text-plum/50 dark:text-milk/50">
         <span className="text-gold">●</span>&nbsp; {t('HARI SPESIAL BERIKUTNYA')}
       </h2>

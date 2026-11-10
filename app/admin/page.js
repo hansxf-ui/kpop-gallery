@@ -9,15 +9,18 @@ import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
 import { downloadBlob } from '../../lib/download'
-import { TAGS } from '../../lib/gallery'
+import { TAGS, tagLabel } from '../../lib/gallery'
+import { suggestTags } from '../../lib/tagSuggest'
 import AdminReports from '../components/AdminReports'
+import AdminTagSuggest from '../components/AdminTagSuggest'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
 let qid = 0
 
 // Pilihan tag konsep/acara (fitur 4). Kolom tags baru ada setelah migrasi 06.
-function TagPicker({ value, onChange }) {
+// suggestFrom: teks (judul) untuk saran tag otomatis (fitur 4) — saran tidak tersimpan sebelum admin menekan simpan.
+function TagPicker({ value, onChange, suggestFrom = '' }) {
   const t = useT()
   const toggle = (k) => onChange(value.includes(k) ? value.filter((x) => x !== k) : [...value, k])
   return (
@@ -28,6 +31,15 @@ function TagPicker({ value, onChange }) {
           <input type="checkbox" className="sr-only" checked={value.includes(k)} onChange={() => toggle(k)} />#{t(label)}
         </label>
       ))}
+      {suggestTags(suggestFrom, value).length > 0 && (
+        <span className="flex w-full flex-wrap items-center gap-1.5 text-xs">
+          <span className="font-bold text-plum/60 dark:text-milk/60">{t('Saran dari judul:')}</span>
+          {suggestTags(suggestFrom, value).map((k) => (
+            <button key={k} type="button" onClick={() => onChange([...value, k])}
+              className="rounded-full border border-dashed border-gold px-2.5 py-0.5 font-bold text-gold">+ #{t(tagLabel(k))}</button>
+          ))}
+        </span>
+      )}
     </fieldset>
   )
 }
@@ -60,7 +72,7 @@ export default function Admin() {
   const [items, setItems] = useState([])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
-  const [f, setF] = useState({ idol: '', title: '', group: '', era: '', note: '', yt: '', date: '', tags: [] })
+  const [f, setF] = useState({ idol: '', title: '', group: '', era: '', note: '', yt: '', date: '', tags: [], alt: '' })
   const [queue, setQueue] = useState([]) // {id, file, url, rotation, status}
   const [dragOver, setDragOver] = useState(false)
   const [editing, setEditing] = useState(null) // item id being edited
@@ -141,7 +153,7 @@ export default function Admin() {
     // Per item digeser +1 menit supaya urutan dalam batch tetap terjaga.
     const baseTime = f.date ? new Date(`${f.date}T00:00:00`).getTime() : null
     const backdate = (i) => (baseTime ? { created_at: new Date(baseTime + i * 60000).toISOString() } : {})
-    const tagExtra = f.tags.length ? { tags: f.tags } : {}
+    const tagExtra = { ...(f.tags.length ? { tags: f.tags } : {}), ...(f.alt.trim() ? { alt_text: f.alt.trim().slice(0, 300) } : {}) }
 
     if (queue.length === 0) {
       let ok = 0
@@ -224,7 +236,7 @@ export default function Admin() {
 
   function startEdit(it) {
     setEditing(it.id)
-    setEditVal({ idol: it.idol, title: it.title || '', group: it.group_name || '', era: it.era || '', note: it.note || '', date: it.created_at ? String(it.created_at).slice(0, 10) : '', tags: Array.isArray(it.tags) ? it.tags : [] })
+    setEditVal({ idol: it.idol, title: it.title || '', group: it.group_name || '', era: it.era || '', note: it.note || '', date: it.created_at ? String(it.created_at).slice(0, 10) : '', tags: Array.isArray(it.tags) ? it.tags : [], alt: it.alt_text || '' })
   }
   async function saveEdit(id) {
     const payload = {
@@ -247,9 +259,11 @@ export default function Admin() {
       }
     }
     payload.tags = editVal.tags || []
+    payload.alt_text = (editVal.alt || '').trim().slice(0, 300) || null
     let { data: saved, error } = await sb.from('items').update(payload).eq('id', id).select('id')
-    if (error && isMissingColumnError(error)) { // migrasi 06 belum jalan -> simpan tanpa tags
+    if (error && isMissingColumnError(error)) { // migrasi 06/13 belum jalan -> simpan tanpa tags/alt_text
       delete payload.tags
+      delete payload.alt_text
       ;({ data: saved, error } = await sb.from('items').update(payload).eq('id', id).select('id'))
     }
     // 0 baris tanpa error = ditolak RLS (bukan admin / sesi habis) — jangan tutup form seolah tersimpan.
@@ -319,7 +333,10 @@ export default function Admin() {
               <input placeholder={t('Era (opsional, mis. Focus)')} value={f.era} onChange={(e) => setF({ ...f, era: e.target.value })} className={box} />
             </div>
             <input placeholder={t('Catatan pribadi (opsional, cuma kamu yang lihat)')} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className={box} />
-            <TagPicker value={f.tags} onChange={(tags) => setF({ ...f, tags })} />
+            <TagPicker value={f.tags} onChange={(tags) => setF({ ...f, tags })} suggestFrom={f.title} />
+            {/* Fitur 14: kosong = judul dipakai sebagai teks alternatif seperti sebelumnya. */}
+            <input placeholder={t('Teks alternatif (opsional) — gambarkan isi foto, mis. "Carmen tersenyum, kemeja putih, latar biru"')}
+              value={f.alt} maxLength={300} onChange={(e) => setF({ ...f, alt: e.target.value })} aria-label={t('Teks alternatif')} className={box} />
             <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
               {t('Tanggal tayang (opsional — isi buat foto lama supaya masuk kategori terlama)')}
               <input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} className={`${box} mt-1`} />
@@ -367,6 +384,8 @@ export default function Admin() {
             <button type="button" onClick={() => sb.auth.signOut()} className="ml-3 text-sm underline dark:text-milk">{t('Keluar')}</button>
           </form>
           {msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
+
+          <AdminTagSuggest items={items} onSaved={load} />
 
           <AdminReports items={items} onEdit={(it) => { startEdit(it); setTimeout(() => document.getElementById(`item-${it.id}`)?.scrollIntoView({ block: 'center' }), 50) }} />
 
@@ -427,7 +446,9 @@ export default function Admin() {
                       <input value={editVal.era} onChange={(e) => setEditVal({ ...editVal, era: e.target.value })} placeholder="Era" className={box} />
                     </div>
                     <input value={editVal.note} onChange={(e) => setEditVal({ ...editVal, note: e.target.value })} placeholder={t('Catatan pribadi')} className={box} />
-                    <TagPicker value={editVal.tags || []} onChange={(tags) => setEditVal({ ...editVal, tags })} />
+                    <TagPicker value={editVal.tags || []} onChange={(tags) => setEditVal({ ...editVal, tags })} suggestFrom={editVal.title} />
+                    <input value={editVal.alt || ''} maxLength={300} onChange={(e) => setEditVal({ ...editVal, alt: e.target.value })}
+                      placeholder={t('Teks alternatif (opsional) — gambarkan isi foto, mis. "Carmen tersenyum, kemeja putih, latar biru"')} aria-label={t('Teks alternatif')} className={box} />
                     <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
                       {t('Tanggal tayang (format YYYY-MM-DD — ubah buat membetulkan tanggal)')}
                       <input value={editVal.date} onChange={(e) => setEditVal({ ...editVal, date: e.target.value })} placeholder="2026-10-21" inputMode="numeric" className={`${box} mt-1`} />

@@ -1,7 +1,8 @@
 'use client'
-import { useT } from '../../lib/i18n'
+import { useT, useLang } from '../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { sb } from '../../lib/supabase'
+import { protectedWrite } from '../../lib/turnstile'
 
 // Gambar emoji asli Apple (gaya iOS), dimuat dari CDN supaya tampilnya
 // sama di semua HP — termasuk Android.
@@ -45,6 +46,7 @@ function loadMine(itemId) {
 
 export default function Reactions({ itemId }) {
   const t = useT()
+  const { lang } = useLang()
   const [counts, setCounts] = useState({})
   const [mine, setMine] = useState([]) // [{emoji, id}]
   const [info, setInfo] = useState('')
@@ -112,14 +114,22 @@ export default function Reactions({ itemId }) {
         setCounts((c) => ({ ...c, [key]: (c[key] || 0) + 1 }))
         const token = newToken()
         let id = null
-        let { data, error } = await sb.rpc('add_reaction', { p_item: itemId, p_emoji: key, p_token: token })
+        let data, error
         let saved = token
-        if (noRpc(error)) {
+        // Fitur 9: dengan kunci Turnstile terpasang, reaksi lewat /api/lindung (diverifikasi anti-spam).
+        let gate = { fallback: true }
+        try { gate = await protectedWrite('reaksi', { item_id: itemId, emoji: key, owner: token }, lang) } catch (e) {
+          error = e
+          setInfo(t(e.message)); setTimeout(() => setInfo(''), 2500)
+        }
+        if (gate.ok) id = gate.data.id ?? null
+        else if (gate.fallback && !error) ({ data, error } = await sb.rpc('add_reaction', { p_item: itemId, p_emoji: key, p_token: token }))
+        if (!gate.ok && noRpc(error)) {
           // Migrasi 09 belum dijalankan → cara lama (tanpa token, tidak bisa dibatalkan dengan aman).
           ;({ data, error } = await sb.from('reactions').insert({ item_id: itemId, emoji: key }).select('id'))
           saved = null
           if (!error) id = data?.[0]?.id ?? null
-        } else if (!error) id = typeof data === 'number' || typeof data === 'string' ? data : null
+        } else if (!gate.ok && !error) id = typeof data === 'number' || typeof data === 'string' ? data : null
         if (error) { // gagal → rollback hitungan optimistis, jangan catat lokal
           setCounts((c) => ({ ...c, [key]: Math.max(0, (c[key] || 1) - 1) }))
           return

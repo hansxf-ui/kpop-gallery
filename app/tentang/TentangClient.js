@@ -4,6 +4,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import { RELEASES, labelRilis } from '../../lib/eras'
 import { useT, useLang, useDocTitle } from '../../lib/i18n'
+import FandomStats from '../components/FandomStats'
 
 // Isi halaman Tentang. Teks Indonesia = kunci kamus lib/i18n-en-data.js.
 // Posisi member memang istilah bahasa Inggris (Main Vocal, Leader, …) — tidak diterjemahkan.
@@ -85,6 +86,7 @@ export default function TentangClient() {
       </section>
 
       <section>
+        <FandomStats className="mb-10" />
         <h2 className={h2}>{t('Tentang website ini')}</h2>
         <p className={p}>
           {t('Hearts2Hearts Gallery adalah tempat menyimpan koleksi foto dan video favorit, dibuat oleh seorang penggemar untuk dinikmati santai.')}{' '}

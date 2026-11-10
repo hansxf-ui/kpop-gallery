@@ -6,48 +6,14 @@ import SiteNav from '../components/SiteNav'
 import { JADWAL, RIWAYAT_2026, TIPE_LABEL } from '../../lib/jadwal'
 import { buildIcs, icsFilename } from '../../lib/ics'
 import { downloadBlob } from '../../lib/download'
+import { parseTanggal, hitungMundur, hariIni, sudahLewat } from '../../lib/schedule'
+import { replaceQuery } from '../../lib/galeriUrl'
+import MonthCalendar from '../components/MonthCalendar'
 
 // Unduh file .ics (fitur 13) — dibuka HP/laptop langsung di aplikasi kalender.
 function unduhIcs(events, filename, tr) {
   const ics = buildIcs(events, { siteUrl: window.location.origin, tr })
   downloadBlob(new Blob([ics], { type: 'text/calendar;charset=utf-8' }), filename)
-}
-
-// Tanggal-saja ('2026-10-19') di-parse sebagai tanggal kalender LOKAL murni — bukan
-// UTC tengah malam — supaya harinya tidak bergeser sehari gara-gara zona waktu pengunjung.
-function parseTanggal(t) {
-  if (!t) return null
-  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
-    const [y, m, d] = t.split('-').map(Number)
-    return new Date(y, m - 1, d)
-  }
-  return new Date(t)
-}
-
-function hitungMundur(target, nowMs) {
-  const selisih = parseTanggal(target).getTime() - nowMs
-  if (selisih <= 0) return null
-  const hari = Math.floor(selisih / 86400000)
-  const jam = Math.floor((selisih % 86400000) / 3600000)
-  const menit = Math.floor((selisih % 3600000) / 60000)
-  const detik = Math.floor((selisih % 60000) / 1000)
-  return { hari, jam, menit, detik }
-}
-
-function hariIni(tanggal) {
-  if (!tanggal) return false
-  const d = parseTanggal(tanggal)
-  const now = new Date()
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
-}
-
-function sudahLewat(tanggal) {
-  if (!tanggal) return false
-  const d = parseTanggal(tanggal)
-  const now = new Date()
-  const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const nDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  return dDay < nDay
 }
 
 // Tanggal "terakhir dicek" footer — nilainya sama seperti sebelumnya (10 Nov 2026), hanya
@@ -133,6 +99,14 @@ export default function JadwalPage() {
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
   }, [])
+  // Fitur 13: tampilan Daftar (bawaan) atau Kalender bulanan — ?tampilan=kalender bisa dibagikan.
+  const [tampilan, setTampilan] = useState('daftar')
+  const [hariBuka, setHariBuka] = useState(null) // tanggal patokan kalender, diisi setelah mount
+  useEffect(() => {
+    setHariBuka(new Date())
+    if (new URLSearchParams(window.location.search).get('tampilan') === 'kalender') setTampilan('kalender')
+  }, [])
+  function pilihTampilan(v) { setTampilan(v); replaceQuery({ tampilan: v === 'kalender' ? v : null }) }
   const upcoming = JADWAL.filter(e => !sudahLewat(e.tanggal))
     .sort((a, b) => (a.tanggal || '9999') > (b.tanggal || '9999') ? 1 : -1)
   const lewat = JADWAL.filter(e => sudahLewat(e.tanggal))
@@ -151,6 +125,18 @@ export default function JadwalPage() {
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">{t('Comeback, rilisan & acara — khusus H2H')}</p>
       </header>
 
+      <div className="mb-6 flex justify-center gap-1.5" role="group" aria-label={t('Tampilan jadwal')}>
+        {[['daftar', '📋', 'Daftar'], ['kalender', '🗓️', 'Kalender']].map(([v, e, label]) => (
+          <button key={v} onClick={() => pilihTampilan(v)} aria-pressed={tampilan === v}
+            className={`rounded-full border px-4 py-1.5 text-sm font-bold ${tampilan === v ? 'border-plum bg-plum text-milk dark:border-gold dark:bg-gold dark:text-plum' : 'border-rose/50 bg-white/70 dark:border-rose/20 dark:bg-white/10 dark:text-milk'}`}>
+            <span aria-hidden>{e}</span> {t(label)}
+          </button>
+        ))}
+      </div>
+
+      {tampilan === 'kalender' && hariBuka && <MonthCalendar now={hariBuka} />}
+
+      {tampilan === 'daftar' && (<>
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-bold uppercase tracking-widest text-gold">✦ {t('Akan datang')}</p>
@@ -182,6 +168,8 @@ export default function JadwalPage() {
           </ul>
         </section>
       )}
+
+      </>)}
 
       <p className="mt-10 text-center text-xs text-plum/40 dark:text-milk/40">
         {t('Data diverifikasi dari pengumuman resmi & media · terakhir dicek')} {formatCek(TERAKHIR_DICEK, loc)}

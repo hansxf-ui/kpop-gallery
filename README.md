@@ -95,6 +95,19 @@ create policy "admin update settings" on settings for update to authenticated us
   Pengumuman banner punya kolom versi Inggris opsional di admin.
 - Tombol "Tambah ke kalender" (.ics) di setiap acara `/jadwal`
 - `/kredit` — daftar sumber/kredit foto dari kolom credit
+- `/hari-ini` — hitung mundur, acara hari ini, voting yang buka, foto kenangan harian (+ kartu ulang tahun di hari ulang tahun member)
+- Pengingat voting harian (.ics berulang sampai voting tutup) di `/voting`
+- `/banding` — satu member di dua era berdampingan
+- Cari per warna & konsep, saran tag otomatis di admin
+- Mode fokus member (bias) di galeri & kuis — disimpan di perangkat
+- `/koleksi/lihat?kode=…` — album bersama read-only dari kode koleksi
+- Statistik fandom kecil di beranda & Tentang
+- Anti-spam Cloudflare Turnstile untuk laporan & reaksi (opsional, lewat env var — lihat di bawah)
+- Satu file cadangan favorit + koleksi
+- Kuis mode Tebak era & Foto potongan
+- Lencana "♥ N baru" untuk foto baru dari member favorit
+- `/jadwal` tampilan kalender bulanan
+- Teks alternatif foto (kolom opsional di admin)
 
 ## Migrasi database (jalankan sekali di Supabase → SQL Editor)
 File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan tidak mengubah data yang ada.
@@ -113,6 +126,14 @@ File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan ti
 8. `20261112_08_reports.sql` — tabel laporan foto (pengunjung hanya kirim, admin baca). Butuh migrasi 03.
 9. `20261112_09_reaction_tokens.sql` — reaksi dengan token + RPC `add_reaction`/`remove_reaction`. Butuh migrasi 05.
 10. `20261113_10_harden_reactions_reports.sql` — sisip reaksi langsung hanya `item_id`/`emoji`, view mingguan hanya 4 emoji, maks. 10 laporan terbuka per item. Butuh 05, 07, 08, 09.
+11. `20261114_11_fandom_stats.sql` — view statistik fandom (sebelum dijalankan, situs menghitung sendiri).
+12. `20261114_12_spam_gate_strict.sql` — **OPSIONAL**, mode ketat anti-spam. Baca syarat di file dulu.
+13. `20261114_13_alt_text.sql` — kolom opsional `alt_text` (teks alternatif foto).
+
+## Anti-spam Turnstile (opsional)
+Isi di Vercel → Project → Settings → Environment Variables (lihat `.env.example`):
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, dan (hanya untuk mode ketat) `SUPABASE_SERVICE_ROLE_KEY`.
+Kosong = laporan & reaksi tetap jalan seperti biasa.
 
 ## Tes
 `npm test` — logika kuis (tanpa foto ganda dalam satu ronde) dan kelengkapan kamus bahasa Inggris

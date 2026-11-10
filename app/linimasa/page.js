@@ -3,7 +3,7 @@ import { useT, useLang, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { sb, fetchAllItems, imgOpt } from '../../lib/supabase'
-import { thumbOf } from '../../lib/gallery'
+import { thumbOf, altOf } from '../../lib/gallery'
 import { groupByEra, formatRilis } from '../../lib/eras'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -62,7 +62,7 @@ export default function Linimasa() {
             <div className="mt-3 flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
               {g.items.filter((it) => it.type !== 'video').slice(0, 8).map((it) => (
                 <Link key={it.id} href={`/galeri?item=${it.id}`} className="shrink-0">
-                  <img src={imgOpt(thumbOf(it), 300)} alt={it.title || it.idol} loading="lazy" decoding="async"
+                  <img src={imgOpt(thumbOf(it), 300)} alt={altOf(it)} loading="lazy" decoding="async"
                     width={96} height={128} className="h-32 w-24 rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />
                 </Link>
               ))}

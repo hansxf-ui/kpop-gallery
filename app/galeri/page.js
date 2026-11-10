@@ -1,4 +1,5 @@
-import { sb, ytId, imgOpt } from '../../lib/supabase'
+import { sb, ytId, imgOpt, isMissingColumn } from '../../lib/supabase'
+import { altOf } from '../../lib/gallery'
 import { parseGaleriQuery } from '../../lib/galeriUrl'
 import GaleriClient from './GaleriClient'
 
@@ -7,21 +8,21 @@ const BASE_TITLE = 'Galeri · Hearts2Hearts Gallery'
 // Ambil satu item untuk preview link. Dibatasi 2,5 detik supaya halaman tidak ikut lambat
 // kalau database sedang lambat — kalau gagal, preview jatuh ke preview umum situs.
 async function ambilItem(id) {
-  try {
-    const { data } = await sb
-      .from('items')
-      .select('id, title, idol, type, url, era')
-      .eq('id', id)
-      .abortSignal(AbortSignal.timeout(2500))
-      .maybeSingle()
-    return data || null
-  } catch {
-    return null
+  // alt_text (migrasi 13) untuk teks alternatif gambar preview; kalau kolomnya belum ada, ulangi tanpa.
+  for (const cols of ['id, title, idol, type, url, era, alt_text', 'id, title, idol, type, url, era']) {
+    try {
+      const { data, error } = await sb.from('items').select(cols).eq('id', id).abortSignal(AbortSignal.timeout(2500)).maybeSingle()
+      if (!error) return data || null
+      if (!isMissingColumn(error)) return null
+    } catch {
+      return null
+    }
   }
+  return null
 }
 
 function gambarOg(it) {
-  const alt = it.title || it.idol || 'Hearts2Hearts'
+  const alt = altOf(it)
   if (it.type === 'photo') return { url: imgOpt(it.url, 1200, 75), alt }
   if (it.type === 'youtube') {
     const id = ytId(it.url)
