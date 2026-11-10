@@ -2,7 +2,7 @@
 import { useT, useLang, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { fetchAllItems, imgOpt } from '../../lib/supabase'
+import { sb, fetchAllItems, imgOpt } from '../../lib/supabase'
 import { thumbOf } from '../../lib/gallery'
 import { groupByEra, formatRilis } from '../../lib/eras'
 import ThemeToggle from '../components/ThemeToggle'
@@ -15,13 +15,19 @@ export default function Linimasa() {
   const { lang } = useLang()
   const [items, setItems] = useState(null)
   const [error, setError] = useState(false)
+  const [total, setTotal] = useState(null) // jumlah seluruh item, untuk menghitung yang belum ber-era
   function load() {
     setError(false); setItems(null)
-    fetchAllItems().then(setItems).catch(() => { setItems([]); setError(true) })
+    // Hanya item yang punya era (sisanya cuma dihitung — lewat query count terpisah).
+    fetchAllItems({ filter: (q) => q.not('era', 'is', null).neq('era', '') }).then(setItems).catch(() => { setItems([]); setError(true) })
   }
   useDocTitle('Linimasa Era')
-  useEffect(() => { load() }, [])
-  const { groups, tanpaEra } = useMemo(() => groupByEra(items || []), [items])
+  useEffect(() => {
+    load()
+    sb.from('items').select('id', { count: 'exact', head: true }).then(({ count }) => setTotal(count ?? null))
+  }, [])
+  const { groups, tanpaEra: eraKosong } = useMemo(() => groupByEra(items || []), [items])
+  const tanpaEra = items && total !== null ? Math.max(0, total - items.length) + eraKosong : 0
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-20 page-fade-in">

@@ -2,7 +2,7 @@
 import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { fetchAllItems, imgOpt } from '../../lib/supabase'
+import { sb, fetchAllItems, imgOpt } from '../../lib/supabase'
 import { thumbOf } from '../../lib/gallery'
 import { groupCredits } from '../../lib/credits'
 import ThemeToggle from '../components/ThemeToggle'
@@ -44,14 +44,19 @@ export default function Kredit() {
   const t = useT()
   const [items, setItems] = useState(null)
   const [error, setError] = useState(false)
+  const [total, setTotal] = useState(null)
   function load() {
     setError(false); setItems(null)
-    fetchAllItems().then(setItems).catch(() => { setItems([]); setError(true) })
+    // Hanya item yang punya kredit (jumlah item tanpa kredit dihitung lewat query count terpisah).
+    fetchAllItems({ filter: (q) => q.not('credit', 'is', null) }).then(setItems).catch(() => { setItems([]); setError(true) })
   }
   useDocTitle('Kredit Foto')
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    sb.from('items').select('id', { count: 'exact', head: true }).then(({ count }) => setTotal(count ?? null))
+  }, [])
   const { official, others } = useMemo(() => groupCredits(items || []), [items])
-  const tanpa = items ? items.length - [...official, ...others].reduce((n, g) => n + g.items.length, 0) : 0
+  const tanpa = items && total !== null ? Math.max(0, total - [...official, ...others].reduce((n, g) => n + g.items.length, 0)) : 0
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-20 page-fade-in">
