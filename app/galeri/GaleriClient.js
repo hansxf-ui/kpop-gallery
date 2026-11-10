@@ -80,8 +80,10 @@ export default function GaleriClient() {
     setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setLoadError(true) })
   }
-  // Judul tab diatur server (generateMetadata di page.js), termasuk judul item untuk ?item=.
-  // Dulu efek di sini menimpanya jadi "Galeri · …" begitu halaman aktif.
+  // Judul tab: link ?item= memakai judul item dari server (generateMetadata di page.js) — tidak
+  // ditimpa. Tanpa ?item, judul "Galeri" ikut bahasa aktif.
+  const [itemTitle] = useState(() => typeof window !== 'undefined' && !!parseGaleriQuery(window.location.search).item)
+  useEffect(() => { if (!itemTitle) document.title = `${t('Galeri')} · Hearts2Hearts Gallery` }, [itemTitle, t])
   useEffect(() => {
     loadItems()
     setFavs(getFavorites())

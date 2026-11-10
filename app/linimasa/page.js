@@ -1,5 +1,5 @@
 'use client'
-import { useT, useLang } from '../../lib/i18n'
+import { useT, useLang, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { fetchAllItems, imgOpt } from '../../lib/supabase'
@@ -19,7 +19,7 @@ export default function Linimasa() {
     setError(false); setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setError(true) })
   }
-  useEffect(() => { document.title = 'Linimasa Era · Hearts2Hearts Gallery' }, [])
+  useDocTitle('Linimasa Era')
   useEffect(() => { load() }, [])
   const { groups, tanpaEra } = useMemo(() => groupByEra(items || []), [items])
 

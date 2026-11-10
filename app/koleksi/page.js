@@ -1,5 +1,5 @@
 'use client'
-import { useT } from '../../lib/i18n'
+import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { fetchItemsByIds } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
@@ -30,7 +30,7 @@ export default function Koleksi() {
   const [renaming, setRenaming] = useState('')
   const [pendingDelete, setPendingDelete] = useState(null)
 
-  useEffect(() => { document.title = 'Koleksiku · Hearts2Hearts Gallery' }, [])
+  useDocTitle('Koleksiku')
   useEffect(() => {
     const sync = () => setList(getCollections())
     const syncFav = () => setFavs(getFavorites())
