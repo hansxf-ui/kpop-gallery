@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { fetchAllItems, imgOpt } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
-import { parseGaleriQuery, replaceQuery } from '../../lib/galeriUrl'
+import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } from '../../lib/galeriUrl'
+import { shareOrCopy } from '../../lib/share'
 import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -62,6 +63,8 @@ export default function GaleriClient() {
   const [loadError, setLoadError] = useState(false)
   const [notice, setNotice] = useState('')
   const deepLinkDone = useRef(false) // ?item= di URL sudah diproses (sekali per kunjungan)
+  const [urlReady, setUrlReady] = useState(false) // filter dari URL sudah dibaca
+  const [shareMsg, setShareMsg] = useState('')
   function loadItems() {
     setLoadError(false)
     setItems(null)
@@ -81,6 +84,29 @@ export default function GaleriClient() {
   }, [])
 
   const idols = ['Semua', ...MEMBERS, 'Hearts2Hearts']
+
+  // Fitur 7: filter dibaca dari URL sekali saat halaman dibuka (di efek, bukan saat render,
+  // supaya HTML server dan klien sama), lalu setiap perubahan filter ditulis balik ke URL.
+  useEffect(() => {
+    const f = parseGaleriFilters(window.location.search, idols.slice(1))
+    setIdol(f.idol); setGroup(f.group); setEra(f.era); setMediaType(f.mediaType); setQ(f.q); setSort(f.sort); setSeed(f.seed)
+    setUrlReady(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    if (!urlReady) return
+    // Ketikan pencarian ditunda sebentar supaya riwayat/URL tidak ditulis tiap huruf.
+    const t = setTimeout(() => replaceQuery(filterQueryPatch({ idol, group, era, mediaType, q, sort, seed })), 300)
+    return () => clearTimeout(t)
+  }, [urlReady, idol, group, era, mediaType, q, sort, seed])
+
+  async function shareView() {
+    replaceQuery(filterQueryPatch({ idol, group, era, mediaType, q, sort, seed }))
+    const u = new URL(window.location.href)
+    u.searchParams.delete('item')
+    const msg = await shareOrCopy(u.toString(), 'Hearts2Hearts Gallery')
+    if (msg) { setShareMsg(msg); setTimeout(() => setShareMsg(''), 2200) }
+  }
   const groups = [...new Set((items || []).map((i) => i.group_name).filter(Boolean))]
   const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
 
@@ -142,7 +168,7 @@ export default function GaleriClient() {
   // Link langsung: /galeri?item=<id> membuka item itu di lightbox begitu koleksi selesai dimuat.
   // Kalau item tersaring/belum termuat di grid, dibuka sendirian (spot) supaya tetap tampil.
   useEffect(() => {
-    if (!items || loadError || deepLinkDone.current) return
+    if (!items || loadError || !urlReady || deepLinkDone.current) return
     deepLinkDone.current = true
     const { item } = parseGaleriQuery(window.location.search)
     if (!item) return
@@ -151,7 +177,7 @@ export default function GaleriClient() {
     const it = items.find((x) => x.id === item)
     if (it) setSpot({ items: [it], index: 0 })
     else { setNotice('Item yang dibagikan sudah tidak ada di galeri.'); replaceQuery({ item: null }) }
-  }, [items, loadError, shown])
+  }, [items, loadError, urlReady, shown])
 
   // URL selalu menunjuk item yang sedang dibuka (bisa langsung disalin dari address bar);
   // ditutup = parameter item dihapus.
@@ -288,6 +314,15 @@ export default function GaleriClient() {
             </button>
           ))}
         </div>
+      )}
+
+      {filtered && (
+        <p className="mb-4 text-center">
+          <button onClick={shareView} className="text-xs font-bold text-plum/60 underline underline-offset-4 hover:text-plum dark:text-milk/60 dark:hover:text-milk">
+            🔗 Bagikan tampilan ini
+          </button>
+          {shareMsg && <span role="status" className="ml-2 text-xs font-bold text-gold">{shareMsg}</span>}
+        </p>
       )}
 
       {idol !== 'Semua' && (
