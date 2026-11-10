@@ -13,6 +13,7 @@ import SiteNav from '../components/SiteNav'
 import GalleryCard from '../components/GalleryCard'
 import Lightbox from '../components/Lightbox'
 import ConfirmModal from '../components/ConfirmModal'
+import BackupPanel from '../components/BackupPanel'
 import Skeleton from '../components/Skeleton'
 
 const tombol = 'rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 dark:border-rose/20 font-bold px-4 py-2 text-sm disabled:opacity-50'
@@ -139,6 +140,7 @@ export default function Koleksi() {
         </details>
         {msg && <p role="status" className="mt-3 text-center text-sm font-bold text-plum dark:text-milk">{msg}</p>}
       </section>
+      <BackupPanel onRestored={() => setList(getCollections())} />
 
       {active && (
         <section aria-label={t('Koleksi {nama}', { nama: active.name })}>

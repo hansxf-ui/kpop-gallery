@@ -10,6 +10,7 @@ import GalleryCard from '../components/GalleryCard'
 import ScrollTopButton from '../components/ScrollTopButton'
 import Skeleton from '../components/Skeleton'
 import FavTransfer from '../components/FavTransfer'
+import BackupPanel from '../components/BackupPanel'
 import { readCachedRows, syncOffline } from '../../lib/offline'
 
 export default function Favorit() {
@@ -87,6 +88,7 @@ export default function Favorit() {
         </p>
       )}
       {items !== null && <FavTransfer onImported={load} />}
+      {items !== null && <BackupPanel onRestored={load} />}
       {items === null && <Skeleton />}
       {items && !loadError && items.length === 0 && (
         <p className="text-center text-plum/60 dark:text-milk/60">{t('Belum ada favorit. Ketuk ikon hati di galeri untuk menyimpan.')}</p>

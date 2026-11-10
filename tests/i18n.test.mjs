@@ -52,6 +52,7 @@ const DYNAMIC = [
   'merah', 'pink', 'ungu', 'biru', 'hijau', 'kuning', 'oranye', 'cokelat', 'hitam', 'putih', 'abu-abu', 'emas', 'perak',
   // pesan dari lib/turnstile.js
   'Verifikasi anti-spam gagal. Coba lagi.', 'Reaksi gagal dikirim. Coba lagi.',
+  'File bukan file cadangan yang valid.',
   // pesan dari lib/
   'Link disalin ✓', 'Gagal menyalin link', 'Kode tidak dikenali — kode favorit diawali "H2H1-".', 'Kode rusak — pastikan tersalin utuh.',
   'Kode terpotong — pastikan tersalin utuh.', 'File bukan file favorit yang valid.', 'Kode tidak dikenali — kode koleksi diawali "H2HK1-".',
