@@ -138,7 +138,7 @@ export default function GaleriClient() {
     return map
   }, [items])
 
-  // Sorotan minggu ini: 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
+  // "Pilihan minggu ini" (dulu "Sorotan Minggu Ini"): 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
   const featuredList = useMemo(() => {
     if (!items || items.length === 0) return []
     const n = Math.min(5, items.length)
@@ -248,7 +248,7 @@ export default function GaleriClient() {
 
       {featuredList.length > 0 && (
         <section className="mb-10">
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ {t('Sorotan Minggu Ini')}</p>
+          <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ {t('Pilihan minggu ini')}</p>
           <FeaturedCarousel items={featuredList} onOpen={(i) => setSpot({ items: featuredList, index: i })} />
         </section>
       )}

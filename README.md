@@ -54,7 +54,7 @@ create policy "admin update settings" on settings for update to authenticated us
 - Tombol unduh di tampilan penuh, dan tombol "Wallpaper HP" khusus foto (crop otomatis ke rasio layar HP)
 - Mode gelap (tombol 🌙/☀️ di kanan atas)
 - Penghitung jumlah foto & video di header
-- "Sorotan Minggu Ini" — satu item ditonjolkan besar di beranda, otomatis berganti tiap minggu
+- "Pilihan minggu ini" — carousel 5 item sampel dari seluruh koleksi di galeri, berganti tiap minggu (bukan berdasarkan reaksi)
 - "Kenangan hari ini" — muncul kalau ada item yang diupload di tanggal yang sama tahun-tahun sebelumnya
 - Tema "hari spesial" otomatis — warna situs berubah lebih meriah pas tanggal debut/ulang tahun member, plus banner ucapan
 - Banner pengumuman comeback yang bisa diatur dari admin
