@@ -46,6 +46,8 @@ const DYNAMIC = [
   'Sumber resmi', 'Fansite & sumber lain',
   // judul tab lewat useDocTitle(…)
   'Tidak Ditemukan', 'Admin',
+  // .ics (lib/ics.js memanggil tr(…))
+  'Jam selesai belum diumumkan.', 'Jadwal lengkap: {url}', 'Vote Hearts2Hearts — {acara}', 'Info voting lengkap: {url}', 'Pengingat voting Hearts2Hearts', 'Saatnya vote hari ini: {acara}',
   // pesan dari lib/
   'Link disalin ✓', 'Gagal menyalin link', 'Kode tidak dikenali — kode favorit diawali "H2H1-".', 'Kode rusak — pastikan tersalin utuh.',
   'Kode terpotong — pastikan tersalin utuh.', 'File bukan file favorit yang valid.', 'Kode tidak dikenali — kode koleksi diawali "H2HK1-".',

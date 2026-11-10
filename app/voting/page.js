@@ -5,6 +5,8 @@ import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import { VOTING, VOTING_CARMEN, PANDUAN_APLIKASI } from '../../lib/voting'
 import { hitungMundur, statusVote } from '../../lib/schedule'
+import { buildVotingReminderIcs, votingIcsFilename } from '../../lib/ics'
+import { downloadBlob } from '../../lib/download'
 
 // Format tanggal ikut bahasa aktif (loc = 'id-ID' / 'en-GB').
 // Tanggal "terakhir dicek" footer — nilainya sama seperti sebelumnya (16 Okt 2026), hanya
@@ -70,6 +72,17 @@ function KartuVoting({ v, now }) {
         <ol className="mt-4 ml-5 list-decimal text-sm text-plum/70 dark:text-milk/70 space-y-1.5 leading-relaxed">
           {v.cara.map((c, i) => <li key={i}>{t(c)}</li>)}
         </ol>
+      )}
+      {(st === 'buka' || st === 'segera') && (
+        <p className="mt-4">
+          {/* Fitur 2: satu file kalender, pengingat tiap hari sampai voting tutup. */}
+          <button type="button" onClick={() => {
+            const ics = buildVotingReminderIcs(v, { siteUrl: window.location.origin, tr: t })
+            if (ics) downloadBlob(new Blob([ics], { type: 'text/calendar;charset=utf-8' }), votingIcsFilename(v))
+          }} className="rounded-full border border-rose/50 bg-white/80 px-4 py-1.5 text-xs font-bold text-plum dark:border-rose/25 dark:bg-white/10 dark:text-milk">
+            🔔 {t('Pengingat harian sampai voting tutup (.ics)')}
+          </button>
+        </p>
       )}
       {v.link && (
         <p className="mt-4">
