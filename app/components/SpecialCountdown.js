@@ -15,7 +15,9 @@ export default function SpecialCountdown({ count = 3 }) {
     const t = setInterval(update, 60 * 60 * 1000) // ganti hari saat halaman lama terbuka
     return () => clearInterval(t)
   }, [count])
-  if (!list) return <div className="mt-10 h-[118px]" aria-hidden /> // ruang tetap → tidak ada lompatan layout
+  // Ruang cadangan seukuran hasil akhir (judul + 3 kartu): bertumpuk di HP, berjajar di layar lebar.
+  // Dulu tingginya 118px di semua layar, jadi di HP konten di bawahnya melompat ±300px.
+  if (!list) return <div className="mt-10 h-[470px] sm:h-[150px]" aria-hidden />
 
   const { lang } = useLang()
   const fmt = (d) => d.toLocaleDateString(lang === 'en' ? 'en-GB' : 'id-ID', { day: 'numeric', month: 'long' })
