@@ -1,5 +1,5 @@
 'use client'
-import { useT } from '../../lib/i18n'
+import { useT, useLocale, useDocTitle } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -15,9 +15,15 @@ function hitungMundur(target, nowMs) {
   return { hari, jam, menit, detik }
 }
 
-function formatTanggal(tanggal) {
-  if (!tanggal) return 'Tanggal menyusul'
-  return new Date(tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+// Format tanggal ikut bahasa aktif (loc = 'id-ID' / 'en-GB').
+// Tanggal "terakhir dicek" footer — nilainya sama seperti sebelumnya (16 Okt 2026), hanya
+// disimpan sekali dalam format ISO supaya bisa ditampilkan sesuai bahasa. Ubah di sini saat dicek ulang.
+const TERAKHIR_DICEK = '2026-10-16'
+const formatCek = (iso, loc) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' }) }
+
+function formatTanggal(tanggal, loc = 'id-ID') {
+  if (!tanggal) return loc === 'en-GB' ? 'Date to be announced' : 'Tanggal menyusul'
+  return new Date(tanggal).toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 // buka | segera | tunggu | tutup
@@ -39,6 +45,7 @@ function UnitCountdown({ angka, label }) {
 
 function KartuVoting({ v, now }) {
   const t = useT()
+  const loc = useLocale()
   const st = statusVote(v, now ?? Date.now())
   const target = st === 'buka' ? v.selesai : st === 'segera' ? v.mulai : null
   const cd = target && now ? hitungMundur(target, now) : null
@@ -50,12 +57,12 @@ function KartuVoting({ v, now }) {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
         </span>
-        {t('Buka · tutup {tgl}', { tgl: formatTanggal(v.selesai) })}
+        {t('Buka · tutup {tgl}', { tgl: formatTanggal(v.selesai, loc) })}
       </span>
     ) : st === 'segera' ? (
-      <span className="text-xs font-extrabold uppercase tracking-widest text-gold">{t('Segera · {tgl}', { tgl: formatTanggal(v.mulai) })}</span>
+      <span className="text-xs font-extrabold uppercase tracking-widest text-gold">{t('Segera · {tgl}', { tgl: formatTanggal(v.mulai, loc) })}</span>
     ) : st === 'tutup' ? (
-      <span className="text-xs font-extrabold uppercase tracking-widest text-plum/40 dark:text-milk/40">{t('Sudah tutup · {tgl}', { tgl: formatTanggal(v.selesai) })}</span>
+      <span className="text-xs font-extrabold uppercase tracking-widest text-plum/40 dark:text-milk/40">{t('Sudah tutup · {tgl}', { tgl: formatTanggal(v.selesai, loc) })}</span>
     ) : (
       <span className="text-xs font-extrabold uppercase tracking-widest text-plum/40 dark:text-milk/40">{t('Belum diumumkan')}</span>
     )
@@ -64,10 +71,10 @@ function KartuVoting({ v, now }) {
     <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/85 dark:bg-plum/60 p-5 sm:p-6">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose via-gold to-lilac" aria-hidden />
       <div>{badge}</div>
-      <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-2">🏆 {v.event}</h2>
-      <p className="mt-1 text-sm font-bold text-plum/70 dark:text-milk/70">{v.kategori}</p>
+      <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-2">🏆 {t(v.event)}</h2>
+      <p className="mt-1 text-sm font-bold text-plum/70 dark:text-milk/70">{t(v.kategori)}</p>
       <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5">📱 {v.platform}</p>
-      {v.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">⚠️ {v.catatan}</p>}
+      {v.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">⚠️ {t(v.catatan)}</p>}
       {cd && (
         <div className="flex gap-2 mt-4">
           <UnitCountdown angka={cd.hari} label={t('hari')} />
@@ -78,14 +85,14 @@ function KartuVoting({ v, now }) {
       )}
       {v.cara && (
         <ol className="mt-4 ml-5 list-decimal text-sm text-plum/70 dark:text-milk/70 space-y-1.5 leading-relaxed">
-          {v.cara.map((c, i) => <li key={i}>{c}</li>)}
+          {v.cara.map((c, i) => <li key={i}>{t(c)}</li>)}
         </ol>
       )}
       {v.link && (
         <p className="mt-4">
           <a href={v.link.url} target="_blank" rel="noopener noreferrer"
              className="inline-block bg-rose text-plum text-sm font-extrabold px-5 py-2.5 rounded-full">
-            {v.link.label} →
+            {t(v.link.label)} →
           </a>
         </p>
       )}
@@ -95,10 +102,11 @@ function KartuVoting({ v, now }) {
 
 export default function VotingPage() {
   const t = useT()
+  const loc = useLocale()
   // satu timer untuk semua kartu biar detiknya sinkron; null sebelum mount supaya
   // angka countdown tidak dirender server (cegah hydration mismatch).
   const [now, setNow] = useState(null)
-  useEffect(() => { document.title = 'Voting · Hearts2Hearts Gallery' }, [])
+  useDocTitle('Voting')
   useEffect(() => {
     setNow(Date.now())
     const t = setInterval(() => setNow(Date.now()), 1000)
@@ -157,11 +165,11 @@ export default function VotingPage() {
       <section className="mt-10">
         <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">💗 {t('Voting Carmen')}</p>
         <div className="rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/70 dark:bg-plum/40 p-5 sm:p-6">
-          <p className="text-sm font-bold text-plum/70 dark:text-milk/70">{VOTING_CARMEN.status}</p>
+          <p className="text-sm font-bold text-plum/70 dark:text-milk/70">{t(VOTING_CARMEN.status)}</p>
           <ul className="mt-3 space-y-2.5">
             {VOTING_CARMEN.daftar.map(d => (
               <li key={d.platform} className="text-sm text-plum/60 dark:text-milk/60 leading-relaxed">
-                <span className="font-bold text-plum/80 dark:text-milk/80">📱 {d.platform}</span> — {d.info}
+                <span className="font-bold text-plum/80 dark:text-milk/80">📱 {d.platform}</span> — {t(d.info)}
               </li>
             ))}
           </ul>
@@ -172,14 +180,14 @@ export default function VotingPage() {
         <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">📱 {t('Panduan aplikasi')}</p>
         <div className="rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/70 dark:bg-plum/40 p-5 sm:p-6">
           <p className="text-xs text-plum/50 dark:text-milk/50 mb-3 leading-relaxed">
-            Voting acara musik mingguan — dipakai saat H2H comeback/promosi. Pola umum: download gratis → daftar akun → vote di periode yang berlaku.
+            {t('Voting acara musik mingguan — dipakai saat H2H comeback/promosi. Pola umum: download gratis → daftar akun → vote di periode yang berlaku.')}
           </p>
           <ul className="space-y-2.5">
             {PANDUAN_APLIKASI.map(p => (
               <li key={p.aplikasi} className="text-sm text-plum/60 dark:text-milk/60 leading-relaxed">
                 <span className="font-bold text-plum/80 dark:text-milk/80">{p.aplikasi}</span>
                 <span className="text-plum/40 dark:text-milk/40"> · {p.acara}</span>
-                <br />{p.info}
+                <br />{t(p.info)}
               </li>
             ))}
           </ul>
@@ -187,7 +195,7 @@ export default function VotingPage() {
       </section>
 
       <p className="mt-10 text-center text-xs text-plum/40 dark:text-milk/40">
-        Data diverifikasi dari pengumuman resmi &amp; media · terakhir dicek 16 Okt 2026
+        {t('Data diverifikasi dari pengumuman resmi & media · terakhir dicek')} {formatCek(TERAKHIR_DICEK, loc)}
       </p>
     </main>
   )

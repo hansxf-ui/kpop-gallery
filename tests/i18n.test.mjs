@@ -105,3 +105,22 @@ test('jadwal: semua catatan, jenis, dan lokasi/judul berbahasa Indonesia punya t
   }
   assert.deepEqual([...need].filter((k) => !(k in ALL)), [])
 })
+
+test('voting: semua catatan, cara, label, status, info (dan kategori/event berbahasa Indonesia) punya terjemahan', async () => {
+  const { VOTING, VOTING_CARMEN, PANDUAN_APLIKASI } = await loadData('voting')
+  const need = new Set([VOTING_CARMEN.status])
+  const INDO_V = /babak|Ronde|kategori|Kategori/
+  for (const v of VOTING) {
+    for (const f of [v.catatan, v.link && v.link.label, ...(v.cara || [])]) if (f) need.add(f)
+    for (const f of [v.kategori, v.event]) if (f && INDO_V.test(f)) need.add(f)
+  }
+  for (const d of [...VOTING_CARMEN.daftar, ...PANDUAN_APLIKASI]) if (d.info) need.add(d.info)
+  assert.deepEqual([...need].filter((k) => !(k in ALL)), [])
+})
+
+test('teks data Inggris: angka ribuan memakai koma, bukan titik (mis. 76,789,533)', () => {
+  for (const [k, v] of Object.entries(EN_DATA)) {
+    if (typeof v !== 'string') continue
+    assert.doesNotMatch(v, /\b\d{1,3}(?:\.\d{3})+\b/, k.slice(0, 50))
+  }
+})

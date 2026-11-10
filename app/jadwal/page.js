@@ -50,6 +50,11 @@ function sudahLewat(tanggal) {
   return dDay < nDay
 }
 
+// Tanggal "terakhir dicek" footer — nilainya sama seperti sebelumnya (10 Nov 2026), hanya
+// disimpan sekali dalam format ISO supaya bisa ditampilkan sesuai bahasa. Ubah di sini saat dicek ulang.
+const TERAKHIR_DICEK = '2026-11-10'
+const formatCek = (iso, loc) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' }) }
+
 // Format tanggal ikut bahasa aktif (loc = 'id-ID' / 'en-GB').
 function formatTanggal(tanggal, loc = 'id-ID') {
   if (!tanggal) return loc === 'en-GB' ? 'Date to be announced' : 'Tanggal menyusul'
@@ -179,7 +184,7 @@ export default function JadwalPage() {
       )}
 
       <p className="mt-10 text-center text-xs text-plum/40 dark:text-milk/40">
-        {t('Data diverifikasi dari pengumuman resmi & media · terakhir dicek')} 10 Nov 2026
+        {t('Data diverifikasi dari pengumuman resmi & media · terakhir dicek')} {formatCek(TERAKHIR_DICEK, loc)}
       </p>
     </main>
   )
