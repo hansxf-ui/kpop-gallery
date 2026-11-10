@@ -21,7 +21,7 @@ function Media({ it, videoRef, onEnded }) {
     </span>
   )
   if (it.type === 'video') return <video ref={videoRef} onEnded={onEnded} src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
-  return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
+  return <iframe title={`Video YouTube: ${it.title || it.idol || 'Hearts2Hearts'}`} src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
 }
 
 // Media tetangga di rel geser: versi ringan TANPA autoplay — video cuma bingkai pertama,
