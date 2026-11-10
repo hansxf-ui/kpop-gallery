@@ -307,7 +307,7 @@ export default function GaleriClient() {
       {loadError && (
         <div className="py-10 text-center">
           <p className="font-bold text-plum dark:text-milk">Gagal memuat koleksi.</p>
-          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Periksa koneksimu, lalu coba lagi.</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Periksa koneksimu, lalu coba lagi. Sedang offline? Foto favorit tetap bisa dilihat di <Link href="/favorit" className="font-bold text-gold underline underline-offset-4">Favoritku</Link>.</p>
           <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">Coba lagi</button>
         </div>
       )}
