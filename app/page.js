@@ -25,7 +25,8 @@ const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
 function Kartu({ m, i, count }) {
   const [flip, setFlip] = useState(false)
   const kickRef = useRef(null)
-  const url = imgOpt(SB + m.file, 800)
+  // Kartu maksimal 240px lebar → 480px cukup untuk layar 2x (dulu 800px, ±2,5× lebih berat).
+  const url = imgOpt(SB + m.file, 480)
   // Tendangan ayun dijalankan via Web Animations API di pembungkus yang STABIL —
   // versi lama memakai key={kick} yang me-remount seluruh subtree tiap klik,
   // sehingga .lc-flip lahir langsung di posisi akhir dan transisi baliknya mati total.
