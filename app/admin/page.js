@@ -39,6 +39,7 @@ export default function Admin() {
   const [editVal, setEditVal] = useState({})
   const [pendingDelete, setPendingDelete] = useState(null) // item yang menunggu konfirmasi hapus
   const [announcement, setAnnouncement] = useState('')
+  const [annMsg, setAnnMsg] = useState('')
   const [dimMsg, setDimMsg] = useState('')
   const [dimBusy, setDimBusy] = useState(false)
   const fileInput = useRef(null)
@@ -69,9 +70,12 @@ export default function Admin() {
     return () => { alive = false }
   }, [user])
 
+  // Dulu hasil simpan tidak dicek — gagal (mis. bukan admin / koneksi putus) tetap terlihat berhasil.
   async function saveAnnouncement(text) {
     setAnnouncement(text)
-    await sb.from('settings').upsert({ key: 'announcement', value: text })
+    setAnnMsg('Menyimpan…')
+    const { error } = await sb.from('settings').upsert({ key: 'announcement', value: text })
+    setAnnMsg(error ? 'Gagal menyimpan pengumuman: ' + error.message : text.trim() ? 'Pengumuman tersimpan ✓' : 'Pengumuman dimatikan ✓')
   }
 
   async function login(e) {
@@ -259,8 +263,8 @@ export default function Admin() {
         </div>
       ) : !user ? (
         <form onSubmit={login} className="space-y-3">
-          <input name="email" type="email" placeholder="Email" required className={box} />
-          <input name="password" type="password" placeholder="Password" required className={box} />
+          <input name="email" type="email" placeholder="Email" aria-label="Email" autoComplete="username" required className={box} />
+          <input name="password" type="password" placeholder="Password" aria-label="Password" autoComplete="current-password" required className={box} />
           <button className={btn}>Masuk</button>
         </form>
       ) : (
@@ -325,9 +329,10 @@ export default function Admin() {
             <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 Pengumuman comeback</h2>
             <p className="text-xs text-plum/50 dark:text-milk/50 mb-2">Muncul sebagai banner di atas beranda. Kosongkan lalu simpan untuk mematikannya.</p>
             <div className="flex gap-2">
-              <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} placeholder="mis. Comeback baru: Lemon Tang! 🍋" className={box} />
+              <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} aria-label="Teks pengumuman" placeholder="mis. Comeback baru: Lemon Tang! 🍋" className={box} />
               <button onClick={() => saveAnnouncement(announcement)} className="rounded-full bg-gold text-plum font-bold px-4 shrink-0 text-sm">Simpan</button>
             </div>
+            {annMsg && <p className="mt-2 text-sm font-bold dark:text-milk" role="status">{annMsg}</p>}
           </div>
 
           <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
