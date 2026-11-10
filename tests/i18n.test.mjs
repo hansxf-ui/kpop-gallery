@@ -83,8 +83,8 @@ test('isian {…} dipertahankan di setiap terjemahan', () => {
 })
 
 test('bentuk tunggal/jamak', () => {
-  assert.equal(EN['{j} reaksi']({ j: 1 }), '1 reaction')
-  assert.equal(EN['{j} reaksi']({ j: 3 }), '3 reactions')
+  assert.equal(EN['Peringkat {n}: {judul}, {j} reaksi minggu ini']({ n: 1, judul: 'X', j: 1 }), '#1: X, 1 reaction this week')
+  assert.equal(EN['Peringkat {n}: {judul}, {j} reaksi minggu ini']({ n: 2, judul: 'X', j: 3 }), '#2: X, 3 reactions this week')
   assert.equal(EN['{n} hari lagi']({ n: 1 }), 'in 1 day')
   assert.equal(EN['Anniversary debut ke-{n}']({ n: 2 }), '2nd debut anniversary')
   assert.equal(EN['Anniversary debut ke-{n}']({ n: 11 }), '11th debut anniversary')

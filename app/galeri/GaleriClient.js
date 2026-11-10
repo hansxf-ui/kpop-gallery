@@ -262,12 +262,12 @@ export default function GaleriClient() {
           <ol className="mx-auto grid max-w-3xl grid-cols-3 gap-3 sm:grid-cols-6">
             {topItems.map(({ it, jumlah }, i) => (
               <li key={it.id}>
-                <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={t('Peringkat {n}: {judul}, {j} reaksi', { n: i + 1, judul: it.title || it.idol, j: jumlah })}>
+                <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={t('Peringkat {n}: {judul}, {j} reaksi minggu ini', { n: i + 1, judul: it.title || it.idol, j: jumlah })}>
                   {it.type === 'video'
                     ? <span className="grid aspect-[3/4] w-full place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
                     : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
                   <span className="absolute left-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-plum text-xs font-bold text-milk">{i + 1}</span>
-                  <span className="mt-1 block text-center text-[11px] font-bold text-plum/70 dark:text-milk/70">{t('{j} reaksi', { j: jumlah })}</span>
+                  <span className="mt-1 block text-center text-[11px] font-bold text-plum/70 dark:text-milk/70">{t('{j} reaksi minggu ini', { j: jumlah })}</span>
                 </button>
               </li>
             ))}
