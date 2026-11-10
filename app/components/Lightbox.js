@@ -14,13 +14,13 @@ import Reactions from './Reactions'
 // object-contain: foto tampil utuh tanpa crop di dalam bingkai yang stabil.
 // URL aktif juga lewat imgOpt(1000) — versi lama memuat file asli ukuran penuh (lambat,
 // kedip kosong di HP) sementara tetangga cuma 700px.
-function Media({ it }) {
+function Media({ it, videoRef, onEnded }) {
   if (it.type === 'photo') return (
     <span className="relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto">
       <img src={imgOpt(it.url, 1000)} alt={it.title || it.idol} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
     </span>
   )
-  if (it.type === 'video') return <video src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
+  if (it.type === 'video') return <video ref={videoRef} onEnded={onEnded} src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
   return <iframe src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
 }
 
@@ -65,6 +65,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const commitTimer = useRef(null)
   const viewRef = useRef(null)
   const dialogRef = useRef(null)
+  const videoRef = useRef(null)
   const startX = useRef(null)
   const activePointer = useRef(null) // pointerId pemilik geseran aktif — jari lain tidak boleh menimpa
   const lastDragEnd = useRef(0) // cap waktu akhir geseran; klik backdrop tepat sesudahnya diabaikan
@@ -74,7 +75,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const commitRef = useRef(null)
   const live = useRef({})
   const it = items[index]
-  live.current = { it, index, controlsOn, onIndexChange, items }
+  live.current = { it, index, controlsOn, onIndexChange, items, playing }
   const multi = items.length > 1
 
   // Jendela 3 slot di sekitar item aktif: [sebelum, aktif, sesudah] — navigasi melingkar seperti sebelumnya.
@@ -267,9 +268,15 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
     setMaking(false)
   }
 
+  // Slideshow: foto & YouTube 4 detik. Video upload diputar sampai selesai (onEnded) — dulu
+  // dipotong setelah 4 detik. Kalau video tidak berjalan (autoplay diblokir browser), lanjut
+  // setelah 4 detik seperti sebelumnya supaya slideshow tidak macet.
   useEffect(() => {
     if (!playing || items.length < 2) return
-    timer.current = setTimeout(() => maju(1), 4000)
+    timer.current = setTimeout(() => {
+      if (it && it.type === 'video' && videoRef.current && !videoRef.current.paused && !videoRef.current.ended) return
+      maju(1)
+    }, 4000)
     return () => clearTimeout(timer.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, index, items])
@@ -315,7 +322,9 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
                     {s.active && (
                       <button onClick={onClose} aria-label="Tutup" className="relative z-20 mb-2 self-end rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">Tutup</button>
                     )}
-                    {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
+                    {s.active
+                      ? <Media it={s.it} videoRef={videoRef} onEnded={() => { if (live.current.playing) maju(1) }} />
+                      : <MediaTetangga it={s.it} />}
                     {s.active && s.it.type === 'youtube' && !controlsOn && (
                       <div className="absolute inset-0 z-10" aria-hidden="true" />
                     )}
