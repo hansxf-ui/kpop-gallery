@@ -5,6 +5,7 @@ import { ytId, imgOpt, creditOf } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { itemShareUrl } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
+import { downloadBlob } from '../../lib/download'
 import Reactions from './Reactions'
 
 // Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
@@ -220,6 +221,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
 
   async function makeWallpaper() {
     setMaking(true)
+    setShareMsg('')
     try {
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -235,11 +237,14 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
       const w = img.width * scale, h = img.height * scale
       ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h)
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url; a.download = 'wallpaper-h2h.jpg'; a.click()
-      URL.revokeObjectURL(url)
-    } catch { /* gambar dari sumber luar mungkin memblokir unduhan langsung */ }
+      if (!blob) throw new Error('kosong')
+      downloadBlob(blob, 'wallpaper-h2h.jpg')
+    } catch {
+      // Gambar dari sumber luar bisa memblokir pengolahan di browser — dulu gagal tanpa pesan.
+      setShareMsg('Wallpaper gagal dibuat untuk foto ini.')
+      clearTimeout(shareTimer.current)
+      shareTimer.current = setTimeout(() => setShareMsg(''), 2500)
+    }
     setMaking(false)
   }
 

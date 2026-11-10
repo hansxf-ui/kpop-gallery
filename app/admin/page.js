@@ -7,6 +7,7 @@ import { measureFile, measureImage, isMissingColumnError } from '../../lib/image
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
+import { downloadBlob } from '../../lib/download'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
@@ -236,12 +237,7 @@ export default function Admin() {
 
   function exportData() {
     const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `hearts2hearts-gallery-backup-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadBlob(blob, `hearts2hearts-gallery-backup-${new Date().toISOString().slice(0, 10)}.json`)
   }
 
   const stats = Object.entries(
