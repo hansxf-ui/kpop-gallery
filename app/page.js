@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { sb, imgOpt } from '../lib/supabase'
+import { imgOpt } from '../lib/supabase'
+import { fetchMemberCounts } from '../lib/counts'
 import ThemeToggle from './components/ThemeToggle'
 import SiteNav from './components/SiteNav'
 
@@ -113,30 +114,16 @@ function Kartu({ m, i, count }) {
 }
 
 export default function Landing() {
-  // Jumlah item per member + total dihitung LANGSUNG dari database (konsisten dengan
-  // filter /galeri) — angka bawaan di MEMBERS hanya cadangan tampilan awal.
+  // Jumlah item per member + total dihitung di database (view member_counts, lihat lib/counts.js)
+  // — angka bawaan di MEMBERS hanya cadangan tampilan awal / saat gagal memuat.
   const [liveCounts, setLiveCounts] = useState(null)
   const [liveTotal, setLiveTotal] = useState(1159)
   useEffect(() => {
-    ;(async () => {
-      try {
-        const rows = []
-        for (let from = 0; ; from += 1000) {
-          const { data, error } = await sb.from('items').select('idol').order('id', { ascending: true }).range(from, from + 999)
-          if (error) throw error
-          rows.push(...(data || []))
-          if (!data || data.length < 1000) break
-        }
-        const c = {}
-        for (const r of rows) {
-          for (const n of (r.idol || '').toUpperCase().split(/[,&]/).map((s) => s.trim()).filter(Boolean)) {
-            c[n] = (c[n] || 0) + 1
-          }
-        }
-        setLiveCounts(c)
-        setLiveTotal(rows.length)
-      } catch { /* gagal memuat → tetap pakai angka cadangan */ }
-    })()
+    let alive = true
+    fetchMemberCounts()
+      .then(({ counts, total }) => { if (alive) { setLiveCounts(counts); setLiveTotal(total) } })
+      .catch(() => { /* gagal memuat → tetap pakai angka cadangan */ })
+    return () => { alive = false }
   }, [])
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-16 sm:px-8">
