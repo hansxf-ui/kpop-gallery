@@ -1,11 +1,12 @@
 'use client'
-import { useT } from '../../lib/i18n'
+import { useT, useLang } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { REPORT_REASONS, sendReport, alreadyReported } from '../../lib/reports'
 
 // "🚩 Laporkan foto" di lightbox (fitur 9). Laporan masuk ke antrean admin.
 export default function ReportButton({ itemId }) {
   const t = useT()
+  const { lang } = useLang()
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [detail, setDetail] = useState('')
@@ -15,7 +16,7 @@ export default function ReportButton({ itemId }) {
   async function kirim(e) {
     e.preventDefault()
     setState('kirim')
-    try { await sendReport(itemId, reason, detail); setState('terkirim'); setOpen(false) }
+    try { await sendReport(itemId, reason, detail, lang); setState('terkirim'); setOpen(false) }
     catch (err) { setState(t(err.message)) }
   }
 
