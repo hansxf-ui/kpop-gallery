@@ -12,6 +12,7 @@ import GalleryCard from '../../components/GalleryCard'
 import AutoLoadMore from '../../components/AutoLoadMore'
 import ScrollTopButton from '../../components/ScrollTopButton'
 import Skeleton from '../../components/Skeleton'
+import MemberProfile from '../../components/MemberProfile'
 
 export default function IdolAlbum() {
   const { name } = useParams()
@@ -99,6 +100,8 @@ export default function IdolAlbum() {
           </div>
         )}
       </header>
+
+      {valid && <MemberProfile albumKey={key} items={items} />}
 
       <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
         <div className="search-group w-full max-w-xs">
