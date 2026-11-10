@@ -108,6 +108,11 @@ export default function IdolAlbum() {
       </header>
 
       {valid && <MemberProfile albumKey={key} items={items} />}
+      {valid && key !== 'HEARTS2HEARTS' && (
+        <p className="-mt-6 mb-8 text-center">
+          <Link href={`/banding?member=${key}`} className="text-sm font-bold text-gold underline underline-offset-4">⇆ {t('Bandingkan {nama} di dua era →', { nama })}</Link>
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
         <div className="search-group w-full max-w-xs">
