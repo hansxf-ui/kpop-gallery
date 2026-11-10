@@ -3,6 +3,14 @@ import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import { JADWAL, RIWAYAT_2026, TIPE_LABEL } from '../../lib/jadwal'
+import { buildIcs, icsFilename } from '../../lib/ics'
+import { downloadBlob } from '../../lib/download'
+
+// Unduh file .ics (fitur 13) — dibuka HP/laptop langsung di aplikasi kalender.
+function unduhIcs(events, filename) {
+  const ics = buildIcs(events, { siteUrl: window.location.origin })
+  downloadBlob(new Blob([ics], { type: 'text/calendar;charset=utf-8' }), filename)
+}
 
 // Tanggal-saja ('2026-10-19') di-parse sebagai tanggal kalender LOKAL murni — bukan
 // UTC tengah malam — supaya harinya tidak bergeser sehari gara-gara zona waktu pengunjung.
@@ -93,6 +101,12 @@ function KartuEvent({ event, now }) {
         ) : !event.tanggal ? (
           <p className="text-sm font-bold text-gold">⏳ Segera diumumkan</p>
         ) : null}
+        {event.tanggal && !isLewat && (
+          <button onClick={() => unduhIcs([event], icsFilename(event))}
+            className="mt-4 rounded-full border border-rose/50 bg-white/80 px-4 py-1.5 text-xs font-bold text-plum dark:border-rose/25 dark:bg-white/10 dark:text-milk">
+            📅 Tambah ke kalender
+          </button>
+        )}
       </div>
     </article>
   )
@@ -127,7 +141,13 @@ export default function JadwalPage() {
       </header>
 
       <section className="space-y-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-gold">✦ Akan datang</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-gold">✦ Akan datang</p>
+          {upcoming.some((e) => e.tanggal) && (
+            <button onClick={() => unduhIcs(upcoming.filter((e) => e.tanggal), 'jadwal-hearts2hearts.ics')}
+              className="text-xs font-bold text-plum/70 underline underline-offset-4 dark:text-milk/70">📅 Tambah semua ke kalender</button>
+          )}
+        </div>
         {upcoming.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">Belum ada jadwal baru yang dikonfirmasi.</p>}
         {upcoming.map(e => <KartuEvent key={e.id} event={e} now={now} />)}
       </section>
