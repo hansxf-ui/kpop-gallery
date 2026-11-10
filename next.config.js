@@ -12,6 +12,18 @@ module.exports = {
   async headers() {
     return [
       {
+        // Header keamanan dasar untuk semua halaman. Tidak memakai Content-Security-Policy dulu:
+        // situs memuat YouTube, Supabase, dan CDN emoji, jadi CSP perlu diuji di browser sebelum dipasang.
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Halaman (termasuk /admin) tidak bisa disematkan di iframe situs lain (clickjacking).
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+        ],
+      },
+      {
         // Service worker (fitur 6) tidak boleh di-cache browser/CDN — versi baru harus langsung terbaca.
         source: '/sw.js',
         headers: [
