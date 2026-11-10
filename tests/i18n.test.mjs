@@ -37,6 +37,7 @@ const DYNAMIC = [
   // reaksi & laporan
   'Suka banget', 'Keren', 'Terharu', 'Tepuk tangan', 'Salah member', 'Gambar rusak / tidak muncul', 'Salah era', 'Lainnya',
   'Pilih alasan laporan.', 'Laporan gagal dikirim. Coba lagi nanti.',
+  'Foto ini sudah dilaporkan beberapa kali dan sedang ditinjau. Terima kasih!',
   // profil
   'Debut', 'Agensi', 'Member', 'Fandom', 'Posisi', 'Ulang tahun', 'Asal', 'Era terbanyak di galeri', 'Koleksi di galeri',
   'Lahir di Vancouver, Kanada', 'Denpasar, Bali, Indonesia', 'Idol Indonesia pertama yang debut di SM Entertainment.', '24 Februari 2025 (The Chase)',
