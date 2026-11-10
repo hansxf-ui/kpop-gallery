@@ -69,6 +69,9 @@ create policy "admin update settings" on settings for update to authenticated us
 - Skeleton loading (kerangka animasi) saat galeri sedang dimuat, dan tombol "Muat lebih banyak" biar galeri besar tetap ringan dibuka
 - Preview cantik saat link dibagikan ke WhatsApp/sosial media (Open Graph), favicon, dan bisa "Tambah ke layar utama" di HP
 - Tombol "Ekspor backup (.json)" di halaman admin untuk menyimpan cadangan semua data
+- Satu navigasi yang sama di semua halaman (Beranda, Galeri, Favoritku + jumlahnya, Jadwal, Voting, Tentang)
+- Favoritkan langsung dari tampilan penuh (lightbox), plus penanda posisi "3 / 120"
+- Tombol "Reset filter" saat hasil kosong, dan tombol ↑ kembali ke atas di grid panjang
 
 ## Pasang domain sendiri (opsional)
 Kalau punya domain sendiri (mis. dari Niagahoster/Namecheap): buka project di Vercel → tab **Domains** → tambahkan domainmu, lalu ikuti instruksi untuk mengarahkan DNS-nya. Vercel akan otomatis pasang HTTPS.

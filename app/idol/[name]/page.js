@@ -2,15 +2,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { sb, ytId, imgOpt, fetchAllItems } from '../../../lib/supabase'
-import { getFavorites, toggleFavorite } from '../../../lib/favorites'
+import { sb, fetchAllItems } from '../../../lib/supabase'
+import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../../lib/favorites'
+import { ALBUM_KEYS, DISPLAY_NAME, namesOf, matchesQuery, shuffleStable, newSeed } from '../../../lib/gallery'
 import ThemeToggle from '../../components/ThemeToggle'
+import SiteNav from '../../components/SiteNav'
 import Lightbox from '../../components/Lightbox'
+import GalleryCard from '../../components/GalleryCard'
+import ScrollTopButton from '../../components/ScrollTopButton'
 import Skeleton from '../../components/Skeleton'
-
-const thumb = (it) => (it.type === 'youtube' ? `https://img.youtube.com/vi/${ytId(it.url)}/mqdefault.jpg` : it.url)
-// Samakan dengan /galeri: cocokkan nama member solo maupun unit, tanpa peduli kapitalisasi.
-const namesOf = (it) => (it.idol || '').toUpperCase().split(/[,&]/).map((s) => s.trim()).filter(Boolean)
 
 export default function IdolAlbum() {
   const { name } = useParams()
@@ -19,6 +19,7 @@ export default function IdolAlbum() {
   const [total, setTotal] = useState(null)
   const [q, setQ] = useState('')
   const [sort, setSort] = useState('terbaru')
+  const [seed, setSeed] = useState(0)
   const [era, setEra] = useState('Semua')
   const [favs, setFavs] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
@@ -26,7 +27,9 @@ export default function IdolAlbum() {
   const [visibleCount, setVisibleCount] = useState(40)
 
   const key = idol.toUpperCase()
-  const valid = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON', 'HEARTS2HEARTS'].includes(key)
+  const valid = ALBUM_KEYS.includes(key)
+  // "JIWOO" / "jiwoo" di URL -> judul "Jiwoo"
+  const nama = DISPLAY_NAME[key] || idol
   const [loadError, setLoadError] = useState(false)
   function loadItems() {
     setLoadError(false)
@@ -35,7 +38,7 @@ export default function IdolAlbum() {
       .then((all) => setItems(all.filter((it) => namesOf(it).includes(key))))
       .catch(() => { setItems([]); setLoadError(true) })
   }
-  useEffect(() => { document.title = `${idol} · Hearts2Hearts Gallery` }, [idol])
+  useEffect(() => { document.title = `${nama} · Hearts2Hearts Gallery` }, [nama])
   useEffect(() => {
     if (valid) loadItems()
     else setItems([])
@@ -43,21 +46,23 @@ export default function IdolAlbum() {
     setFavs(getFavorites())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idol])
+  useEffect(() => {
+    const sync = () => setFavs(getFavorites())
+    window.addEventListener(FAVS_EVENT, sync)
+    return () => window.removeEventListener(FAVS_EVENT, sync)
+  }, [])
 
   const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
 
   const shown = useMemo(() => {
     let list = items || []
     if (era !== 'Semua') list = list.filter((i) => i.era === era)
-    if (q.trim()) {
-      const s = q.trim().toLowerCase()
-      list = list.filter((i) => (i.title || '').toLowerCase().includes(s))
-    }
+    if (q.trim()) list = list.filter((i) => matchesQuery(i, q))
     list = [...list]
     if (sort === 'terlama') list.reverse()
-    if (sort === 'acak') list.sort(() => Math.random() - 0.5)
+    if (sort === 'acak') list = shuffleStable(list, seed)
     return list
-  }, [items, q, sort, era])
+  }, [items, q, sort, seed, era])
 
   const fotoCount = shown.filter((i) => i.type === 'photo').length
   const videoCount = shown.length - fotoCount
@@ -66,21 +71,20 @@ export default function IdolAlbum() {
 
   useEffect(() => { setVisibleCount(40) }, [q, sort, era])
 
-  function onFav(it, e) {
-    e.stopPropagation(); e.preventDefault()
+  function onFav(it, x, y) {
     const wasFav = favs.includes(it.id)
     setFavs(toggleFavorite(it.id))
-    if (!wasFav) window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x: e.clientX, y: e.clientY } }))
+    if (!wasFav) window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x, y } }))
   }
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
       <ThemeToggle />
-      <header className="py-14 text-center">
-        <Link href="/galeri" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Semua idol</Link>
-        <p className="text-gold text-2xl mt-4" aria-hidden>✦ ✧ ✦</p>
-        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{idol}</h1>
-        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Album khusus {idol}</p>
+      <header className="pt-16 pb-12 text-center">
+        <SiteNav className="mb-8" />
+        <p className="text-gold text-2xl" aria-hidden>✦ ✧ ✦</p>
+        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{nama}</h1>
+        <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">Album khusus {nama}</p>
         <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{fotoCount} foto · {videoCount} video</p>
         {pct !== null && (
           <div className="mx-auto mt-3 max-w-xs">
@@ -95,9 +99,9 @@ export default function IdolAlbum() {
       <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
         <div className="search-group w-full max-w-xs">
           <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul…" type="search" className="search-input" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari judul atau era…" type="search" className="search-input" />
         </div>
-        <select value={sort} onChange={(e) => setSort(e.target.value)}
+        <select value={sort} aria-label="Urutkan" onChange={(e) => { setSort(e.target.value); if (e.target.value === 'acak') setSeed(newSeed()) }}
           className="rounded-full border border-rose/50 dark:border-rose/25 bg-white/80 dark:bg-white/10 px-3 py-2 text-sm font-bold">
           <option value="terbaru">Terbaru</option>
           <option value="terlama">Terlama</option>
@@ -138,19 +142,9 @@ export default function IdolAlbum() {
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (
-          <button key={it.id} onClick={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }} className="card mb-4 block w-full text-left break-inside-avoid">
-            <div className="relative overflow-hidden rounded-2xl bg-[#DCEBF6] dark:bg-[#1B3049]">
-              {it.type === 'video'
-                ? <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="w-full" />
-                : <img src={imgOpt(thumb(it), 800)} alt={it.title || it.idol} loading="lazy" decoding="async" className="w-full" />}
-              {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
-              <span onClick={(e) => onFav(it, e)} role="button" aria-label="Favoritkan"
-                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/85 grid place-items-center text-base">
-                {favs.includes(it.id) ? '❤️' : '🤍'}
-              </span>
-            </div>
-            <p className="font-bold text-sm truncate px-2 py-2.5 dark:text-milk">{it.title || it.idol}</p>
-          </button>
+          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} showIdol={false}
+            onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
+            onFav={(x, y) => onFav(it, x, y)} />
         ))}
       </div>
 
@@ -166,6 +160,7 @@ export default function IdolAlbum() {
         <Lightbox items={shown} index={openIndex} onIndexChange={setOpenIndex}
           onClose={() => { setOpenIndex(null); setAutoplay(false) }} autoplay={autoplay} />
       )}
+      <ScrollTopButton />
     </main>
   )
 }

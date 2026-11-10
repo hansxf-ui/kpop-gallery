@@ -38,7 +38,7 @@ export default function TopBanner() {
   if (!text) return null
 
   return (
-    <div className="relative z-30 bg-gradient-to-r from-rose via-gold/70 to-lilac text-plum text-center text-sm font-bold px-10 py-2.5">
+    <div className="relative z-30 bg-gradient-to-r from-rose via-gold/70 to-lilac text-plum text-center text-sm font-bold pl-10 pr-20 py-2.5">
       <span>{special ? '🎉 ' : '📣 '}{text}</span>
       <button onClick={dismiss} aria-label="Tutup pengumuman" className="absolute left-3 top-1/2 -translate-y-1/2 font-bold">✕</button>
     </div>

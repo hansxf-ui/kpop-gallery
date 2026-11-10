@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ytId, imgOpt } from '../../lib/supabase'
+import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import Reactions from './Reactions'
 
 // Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
@@ -39,7 +40,10 @@ function MediaTetangga({ it }) {
   )
   return (
     <span className="relative block w-full mx-auto rounded-2xl bg-white/5 pointer-events-none">
-      <img src={`https://img.youtube.com/vi/${ytId(it.url)}/maxresdefault.jpg`} alt={it.title || it.idol} draggable={false} className="w-full max-h-[calc(100dvh-300px)] aspect-video object-cover rounded-2xl" />
+      {/* maxresdefault tidak tersedia untuk semua video — jatuh ke hqdefault (selalu ada) supaya slot tidak kosong. */}
+      <img src={`https://img.youtube.com/vi/${ytId(it.url)}/maxresdefault.jpg`}
+        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `https://img.youtube.com/vi/${ytId(it.url)}/hqdefault.jpg` }}
+        alt={it.title || it.idol} draggable={false} className="w-full max-h-[calc(100dvh-300px)] aspect-video object-cover rounded-2xl" />
       <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>
     </span>
   )
@@ -51,6 +55,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   const [dragX, setDragX] = useState(0)
   const [anim, setAnim] = useState(false)
   const [controlsOn, setControlsOn] = useState(false)
+  const [favIds, setFavIds] = useState(() => getFavorites())
   const timer = useRef(null)
   const commitTimer = useRef(null)
   const viewRef = useRef(null)
@@ -176,6 +181,29 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
 
   useEffect(() => () => clearTimeout(commitTimer.current), [])
 
+  // Kunci scroll halaman di belakang selama lightbox terbuka (di HP, geser vertikal dulu ikut
+  // menggulir grid di belakangnya).
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  // Favorit dari dalam lightbox — tetap sinkron dengan grid & nav lewat FAVS_EVENT.
+  useEffect(() => {
+    const sync = () => setFavIds(getFavorites())
+    window.addEventListener(FAVS_EVENT, sync)
+    return () => window.removeEventListener(FAVS_EVENT, sync)
+  }, [])
+  function toggleFav(e) {
+    const was = favIds.includes(it.id)
+    setFavIds(toggleFavorite(it.id))
+    if (!was) {
+      const r = e.currentTarget.getBoundingClientRect()
+      window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x: r.left + r.width / 2, y: r.top + r.height / 2 } }))
+    }
+  }
+
   async function makeWallpaper() {
     setMaking(true)
     try {
@@ -223,7 +251,8 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
   // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
   return createPortal(
-    <div onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4">
+    <div role="dialog" aria-modal="true" aria-label={it.title || it.idol || 'Tampilan penuh'}
+      onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4">
       {/* Kolom WAJIB min-w-0 + max-w: tanpa itu lebar kolom ditentukan max-content rel geser
           (3 slot × lebar bingkai ≈ 889px) — lightbox jadi lebih lebar dari layar HP dan bisa
           kegeser menyamping, foto diamnya pun di luar tengah. Terukur pakai Chromium 390px. */}
@@ -266,11 +295,16 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
           {it.note && it.note.trim().startsWith('📷') && (
             <p className="text-[11px] text-milk/60 mt-1">{it.note.trim()}</p>
           )}
+          {multi && <p className="mt-1 text-[11px] font-bold tabular-nums text-milk/50">{index + 1} / {items.length}</p>}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {items.length > 1 && (
             <button onClick={() => setPlaying((p) => !p)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">{playing ? '⏸ Jeda' : '▶ Putar semua'}</button>
           )}
+          <button onClick={toggleFav} aria-pressed={favIds.includes(it.id)}
+            className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">
+            {favIds.includes(it.id) ? '❤️ Favorit' : '🤍 Favoritkan'}
+          </button>
           {it.type !== 'youtube' ? (
             <a href={`${it.url}?download=${encodeURIComponent(it.url.split('/').pop() || 'hearts2hearts')}`} className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ Unduh</a>
           ) : (

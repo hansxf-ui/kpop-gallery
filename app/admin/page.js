@@ -1,10 +1,10 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { sb, ytId, fetchAllItems } from '../../lib/supabase'
 import { compressImage } from '../../lib/compress'
 import { rotateImageFile } from '../../lib/rotate'
 import ThemeToggle from '../components/ThemeToggle'
+import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
@@ -200,10 +200,10 @@ export default function Admin() {
 
   if (user === undefined) return <main className="mx-auto max-w-3xl px-4 py-24 text-center font-bold text-plum/60 dark:text-milk/60">Memuat sesi admin…</main>
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10 page-fade-in">
+    <main className="mx-auto max-w-2xl px-4 pt-16 pb-10 page-fade-in">
       <ThemeToggle />
-      <Link href="/galeri" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Kembali ke galeri</Link>
-      <h1 className="font-display text-4xl mb-6 mt-3 text-plum dark:text-milk">Admin ✦</h1>
+      <SiteNav className="mb-8" />
+      <h1 className="font-display text-4xl mb-6 text-plum dark:text-milk">Admin ✦</h1>
       {!user ? (
         <form onSubmit={login} className="space-y-3">
           <input name="email" type="email" placeholder="Email" required className={box} />
@@ -213,7 +213,7 @@ export default function Admin() {
       ) : (
         <>
           <form onSubmit={add} className="space-y-3 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
-            <input placeholder="Nama idol (opsional, mis. Karina)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
+            <input placeholder="Nama idol (opsional, mis. CARMEN)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
             <input placeholder="Judul (opsional, dipakai untuk semua file di batch ini)" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={box} />
             <div className="grid grid-cols-2 gap-3">
               <input placeholder="Grup (opsional)" value={f.group} onChange={(e) => setF({ ...f, group: e.target.value })} className={box} />

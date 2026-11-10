@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import ThemeToggle from '../components/ThemeToggle'
+import SiteNav from '../components/SiteNav'
 
 export const metadata = { title: 'Tentang · Hearts2Hearts Gallery' }
 
@@ -31,9 +31,9 @@ export default function Tentang() {
   return (
     <main className="mx-auto max-w-4xl px-4 pb-24 page-fade-in">
       <ThemeToggle />
-      <header className="py-14 text-center">
-        <Link href="/galeri" className="text-sm font-bold text-plum/60 dark:text-milk/60 hover:text-plum dark:hover:text-milk">← Kembali ke galeri</Link>
-        <p className="flex justify-center items-center mt-4" aria-hidden="true">
+      <header className="pt-16 pb-14 text-center">
+        <SiteNav className="mb-8" />
+        <p className="flex justify-center items-center" aria-hidden="true">
           <svg width="30" height="30" viewBox="0 0 24 24" className="text-rose" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
           <svg width="30" height="30" viewBox="0 0 24 24" className="text-gold -ml-3 mt-2.5" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
         </p>
@@ -73,7 +73,7 @@ export default function Tentang() {
         <h2 className={h2}>Perjalanan rilisan</h2>
         <ol className="space-y-3">
           {releases.map(([d, t, k]) => (
-            <li key={t} className="flex items-baseline gap-4 border-b border-rose/30 dark:border-rose/15 pb-3">
+            <li key={t} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 border-b border-rose/30 dark:border-rose/15 pb-3">
               <span className="w-20 shrink-0 text-sm font-bold text-gold">{d}</span>
               <span className="font-bold text-plum dark:text-milk">{t}</span>
               <span className="text-sm text-plum/60 dark:text-milk/60">{k}</span>
