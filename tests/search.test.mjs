@@ -39,3 +39,10 @@ test('pencarian konsep mencocokkan tag (ID & EN, dengan/tanpa #)', () => {
   assert.ok(G.matchesQuery(it, '#stage'))
   assert.ok(!G.matchesQuery(it, 'bandara'))
 })
+
+test('teks alternatif: alt_text dulu, lalu judul, lalu nama idol', () => {
+  assert.equal(G.altOf({ alt_text: '  Carmen tersenyum  ', title: 'Foto 1', idol: 'CARMEN' }), 'Carmen tersenyum')
+  assert.equal(G.altOf({ alt_text: '   ', title: 'Foto 1', idol: 'CARMEN' }), 'Foto 1')
+  assert.equal(G.altOf({ idol: 'CARMEN' }), 'CARMEN')
+  assert.ok(G.matchesQuery({ alt_text: 'latar biru' }, 'blue'), 'warna juga dicari di teks alternatif')
+})

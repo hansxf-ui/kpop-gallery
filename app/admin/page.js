@@ -72,7 +72,7 @@ export default function Admin() {
   const [items, setItems] = useState([])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
-  const [f, setF] = useState({ idol: '', title: '', group: '', era: '', note: '', yt: '', date: '', tags: [] })
+  const [f, setF] = useState({ idol: '', title: '', group: '', era: '', note: '', yt: '', date: '', tags: [], alt: '' })
   const [queue, setQueue] = useState([]) // {id, file, url, rotation, status}
   const [dragOver, setDragOver] = useState(false)
   const [editing, setEditing] = useState(null) // item id being edited
@@ -153,7 +153,7 @@ export default function Admin() {
     // Per item digeser +1 menit supaya urutan dalam batch tetap terjaga.
     const baseTime = f.date ? new Date(`${f.date}T00:00:00`).getTime() : null
     const backdate = (i) => (baseTime ? { created_at: new Date(baseTime + i * 60000).toISOString() } : {})
-    const tagExtra = f.tags.length ? { tags: f.tags } : {}
+    const tagExtra = { ...(f.tags.length ? { tags: f.tags } : {}), ...(f.alt.trim() ? { alt_text: f.alt.trim().slice(0, 300) } : {}) }
 
     if (queue.length === 0) {
       let ok = 0
@@ -236,7 +236,7 @@ export default function Admin() {
 
   function startEdit(it) {
     setEditing(it.id)
-    setEditVal({ idol: it.idol, title: it.title || '', group: it.group_name || '', era: it.era || '', note: it.note || '', date: it.created_at ? String(it.created_at).slice(0, 10) : '', tags: Array.isArray(it.tags) ? it.tags : [] })
+    setEditVal({ idol: it.idol, title: it.title || '', group: it.group_name || '', era: it.era || '', note: it.note || '', date: it.created_at ? String(it.created_at).slice(0, 10) : '', tags: Array.isArray(it.tags) ? it.tags : [], alt: it.alt_text || '' })
   }
   async function saveEdit(id) {
     const payload = {
@@ -259,9 +259,11 @@ export default function Admin() {
       }
     }
     payload.tags = editVal.tags || []
+    payload.alt_text = (editVal.alt || '').trim().slice(0, 300) || null
     let { data: saved, error } = await sb.from('items').update(payload).eq('id', id).select('id')
-    if (error && isMissingColumnError(error)) { // migrasi 06 belum jalan -> simpan tanpa tags
+    if (error && isMissingColumnError(error)) { // migrasi 06/13 belum jalan -> simpan tanpa tags/alt_text
       delete payload.tags
+      delete payload.alt_text
       ;({ data: saved, error } = await sb.from('items').update(payload).eq('id', id).select('id'))
     }
     // 0 baris tanpa error = ditolak RLS (bukan admin / sesi habis) — jangan tutup form seolah tersimpan.
@@ -332,6 +334,9 @@ export default function Admin() {
             </div>
             <input placeholder={t('Catatan pribadi (opsional, cuma kamu yang lihat)')} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className={box} />
             <TagPicker value={f.tags} onChange={(tags) => setF({ ...f, tags })} suggestFrom={f.title} />
+            {/* Fitur 14: kosong = judul dipakai sebagai teks alternatif seperti sebelumnya. */}
+            <input placeholder={t('Teks alternatif (opsional) — gambarkan isi foto, mis. "Carmen tersenyum, kemeja putih, latar biru"')}
+              value={f.alt} maxLength={300} onChange={(e) => setF({ ...f, alt: e.target.value })} aria-label={t('Teks alternatif')} className={box} />
             <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
               {t('Tanggal tayang (opsional — isi buat foto lama supaya masuk kategori terlama)')}
               <input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} className={`${box} mt-1`} />
@@ -442,6 +447,8 @@ export default function Admin() {
                     </div>
                     <input value={editVal.note} onChange={(e) => setEditVal({ ...editVal, note: e.target.value })} placeholder={t('Catatan pribadi')} className={box} />
                     <TagPicker value={editVal.tags || []} onChange={(tags) => setEditVal({ ...editVal, tags })} suggestFrom={editVal.title} />
+                    <input value={editVal.alt || ''} maxLength={300} onChange={(e) => setEditVal({ ...editVal, alt: e.target.value })}
+                      placeholder={t('Teks alternatif (opsional) — gambarkan isi foto, mis. "Carmen tersenyum, kemeja putih, latar biru"')} aria-label={t('Teks alternatif')} className={box} />
                     <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
                       {t('Tanggal tayang (format YYYY-MM-DD — ubah buat membetulkan tanggal)')}
                       <input value={editVal.date} onChange={(e) => setEditVal({ ...editVal, date: e.target.value })} placeholder="2026-10-21" inputMode="numeric" className={`${box} mt-1`} />

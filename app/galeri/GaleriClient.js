@@ -13,7 +13,7 @@ import { markFavNewSeen } from '../../lib/favNew'
 import BiasPicker from '../components/BiasPicker'
 import { visitBaseline, isNewSince } from '../../lib/lastVisit'
 import { fetchTopReacted } from '../../lib/topReacted'
-import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf } from '../../lib/gallery'
+import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf, altOf } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
@@ -283,7 +283,7 @@ export default function GaleriClient() {
           <ol className="mx-auto grid max-w-3xl grid-cols-3 gap-3 sm:grid-cols-6">
             {topItems.map(({ it, jumlah }, i) => (
               <li key={it.id}>
-                <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={t('Peringkat {n}: {judul}, {j} reaksi minggu ini', { n: i + 1, judul: it.title || it.idol, j: jumlah })}>
+                <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={t('Peringkat {n}: {judul}, {j} reaksi minggu ini', { n: i + 1, judul: altOf(it), j: jumlah })}>
                   {it.type === 'video'
                     ? <span className="grid aspect-[3/4] w-full place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
                     : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
@@ -303,7 +303,7 @@ export default function GaleriClient() {
           </p>
           <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-1 pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
             {newItems.slice(0, 12).map((it, i) => (
-              <button key={it.id} onClick={() => setSpot({ items: newItems, index: i })} className="relative shrink-0" aria-label={t('Buka {judul}', { judul: it.title || it.idol })}>
+              <button key={it.id} onClick={() => setSpot({ items: newItems, index: i })} className="relative shrink-0" aria-label={t('Buka {judul}', { judul: altOf(it) })}>
                 {it.type === 'video'
                   ? <span className="grid h-32 w-24 place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
                   : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" width={96} height={128} className="h-32 w-24 rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}

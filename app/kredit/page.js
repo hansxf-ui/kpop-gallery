@@ -3,7 +3,7 @@ import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { sb, fetchAllItems, imgOpt } from '../../lib/supabase'
-import { thumbOf } from '../../lib/gallery'
+import { thumbOf, altOf } from '../../lib/gallery'
 import { groupCredits } from '../../lib/credits'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -23,7 +23,7 @@ function Grup({ title, groups }) {
             <div className="mt-2 flex gap-1.5">
               {g.items.filter((it) => it.type === 'photo').slice(0, 4).map((it) => (
                 <Link key={it.id} href={`/galeri?item=${it.id}`}>
-                  <img src={imgOpt(thumbOf(it), 160)} alt={it.title || it.idol} loading="lazy" decoding="async" width={56} height={56}
+                  <img src={imgOpt(thumbOf(it), 160)} alt={altOf(it)} loading="lazy" decoding="async" width={56} height={56}
                     className="h-14 w-14 rounded-lg object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />
                 </Link>
               ))}

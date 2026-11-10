@@ -1,7 +1,7 @@
 'use client'
 import { useRef, useState } from 'react'
 import { ytId, imgOpt } from '../../lib/supabase'
-import { thumbOf as thumb } from '../../lib/gallery'
+import { thumbOf as thumb, altOf } from '../../lib/gallery'
 import { useT } from '../../lib/i18n'
 
 // Carousel sorotan beranda — adaptasi demo Carousel shadcn/ui kiriman pemilik (18 Okt 2026)
@@ -41,8 +41,8 @@ export default function FeaturedCarousel({ items, onOpen }) {
                   : it.type === 'youtube'
                     ? <img src={`https://img.youtube.com/vi/${ytId(it.url)}/maxresdefault.jpg`}
                         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = thumb(it) }}
-                        alt={it.title || it.idol} loading={i === 0 ? 'eager' : 'lazy'} className="w-full aspect-square object-cover object-[center_22%]" />
-                    : <img src={imgOpt(thumb(it), 1200)} alt={it.title || it.idol} loading={i === 0 ? 'eager' : 'lazy'} decoding="async" className="w-full aspect-square object-cover object-[center_22%]" />}
+                        alt={altOf(it)} loading={i === 0 ? 'eager' : 'lazy'} className="w-full aspect-square object-cover object-[center_22%]" />
+                    : <img src={imgOpt(thumb(it), 1200)} alt={altOf(it)} loading={i === 0 ? 'eager' : 'lazy'} decoding="async" className="w-full aspect-square object-cover object-[center_22%]" />}
                 {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>}
               </span>
               <span className="block px-3 py-3 font-bold dark:text-milk">{it.title || it.idol} <span className="text-gold text-sm">· {it.idol}</span></span>
