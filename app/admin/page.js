@@ -8,10 +8,33 @@ import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
 import { downloadBlob } from '../../lib/download'
+import { TAGS } from '../../lib/gallery'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
 let qid = 0
+
+// Pilihan tag konsep/acara (fitur 4). Kolom tags baru ada setelah migrasi 06.
+function TagPicker({ value, onChange }) {
+  const toggle = (k) => onChange(value.includes(k) ? value.filter((x) => x !== k) : [...value, k])
+  return (
+    <fieldset className="flex flex-wrap items-center gap-2 text-sm">
+      <legend className="mb-1 w-full text-xs font-bold text-plum/60 dark:text-milk/60">Tag konsep/acara (opsional)</legend>
+      {TAGS.map(([k, label]) => (
+        <label key={k} className={`cursor-pointer rounded-full border px-3 py-1 font-bold ${value.includes(k) ? 'border-plum bg-plum text-milk' : 'border-rose/50 bg-white dark:bg-white/10 dark:text-milk'}`}>
+          <input type="checkbox" className="sr-only" checked={value.includes(k)} onChange={() => toggle(k)} />#{label}
+        </label>
+      ))}
+    </fieldset>
+  )
+}
+
+// Simpan baris; kalau kolom baru (width/height/tags) belum ada di database, ulangi tanpa kolom itu.
+async function insertItem(row, extra) {
+  let { error } = await sb.from('items').insert({ ...row, ...extra })
+  if (error && Object.keys(extra).length && isMissingColumnError(error)) ({ error } = await sb.from('items').insert(row))
+  return { error }
+}
 
 const MEMBER_SET = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON']
 // Bakuan bentuk idol: bila semua nama di dalamnya member H2H (solo/unit, pisah koma/&),
@@ -32,7 +55,7 @@ export default function Admin() {
   const [items, setItems] = useState([])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
-  const [f, setF] = useState({ idol: '', title: '', group: '', era: '', note: '', yt: '', date: '' })
+  const [f, setF] = useState({ idol: '', title: '', group: '', era: '', note: '', yt: '', date: '', tags: [] })
   const [queue, setQueue] = useState([]) // {id, file, url, rotation, status}
   const [dragOver, setDragOver] = useState(false)
   const [editing, setEditing] = useState(null) // item id being edited
@@ -108,12 +131,13 @@ export default function Admin() {
     // Per item digeser +1 menit supaya urutan dalam batch tetap terjaga.
     const baseTime = f.date ? new Date(`${f.date}T00:00:00`).getTime() : null
     const backdate = (i) => (baseTime ? { created_at: new Date(baseTime + i * 60000).toISOString() } : {})
+    const tagExtra = f.tags.length ? { tags: f.tags } : {}
 
     if (queue.length === 0) {
       let ok = 0
       for (const link of validYt) {
         setMsg(`Menyimpan… ${ok}/${validYt.length}`)
-        const { error } = await sb.from('items').insert({ ...baseRow, title: f.title.trim(), type: 'youtube', url: link, ...backdate(ok) })
+        const { error } = await insertItem({ ...baseRow, title: f.title.trim(), type: 'youtube', url: link, ...backdate(ok) }, tagExtra)
         if (!error) ok++
       }
       setBusy(false)
@@ -151,9 +175,8 @@ export default function Admin() {
           ...baseRow, idol: rowIdol, title: rowTitle,
           path, type: file.type.startsWith('video') ? 'video' : 'photo', url, ...backdate(seq++),
         }
-        let { error } = await sb.from('items').insert({ ...row, ...dims })
-        // Kolom width/height belum ada (migrasi 02 belum dijalankan) -> simpan tanpa dimensi.
-        if (error && dims.width && isMissingColumnError(error)) ({ error } = await sb.from('items').insert(row))
+        // Kolom width/height/tags belum ada (migrasi 02/06 belum dijalankan) -> simpan tanpa kolom itu.
+        const { error } = await insertItem(row, { ...dims, ...tagExtra })
         if (error) throw error
         ok++
         setQueue((cur) => cur.map((it) => (it.id === q.id ? { ...it, status: 'selesai ✓' } : it)))
@@ -189,7 +212,7 @@ export default function Admin() {
 
   function startEdit(it) {
     setEditing(it.id)
-    setEditVal({ idol: it.idol, title: it.title || '', group: it.group_name || '', era: it.era || '', note: it.note || '', date: it.created_at ? String(it.created_at).slice(0, 10) : '' })
+    setEditVal({ idol: it.idol, title: it.title || '', group: it.group_name || '', era: it.era || '', note: it.note || '', date: it.created_at ? String(it.created_at).slice(0, 10) : '', tags: Array.isArray(it.tags) ? it.tags : [] })
   }
   async function saveEdit(id) {
     const payload = {
@@ -211,7 +234,12 @@ export default function Admin() {
         payload.created_at = `${ds}T${orig.toISOString().slice(11, 19)}.000Z`
       }
     }
-    const { error } = await sb.from('items').update(payload).eq('id', id)
+    payload.tags = editVal.tags || []
+    let { error } = await sb.from('items').update(payload).eq('id', id)
+    if (error && isMissingColumnError(error)) { // migrasi 06 belum jalan -> simpan tanpa tags
+      delete payload.tags
+      ;({ error } = await sb.from('items').update(payload).eq('id', id))
+    }
     if (error) return setMsg('Gagal menyimpan perubahan: ' + error.message)
     setEditing(null); load()
   }
@@ -277,6 +305,7 @@ export default function Admin() {
               <input placeholder="Era (opsional, mis. Focus)" value={f.era} onChange={(e) => setF({ ...f, era: e.target.value })} className={box} />
             </div>
             <input placeholder="Catatan pribadi (opsional, cuma kamu yang lihat)" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className={box} />
+            <TagPicker value={f.tags} onChange={(tags) => setF({ ...f, tags })} />
             <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
               Tanggal tayang (opsional — isi buat foto lama supaya masuk kategori terlama)
               <input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} className={`${box} mt-1`} />
@@ -380,6 +409,7 @@ export default function Admin() {
                       <input value={editVal.era} onChange={(e) => setEditVal({ ...editVal, era: e.target.value })} placeholder="Era" className={box} />
                     </div>
                     <input value={editVal.note} onChange={(e) => setEditVal({ ...editVal, note: e.target.value })} placeholder="Catatan pribadi" className={box} />
+                    <TagPicker value={editVal.tags || []} onChange={(tags) => setEditVal({ ...editVal, tags })} />
                     <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
                       Tanggal tayang (format YYYY-MM-DD — ubah buat membetulkan tanggal)
                       <input value={editVal.date} onChange={(e) => setEditVal({ ...editVal, date: e.target.value })} placeholder="2026-10-21" inputMode="numeric" className={`${box} mt-1`} />

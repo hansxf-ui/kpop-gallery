@@ -6,7 +6,7 @@ import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
 import { sameEra } from '../../lib/eras'
-import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed } from '../../lib/gallery'
+import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
@@ -49,6 +49,7 @@ export default function GaleriClient() {
   const [idol, setIdol] = useState('Semua')
   const [group, setGroup] = useState('Semua')
   const [era, setEra] = useState('Semua')
+  const [tag, setTag] = useState('Semua') // fitur 4: tag konsep/acara
   const [q, setQ] = useState('')
   const [sort, setSort] = useState('terbaru')
   const [seed, setSeed] = useState(0) // kunci urutan "Acak" — hanya berganti saat Acak dipilih
@@ -91,19 +92,19 @@ export default function GaleriClient() {
   // supaya HTML server dan klien sama), lalu setiap perubahan filter ditulis balik ke URL.
   useEffect(() => {
     const f = parseGaleriFilters(window.location.search, idols.slice(1))
-    setIdol(f.idol); setGroup(f.group); setEra(f.era); setMediaType(f.mediaType); setQ(f.q); setSort(f.sort); setSeed(f.seed)
+    setIdol(f.idol); setGroup(f.group); setEra(f.era); setTag(f.tag); setMediaType(f.mediaType); setQ(f.q); setSort(f.sort); setSeed(f.seed)
     setUrlReady(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     if (!urlReady) return
     // Ketikan pencarian ditunda sebentar supaya riwayat/URL tidak ditulis tiap huruf.
-    const t = setTimeout(() => replaceQuery(filterQueryPatch({ idol, group, era, mediaType, q, sort, seed })), 300)
+    const t = setTimeout(() => replaceQuery(filterQueryPatch({ idol, group, era, tag, mediaType, q, sort, seed })), 300)
     return () => clearTimeout(t)
-  }, [urlReady, idol, group, era, mediaType, q, sort, seed])
+  }, [urlReady, idol, group, era, tag, mediaType, q, sort, seed])
 
   async function shareView() {
-    replaceQuery(filterQueryPatch({ idol, group, era, mediaType, q, sort, seed }))
+    replaceQuery(filterQueryPatch({ idol, group, era, tag, mediaType, q, sort, seed }))
     const u = new URL(window.location.href)
     u.searchParams.delete('item')
     const msg = await shareOrCopy(u.toString(), 'Hearts2Hearts Gallery')
@@ -111,6 +112,8 @@ export default function GaleriClient() {
   }
   const groups = [...new Set((items || []).map((i) => i.group_name).filter(Boolean))]
   const eras = [...new Set((items || []).map((i) => i.era).filter(Boolean))]
+  // Chip tag hanya muncul untuk tag yang benar-benar dipakai (sebelum admin menandai apa pun = tersembunyi).
+  const usedTags = TAGS.filter(([k]) => (items || []).some((i) => tagsOf(i).includes(k)))
 
   const idolCover = useMemo(() => {
     const map = {}
@@ -156,16 +159,17 @@ export default function GaleriClient() {
     if (mediaType !== 'semua') list = list.filter((i) => (mediaType === 'foto' ? i.type === 'photo' : i.type !== 'photo'))
     if (group !== 'Semua') list = list.filter((i) => i.group_name === group)
     if (era !== 'Semua') list = list.filter((i) => sameEra(i.era, era))
+    if (tag !== 'Semua') list = list.filter((i) => tagsOf(i).includes(tag))
     if (q.trim()) list = list.filter((i) => matchesQuery(i, q))
     list = [...list]
     if (sort === 'terlama') list.reverse()
     if (sort === 'acak') list = shuffleStable(list, seed)
     return list
-  }, [items, idol, group, era, q, sort, seed, mediaType])
+  }, [items, idol, group, era, tag, q, sort, seed, mediaType])
 
-  const filtered = idol !== 'Semua' || group !== 'Semua' || era !== 'Semua' || mediaType !== 'semua' || q.trim() !== ''
+  const filtered = idol !== 'Semua' || group !== 'Semua' || era !== 'Semua' || tag !== 'Semua' || mediaType !== 'semua' || q.trim() !== ''
   function resetFilters() {
-    setIdol('Semua'); setGroup('Semua'); setEra('Semua'); setMediaType('semua'); setQ('')
+    setIdol('Semua'); setGroup('Semua'); setEra('Semua'); setTag('Semua'); setMediaType('semua'); setQ('')
   }
 
   // Link langsung: /galeri?item=<id> membuka item itu di lightbox begitu koleksi selesai dimuat.
@@ -193,7 +197,7 @@ export default function GaleriClient() {
   const videoCount = shown.length - fotoCount
   const visible = shown.slice(0, visibleCount)
 
-  useEffect(() => { setVisibleCount(40) }, [idol, group, era, q, sort, mediaType])
+  useEffect(() => { setVisibleCount(40) }, [idol, group, era, tag, q, sort, mediaType])
 
   useEffect(() => {
     if (!sortOpen) return
@@ -314,6 +318,17 @@ export default function GaleriClient() {
             <button key={n} onClick={() => setEra(n)} aria-pressed={era === n}
               className={`px-3 py-1 rounded-full text-xs font-bold border ${era === n ? 'bg-lilac text-plum border-lilac' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
               {n}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {usedTags.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2 mb-4" role="group" aria-label="Konsep / acara">
+          {[['Semua', 'Semua konsep'], ...usedTags].map(([k, label]) => (
+            <button key={k} onClick={() => setTag(k)} aria-pressed={tag === k}
+              className={`px-3 py-1 rounded-full text-xs font-bold border ${tag === k ? 'bg-plum text-milk border-plum dark:bg-milk dark:text-plum dark:border-milk' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
+              {k !== 'Semua' && '#'}{label}
             </button>
           ))}
         </div>

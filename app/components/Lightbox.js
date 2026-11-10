@@ -6,6 +6,7 @@ import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { itemShareUrl } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
 import { downloadBlob } from '../../lib/download'
+import { tagsOf, tagLabel } from '../../lib/gallery'
 import Reactions from './Reactions'
 
 // Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
@@ -341,6 +342,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
           <p className="font-bold text-milk break-words">{it.title || it.idol}</p>
           <p className="text-xs text-gold font-bold mt-0.5">{it.idol}{it.group_name ? ` · ${it.group_name}` : ''}</p>
           {creditOf(it) && <p className="text-[11px] text-milk/60 mt-1">{creditOf(it)}</p>}
+          {tagsOf(it).length > 0 && <p className="mt-1 text-[11px] font-bold text-lilac">{tagsOf(it).map((k) => `#${tagLabel(k)}`).join('  ')}</p>}
           {multi && <p className="mt-1 text-[11px] font-bold tabular-nums text-milk/50">{index + 1} / {items.length}</p>}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
