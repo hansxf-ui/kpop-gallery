@@ -1,5 +1,5 @@
 'use client'
-import { useT, useLang } from '../../lib/i18n'
+import { useT, useLang, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { fetchAllItems, imgOpt } from '../../lib/supabase'
@@ -19,7 +19,7 @@ export default function Linimasa() {
     setError(false); setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setError(true) })
   }
-  useEffect(() => { document.title = 'Linimasa Era · Hearts2Hearts Gallery' }, [])
+  useDocTitle('Linimasa Era')
   useEffect(() => { load() }, [])
   const { groups, tanpaEra } = useMemo(() => groupByEra(items || []), [items])
 
@@ -51,7 +51,7 @@ export default function Linimasa() {
             <p className="text-xs font-bold uppercase tracking-widest text-gold">{g.release ? formatRilis(g.release, lang) : t('Tanggal belum tercatat')}</p>
             <h2 className="font-display text-3xl text-plum dark:text-milk">{g.era}</h2>
             <p className="text-sm text-plum/60 dark:text-milk/60">
-              {g.release ? `${t(g.release.jenis)} · ` : ''}{g.items.length} item
+              {g.release ? `${t(g.release.jenis)} · ` : ''}{t('{n} item', { n: g.items.length })}
             </p>
             <div className="mt-3 flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
               {g.items.filter((it) => it.type !== 'video').slice(0, 8).map((it) => (

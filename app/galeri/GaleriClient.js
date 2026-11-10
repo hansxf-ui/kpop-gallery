@@ -80,8 +80,10 @@ export default function GaleriClient() {
     setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setLoadError(true) })
   }
-  // Judul tab diatur server (generateMetadata di page.js), termasuk judul item untuk ?item=.
-  // Dulu efek di sini menimpanya jadi "Galeri · …" begitu halaman aktif.
+  // Judul tab: link ?item= memakai judul item dari server (generateMetadata di page.js) — tidak
+  // ditimpa. Tanpa ?item, judul "Galeri" ikut bahasa aktif.
+  const [itemTitle] = useState(() => typeof window !== 'undefined' && !!parseGaleriQuery(window.location.search).item)
+  useEffect(() => { if (!itemTitle) document.title = `${t('Galeri')} · Hearts2Hearts Gallery` }, [itemTitle, t])
   useEffect(() => {
     loadItems()
     setFavs(getFavorites())
@@ -138,7 +140,7 @@ export default function GaleriClient() {
     return map
   }, [items])
 
-  // Sorotan minggu ini: 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
+  // "Pilihan minggu ini" (dulu "Sorotan Minggu Ini"): 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
   const featuredList = useMemo(() => {
     if (!items || items.length === 0) return []
     const n = Math.min(5, items.length)
@@ -248,7 +250,7 @@ export default function GaleriClient() {
 
       {featuredList.length > 0 && (
         <section className="mb-10">
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ {t('Sorotan Minggu Ini')}</p>
+          <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ {t('Pilihan minggu ini')}</p>
           <FeaturedCarousel items={featuredList} onOpen={(i) => setSpot({ items: featuredList, index: i })} />
         </section>
       )}

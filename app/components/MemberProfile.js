@@ -19,7 +19,7 @@ export default function MemberProfile({ albumKey, items }) {
     if (!p) return null
     rows = [['Posisi', p.pos], ['Ulang tahun', birthdayOf(albumKey, lang)], ['Asal', p.origin && t(p.origin)]]
   }
-  rows.push(['Era terbanyak di galeri', era ? `${era.era} (${era.count} item)` : null])
+  rows.push(['Era terbanyak di galeri', era ? `${era.era} (${t('{n} item', { n: era.count })})` : null])
   rows.push(['Koleksi di galeri', items ? t('{f} foto · {v} video', { f: fotos, v: videos }) : t('Memuat…')])
   rows = rows.filter(([, v]) => v)
   const note = PROFILE_NOTES[albumKey]

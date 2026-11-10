@@ -1,5 +1,5 @@
 'use client'
-import { useT } from '../../lib/i18n'
+import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { fetchAllItems, imgOpt } from '../../lib/supabase'
 import { quizPool, makeRound, nameOf, getBest, saveBest, ROUND } from '../../lib/quiz'
@@ -19,7 +19,7 @@ export default function Kuis() {
   const [best, setBest] = useState(0)
   const [shareMsg, setShareMsg] = useState('')
 
-  useEffect(() => { document.title = 'Tebak Member · Hearts2Hearts Gallery' }, [])
+  useDocTitle('Tebak Member')
   function load() {
     setError(false); setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setError(true) })

@@ -1,4 +1,5 @@
 'use client'
+import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { sb, ytId, fetchAllItems, imgOpt } from '../../lib/supabase'
 import { compressImage } from '../../lib/compress'
@@ -17,13 +18,14 @@ let qid = 0
 
 // Pilihan tag konsep/acara (fitur 4). Kolom tags baru ada setelah migrasi 06.
 function TagPicker({ value, onChange }) {
+  const t = useT()
   const toggle = (k) => onChange(value.includes(k) ? value.filter((x) => x !== k) : [...value, k])
   return (
     <fieldset className="flex flex-wrap items-center gap-2 text-sm">
-      <legend className="mb-1 w-full text-xs font-bold text-plum/60 dark:text-milk/60">Tag konsep/acara (opsional)</legend>
+      <legend className="mb-1 w-full text-xs font-bold text-plum/60 dark:text-milk/60">{t('Tag konsep/acara (opsional)')}</legend>
       {TAGS.map(([k, label]) => (
         <label key={k} className={`cursor-pointer rounded-full border px-3 py-1 font-bold ${value.includes(k) ? 'border-plum bg-plum text-milk' : 'border-rose/50 bg-white dark:bg-white/10 dark:text-milk'}`}>
-          <input type="checkbox" className="sr-only" checked={value.includes(k)} onChange={() => toggle(k)} />#{label}
+          <input type="checkbox" className="sr-only" checked={value.includes(k)} onChange={() => toggle(k)} />#{t(label)}
         </label>
       ))}
     </fieldset>
@@ -50,6 +52,8 @@ function canonIdol(v) {
 }
 
 export default function Admin() {
+  const t = useT()
+  useDocTitle('Admin')
   const [user, setUser] = useState(undefined)
   // null = belum dicek / fungsi is_admin belum ada (migrasi 03 belum dijalankan) → perilaku lama.
   const [isAdmin, setIsAdmin] = useState(null)
@@ -63,6 +67,7 @@ export default function Admin() {
   const [editVal, setEditVal] = useState({})
   const [pendingDelete, setPendingDelete] = useState(null) // item yang menunggu konfirmasi hapus
   const [announcement, setAnnouncement] = useState('')
+  const [announcementEn, setAnnouncementEn] = useState('')
   const [annMsg, setAnnMsg] = useState('')
   const [dimMsg, setDimMsg] = useState('')
   const [dimBusy, setDimBusy] = useState(false)
@@ -73,7 +78,10 @@ export default function Admin() {
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
     const { data } = sb.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null))
-    sb.from('settings').select('value').eq('key', 'announcement').maybeSingle().then(({ data }) => setAnnouncement(data?.value || ''))
+    sb.from('settings').select('key, value').in('key', ['announcement', 'announcement_en']).then(({ data }) => {
+      setAnnouncement((data || []).find((r) => r.key === 'announcement')?.value || '')
+      setAnnouncementEn((data || []).find((r) => r.key === 'announcement_en')?.value || '')
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
@@ -95,18 +103,19 @@ export default function Admin() {
   }, [user])
 
   // Dulu hasil simpan tidak dicek — gagal (mis. bukan admin / koneksi putus) tetap terlihat berhasil.
-  async function saveAnnouncement(text) {
+  async function saveAnnouncement(text, textEn) {
     setAnnouncement(text)
-    setAnnMsg('Menyimpan…')
-    const { error } = await sb.from('settings').upsert({ key: 'announcement', value: text })
-    setAnnMsg(error ? 'Gagal menyimpan pengumuman: ' + error.message : text.trim() ? 'Pengumuman tersimpan ✓' : 'Pengumuman dimatikan ✓')
+    setAnnMsg(t('Menyimpan…'))
+    // announcement_en = versi Inggris opsional (baris baru di tabel settings yang sudah ada, tanpa ubah skema).
+    const { error } = await sb.from('settings').upsert([{ key: 'announcement', value: text }, { key: 'announcement_en', value: (textEn || '').trim() }])
+    setAnnMsg(error ? t('Gagal menyimpan pengumuman: {pesan}', { pesan: error.message }) : text.trim() ? t('Pengumuman tersimpan ✓') : t('Pengumuman dimatikan ✓'))
   }
 
   async function login(e) {
     e.preventDefault()
     const d = new FormData(e.target)
     const { error } = await sb.auth.signInWithPassword({ email: d.get('email'), password: d.get('password') })
-    setMsg(error ? 'Email atau password salah.' : '')
+    setMsg(error ? t('Email atau password salah.') : '')
   }
 
   function addFiles(fileList) {
@@ -125,7 +134,7 @@ export default function Admin() {
     const ytLinks = f.yt.split('\n').map((s) => s.trim()).filter(Boolean)
     const validYt = ytLinks.filter((l) => ytId(l))
     const idolName = canonIdol(f.idol.trim() || f.group.trim() || 'Hearts2Hearts')
-    if (queue.length === 0 && validYt.length === 0) return setMsg('Pilih foto/video, atau tempel link YouTube yang valid.')
+    if (queue.length === 0 && validYt.length === 0) return setMsg(t('Pilih foto/video, atau tempel link YouTube yang valid.'))
     setBusy(true)
     const baseRow = { idol: idolName, group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
     // Tanggal manual (opsional): buat memasukkan foto lama agar urut di kategori terlama.
@@ -137,14 +146,14 @@ export default function Admin() {
     if (queue.length === 0) {
       let ok = 0
       for (const link of validYt) {
-        setMsg(`Menyimpan… ${ok}/${validYt.length}`)
+        setMsg(t('Menyimpan… {ok}/{n}', { ok, n: validYt.length }))
         const { error } = await insertItem({ ...baseRow, title: f.title.trim(), type: 'youtube', url: link, ...backdate(ok) }, tagExtra)
         if (!error) ok++
       }
       setBusy(false)
-      if (ok === 0) return setMsg('Gagal menyimpan link YouTube.')
+      if (ok === 0) return setMsg(t('Gagal menyimpan link YouTube.'))
       setF({ ...f, title: '', yt: '' })
-      setMsg(validYt.length > 1 ? `Selesai: ${ok}/${validYt.length} link tersimpan ✓` : 'Tersimpan ✓')
+      setMsg(validYt.length > 1 ? t('Selesai: {ok}/{n} link tersimpan ✓', { ok, n: validYt.length }) : t('Tersimpan ✓'))
       load()
       return
     }
@@ -184,10 +193,10 @@ export default function Admin() {
       } catch (err) {
         setQueue((cur) => cur.map((it) => (it.id === q.id ? { ...it, status: 'gagal' } : it)))
       }
-      setMsg(`Mengunggah… ${ok}/${queue.length} selesai`)
+      setMsg(t('Mengunggah… {ok}/{n} selesai', { ok, n: queue.length }))
     }
     setBusy(false)
-    setMsg(`Selesai: ${ok}/${queue.length} item tersimpan ✓`)
+    setMsg(t('Selesai: {ok}/{n} item tersimpan ✓', { ok, n: queue.length }))
     setF({ ...f, title: '' })
     setQueue([])
     if (fileInput.current) fileInput.current.value = ''
@@ -200,12 +209,12 @@ export default function Admin() {
     const { error } = await sb.from('items').delete().eq('id', it.id)
     if (error) {
       setPendingDelete(null)
-      setMsg('Gagal menghapus item dari database — item TIDAK dihapus. Coba lagi.')
+      setMsg(t('Gagal menghapus item dari database — item TIDAK dihapus. Coba lagi.'))
       return
     }
     if (it.path) {
       const { error: stErr } = await sb.storage.from('gallery').remove([it.path])
-      if (stErr) setMsg('Item terhapus, tapi file gambarnya gagal dibersihkan dari storage.')
+      if (stErr) setMsg(t('Item terhapus, tapi file gambarnya gagal dibersihkan dari storage.'))
     }
     setPendingDelete(null)
     load()
@@ -227,7 +236,7 @@ export default function Admin() {
       const m = ds.match(/^(\d{4})-(\d{2})-(\d{2})$/)
       const chk = m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null
       if (!chk || chk.getUTCFullYear() !== +m[1] || chk.getUTCMonth() !== +m[2] - 1 || chk.getUTCDate() !== +m[3]) {
-        return setMsg('Tanggal tidak valid — pakai format YYYY-MM-DD, mis. 2026-10-21.')
+        return setMsg(t('Tanggal tidak valid — pakai format YYYY-MM-DD, mis. 2026-10-21.'))
       }
       const it = items.find((x) => x.id === id)
       const orig = it?.created_at ? new Date(it.created_at) : null
@@ -241,7 +250,7 @@ export default function Admin() {
       delete payload.tags
       ;({ error } = await sb.from('items').update(payload).eq('id', id))
     }
-    if (error) return setMsg('Gagal menyimpan perubahan: ' + error.message)
+    if (error) return setMsg(t('Gagal menyimpan perubahan: {pesan}', { pesan: error.message }))
     setEditing(null); load()
   }
 
@@ -249,7 +258,7 @@ export default function Admin() {
   // Aman diulang: hanya foto yang width/height-nya masih kosong.
   async function backfillDimensions() {
     const todo = items.filter((it) => it.type === 'photo' && !(it.width > 0 && it.height > 0))
-    if (todo.length === 0) return setDimMsg('Semua foto sudah punya dimensi ✓')
+    if (todo.length === 0) return setDimMsg(t('Semua foto sudah punya dimensi ✓'))
     setDimBusy(true)
     let ok = 0, gagal = 0
     for (const it of todo) {
@@ -257,14 +266,14 @@ export default function Admin() {
         const d = await measureImage(imgOpt(it.url, 600))
         const { error } = await sb.from('items').update({ width: d.width, height: d.height }).eq('id', it.id)
         if (error) {
-          if (isMissingColumnError(error)) { setDimBusy(false); return setDimMsg('Kolom width/height belum ada — jalankan dulu supabase/migrations/20261110_02_item_dimensions.sql.') }
+          if (isMissingColumnError(error)) { setDimBusy(false); return setDimMsg(t('Kolom width/height belum ada — jalankan dulu supabase/migrations/20261110_02_item_dimensions.sql.')) }
           gagal++
         } else ok++
       } catch { gagal++ }
-      setDimMsg(`Mengukur… ${ok + gagal}/${todo.length}`)
+      setDimMsg(t('Mengukur… {ok}/{n}', { ok: ok + gagal, n: todo.length }))
     }
     setDimBusy(false)
-    setDimMsg(`Selesai: ${ok} foto diukur${gagal ? `, ${gagal} gagal` : ''} ✓`)
+    setDimMsg(gagal ? t('Selesai: {ok} foto diukur, {gagal} gagal ✓', { ok, gagal }) : t('Selesai: {ok} foto diukur ✓', { ok }))
     load()
   }
 
@@ -278,37 +287,37 @@ export default function Admin() {
   ).sort((a, b) => b[1] - a[1])
   const maxCount = stats[0]?.[1] || 1
 
-  if (user === undefined) return <main className="mx-auto max-w-3xl px-4 py-24 text-center font-bold text-plum/60 dark:text-milk/60">Memuat sesi admin…</main>
+  if (user === undefined) return <main className="mx-auto max-w-3xl px-4 py-24 text-center font-bold text-plum/60 dark:text-milk/60">{t('Memuat sesi admin…')}</main>
   return (
     <main className="mx-auto max-w-2xl px-4 pt-16 pb-10 page-fade-in">
       <ThemeToggle />
       <SiteNav className="mb-8" />
-      <h1 className="font-display text-4xl mb-6 text-plum dark:text-milk">Admin ✦</h1>
+      <h1 className="font-display text-4xl mb-6 text-plum dark:text-milk">{t('Admin ✦')}</h1>
       {user && isAdmin === false ? (
         <div className="rounded-3xl border border-rose/40 bg-white/70 p-5 text-center dark:border-rose/20 dark:bg-white/5">
-          <p className="font-bold text-plum dark:text-milk">Akun ini bukan admin galeri.</p>
-          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">Perubahan hanya bisa dilakukan oleh akun yang terdaftar sebagai admin.</p>
-          <button onClick={() => sb.auth.signOut()} className={`${btn} mt-4`}>Keluar</button>
+          <p className="font-bold text-plum dark:text-milk">{t('Akun ini bukan admin galeri.')}</p>
+          <p className="mt-1 text-sm text-plum/60 dark:text-milk/60">{t('Perubahan hanya bisa dilakukan oleh akun yang terdaftar sebagai admin.')}</p>
+          <button onClick={() => sb.auth.signOut()} className={`${btn} mt-4`}>{t('Keluar')}</button>
         </div>
       ) : !user ? (
         <form onSubmit={login} className="space-y-3">
           <input name="email" type="email" placeholder="Email" aria-label="Email" autoComplete="username" required className={box} />
-          <input name="password" type="password" placeholder="Password" aria-label="Password" autoComplete="current-password" required className={box} />
-          <button className={btn}>Masuk</button>
+          <input name="password" type="password" placeholder={t('Password')} aria-label={t('Password')} autoComplete="current-password" required className={box} />
+          <button className={btn}>{t('Masuk')}</button>
         </form>
       ) : (
         <>
           <form onSubmit={add} className="space-y-3 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
-            <input placeholder="Nama idol (opsional, mis. CARMEN)" value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
-            <input placeholder="Judul (opsional, dipakai untuk semua file di batch ini)" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={box} />
+            <input placeholder={t('Nama idol (opsional, mis. CARMEN)')} value={f.idol} onChange={(e) => setF({ ...f, idol: e.target.value })} className={box} />
+            <input placeholder={t('Judul (opsional, dipakai untuk semua file di batch ini)')} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={box} />
             <div className="grid grid-cols-2 gap-3">
-              <input placeholder="Grup (opsional)" value={f.group} onChange={(e) => setF({ ...f, group: e.target.value })} className={box} />
-              <input placeholder="Era (opsional, mis. Focus)" value={f.era} onChange={(e) => setF({ ...f, era: e.target.value })} className={box} />
+              <input placeholder={t('Grup (opsional)')} value={f.group} onChange={(e) => setF({ ...f, group: e.target.value })} className={box} />
+              <input placeholder={t('Era (opsional, mis. Focus)')} value={f.era} onChange={(e) => setF({ ...f, era: e.target.value })} className={box} />
             </div>
-            <input placeholder="Catatan pribadi (opsional, cuma kamu yang lihat)" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className={box} />
+            <input placeholder={t('Catatan pribadi (opsional, cuma kamu yang lihat)')} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} className={box} />
             <TagPicker value={f.tags} onChange={(tags) => setF({ ...f, tags })} />
             <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
-              Tanggal tayang (opsional — isi buat foto lama supaya masuk kategori terlama)
+              {t('Tanggal tayang (opsional — isi buat foto lama supaya masuk kategori terlama)')}
               <input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} className={`${box} mt-1`} />
             </label>
 
@@ -318,7 +327,7 @@ export default function Admin() {
               onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files) }}
               onClick={() => fileInput.current?.click()}
               className={`rounded-xl border-2 border-dashed px-4 py-6 text-center cursor-pointer text-sm font-bold transition ${dragOver ? 'border-gold bg-gold/10' : 'border-rose/50 dark:border-rose/25 text-plum/60 dark:text-milk/60'}`}>
-              📸 Seret & lepas foto/video di sini, atau ketuk untuk memilih (boleh banyak sekaligus)
+              📸 {t('Seret & lepas foto/video di sini, atau ketuk untuk memilih (boleh banyak sekaligus)')}
               <input ref={fileInput} type="file" accept="image/*,video/*" multiple onChange={(e) => addFiles(e.target.files)} className="hidden" />
               <div className="mt-3">
                 <button type="button" onClick={(e) => { e.stopPropagation(); fileInput.current?.click() }} className="rounded-full bg-plum text-milk text-xs font-bold px-4 py-2">
@@ -337,51 +346,53 @@ export default function Admin() {
                     <span className="flex-1 truncate text-xs dark:text-milk">{q.file.name}</span>
                     <span className="text-xs font-bold text-gold shrink-0">{q.status}</span>
                     {q.file.type.startsWith('image/') && (
-                      <button type="button" onClick={() => rotateQueued(q.id)} className="text-sm shrink-0" aria-label="Putar 90°">↻</button>
+                      <button type="button" onClick={() => rotateQueued(q.id)} className="text-sm shrink-0" aria-label={t('Putar 90°')}>↻</button>
                     )}
-                    <button type="button" onClick={() => removeQueued(q.id)} className="text-sm text-rose font-bold shrink-0" aria-label="Hapus dari antrean">✕</button>
+                    <button type="button" onClick={() => removeQueued(q.id)} className="text-sm text-rose font-bold shrink-0" aria-label={t('Hapus dari antrean')}>✕</button>
                   </li>
                 ))}
               </ul>
             )}
 
-            <p className="text-center text-sm text-plum/60 dark:text-milk/60">atau, kalau tanpa file di atas — tempel link YouTube (boleh banyak, satu per baris)</p>
+            <p className="text-center text-sm text-plum/60 dark:text-milk/60">{t('atau, kalau tanpa file di atas — tempel link YouTube (boleh banyak, satu per baris)')}</p>
             <textarea placeholder={'https://youtu.be/...\nhttps://youtu.be/...'} value={f.yt}
               onChange={(e) => setF({ ...f, yt: e.target.value })} rows={3} className={box} />
             <button disabled={busy} className={btn}>
-              {queue.length > 1 ? `Tambah ${queue.length} item ke galeri` : f.yt.trim().includes('\n') || (f.yt.match(/youtu/g) || []).length > 1 ? 'Tambah semua link YouTube' : 'Tambah ke galeri'}
+              {queue.length > 1 ? t('Tambah {n} item ke galeri', { n: queue.length }) : f.yt.trim().includes('\n') || (f.yt.match(/youtu/g) || []).length > 1 ? t('Tambah semua link YouTube') : t('Tambah ke galeri')}
             </button>
-            <button type="button" onClick={() => sb.auth.signOut()} className="ml-3 text-sm underline dark:text-milk">Keluar</button>
+            <button type="button" onClick={() => sb.auth.signOut()} className="ml-3 text-sm underline dark:text-milk">{t('Keluar')}</button>
           </form>
           {msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
 
           <AdminReports items={items} onEdit={(it) => { startEdit(it); setTimeout(() => document.getElementById(`item-${it.id}`)?.scrollIntoView({ block: 'center' }), 50) }} />
 
           <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
-            <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 Pengumuman comeback</h2>
-            <p className="text-xs text-plum/50 dark:text-milk/50 mb-2">Muncul sebagai banner di atas beranda. Kosongkan lalu simpan untuk mematikannya.</p>
+            <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 {t('Pengumuman comeback')}</h2>
+            <p className="text-xs text-plum/50 dark:text-milk/50 mb-2">{t('Muncul sebagai banner di atas beranda. Kosongkan lalu simpan untuk mematikannya.')}</p>
             <div className="flex gap-2">
-              <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} aria-label="Teks pengumuman" placeholder="mis. Comeback baru: Lemon Tang! 🍋" className={box} />
-              <button onClick={() => saveAnnouncement(announcement)} className="rounded-full bg-gold text-plum font-bold px-4 shrink-0 text-sm">Simpan</button>
+              <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} aria-label={t('Teks pengumuman')} placeholder={t('mis. Comeback baru: Lemon Tang! 🍋')} className={box} />
+              <button onClick={() => saveAnnouncement(announcement, announcementEn)} className="rounded-full bg-gold text-plum font-bold px-4 shrink-0 text-sm">{t('Simpan')}</button>
             </div>
+            <input value={announcementEn} onChange={(e) => setAnnouncementEn(e.target.value)} aria-label={t('Teks pengumuman bahasa Inggris (opsional)')}
+              placeholder={t('Versi bahasa Inggris (opsional), mis. New comeback: Lemon Tang! 🍋')} className={`${box} mt-2`} />
+            <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Kalau dikosongkan, pengunjung yang memilih EN tetap melihat teks Indonesia.')}</p>
             {annMsg && <p className="mt-2 text-sm font-bold dark:text-milk" role="status">{annMsg}</p>}
           </div>
 
           <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
-            <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📐 Dimensi foto</h2>
+            <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📐 {t('Dimensi foto')}</h2>
             <p className="text-xs text-plum/50 dark:text-milk/50 mb-3">
-              Foto yang dimensinya tercatat tampil tanpa lompatan layout di galeri. Upload baru tercatat otomatis;
-              tombol ini mengukur foto lama yang belum. Perlu migrasi <code>20261110_02_item_dimensions.sql</code>.
+              {t('Foto yang dimensinya tercatat tampil tanpa lompatan layout di galeri. Upload baru tercatat otomatis; tombol ini mengukur foto lama yang belum. Perlu migrasi')} <code>20261110_02_item_dimensions.sql</code>.
             </p>
             <button onClick={backfillDimensions} disabled={dimBusy} className="rounded-full bg-gold text-plum font-bold px-4 py-2 text-sm disabled:opacity-50">
-              {dimBusy ? 'Mengukur…' : `Ukur dimensi foto lama (${items.filter((it) => it.type === 'photo' && !(it.width > 0 && it.height > 0)).length})`}
+              {dimBusy ? t('Mengukur…') : t('Ukur dimensi foto lama ({n})', { n: items.filter((it) => it.type === 'photo' && !(it.width > 0 && it.height > 0)).length })}
             </button>
             {dimMsg && <p className="mt-2 text-sm font-bold dark:text-milk" role="status">{dimMsg}</p>}
           </div>
 
           {stats.length > 0 && (
             <div className="mt-10">
-              <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">Statistik koleksi</h2>
+              <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">{t('Statistik koleksi')}</h2>
               <ul className="space-y-1.5">
                 {stats.map(([n, c]) => (
                   <li key={n} className="flex items-center gap-2 text-sm">
@@ -397,29 +408,29 @@ export default function Admin() {
           )}
 
           <div className="mt-10 flex items-center justify-between">
-            <h2 className="font-display text-2xl text-plum dark:text-milk">Semua item ({items.length})</h2>
-            <button onClick={exportData} className="text-sm font-bold text-gold underline underline-offset-4">⬇ Ekspor backup (.json)</button>
+            <h2 className="font-display text-2xl text-plum dark:text-milk">{t('Semua item ({n})', { n: items.length })}</h2>
+            <button onClick={exportData} className="text-sm font-bold text-gold underline underline-offset-4">⬇ {t('Ekspor backup (.json)')}</button>
           </div>
           <ul className="mt-3 space-y-2">
             {items.map((it) => (
               <li key={it.id} id={`item-${it.id}`} className="rounded-xl bg-white/70 dark:bg-white/5 dark:text-milk px-4 py-2.5">
                 {editing === it.id ? (
                   <div className="space-y-2">
-                    <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder="Idol (opsional)" className={box} />
-                    <input value={editVal.title} onChange={(e) => setEditVal({ ...editVal, title: e.target.value })} placeholder="Judul" className={box} />
+                    <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder={t('Idol (opsional)')} className={box} />
+                    <input value={editVal.title} onChange={(e) => setEditVal({ ...editVal, title: e.target.value })} placeholder={t('Judul')} className={box} />
                     <div className="grid grid-cols-2 gap-2">
-                      <input value={editVal.group} onChange={(e) => setEditVal({ ...editVal, group: e.target.value })} placeholder="Grup" className={box} />
+                      <input value={editVal.group} onChange={(e) => setEditVal({ ...editVal, group: e.target.value })} placeholder={t('Grup')} className={box} />
                       <input value={editVal.era} onChange={(e) => setEditVal({ ...editVal, era: e.target.value })} placeholder="Era" className={box} />
                     </div>
-                    <input value={editVal.note} onChange={(e) => setEditVal({ ...editVal, note: e.target.value })} placeholder="Catatan pribadi" className={box} />
+                    <input value={editVal.note} onChange={(e) => setEditVal({ ...editVal, note: e.target.value })} placeholder={t('Catatan pribadi')} className={box} />
                     <TagPicker value={editVal.tags || []} onChange={(tags) => setEditVal({ ...editVal, tags })} />
                     <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
-                      Tanggal tayang (format YYYY-MM-DD — ubah buat membetulkan tanggal)
+                      {t('Tanggal tayang (format YYYY-MM-DD — ubah buat membetulkan tanggal)')}
                       <input value={editVal.date} onChange={(e) => setEditVal({ ...editVal, date: e.target.value })} placeholder="2026-10-21" inputMode="numeric" className={`${box} mt-1`} />
                     </label>
                     <div className="flex gap-2">
-                      <button onClick={() => saveEdit(it.id)} className="rounded-full bg-plum text-milk font-bold px-4 py-1.5 text-sm">Simpan</button>
-                      <button onClick={() => setEditing(null)} className="rounded-full bg-white dark:bg-white/10 border border-rose/40 px-4 py-1.5 text-sm font-bold">Batal</button>
+                      <button onClick={() => saveEdit(it.id)} className="rounded-full bg-plum text-milk font-bold px-4 py-1.5 text-sm">{t('Simpan')}</button>
+                      <button onClick={() => setEditing(null)} className="rounded-full bg-white dark:bg-white/10 border border-rose/40 px-4 py-1.5 text-sm font-bold">{t('Batal')}</button>
                     </div>
                   </div>
                 ) : (
@@ -429,8 +440,8 @@ export default function Admin() {
                       {it.note && <span className="block text-xs text-plum/50 dark:text-milk/50 truncate">📝 {it.note}</span>}
                     </div>
                     <div className="flex gap-3 shrink-0">
-                      <button onClick={() => startEdit(it)} className="text-sm font-bold text-gold">Ubah</button>
-                      <button onClick={() => setPendingDelete(it)} className="text-sm text-rose font-bold">Hapus</button>
+                      <button onClick={() => startEdit(it)} className="text-sm font-bold text-gold">{t('Ubah')}</button>
+                      <button onClick={() => setPendingDelete(it)} className="text-sm text-rose font-bold">{t('Hapus')}</button>
                     </div>
                   </div>
                 )}
@@ -442,9 +453,9 @@ export default function Admin() {
       {!user && msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
       <ConfirmModal
         open={!!pendingDelete}
-        title="Hapus item ini?"
+        title={t('Hapus item ini?')}
         message={pendingDelete ? `${pendingDelete.idol}${pendingDelete.title ? ` · ${pendingDelete.title}` : ''}` : ''}
-        confirmLabel="Ya, hapus"
+        confirmLabel={t('Ya, hapus')}
         onConfirm={() => del(pendingDelete)}
         onCancel={() => setPendingDelete(null)}
       />

@@ -1,5 +1,5 @@
 'use client'
-import { useT } from '../../lib/i18n'
+import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { fetchItemsByIds } from '../../lib/supabase'
 import { getFavorites, setFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
@@ -49,7 +49,7 @@ export default function Favorit() {
     })
   }
 
-  useEffect(() => { document.title = 'Favoritku · Hearts2Hearts Gallery' }, [])
+  useDocTitle('Favoritku')
   useEffect(() => { load() }, [])
   // Hati bisa diubah dari lightbox — ikon di grid ikut berubah, tapi kartunya tidak langsung
   // hilang (supaya urutan lightbox yang sedang terbuka tidak bergeser).

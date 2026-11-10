@@ -1,7 +1,9 @@
 'use client'
+import { useT } from '../../lib/i18n'
 import { useEffect } from 'react'
 
-export default function ConfirmModal({ open, title, message, confirmLabel = 'Ya, hapus', onConfirm, onCancel }) {
+export default function ConfirmModal({ open, title, message, confirmLabel, onConfirm, onCancel }) {
+  const t = useT()
   useEffect(() => {
     if (!open) return
     const onKey = (e) => { if (e.key === 'Escape') onCancel() }
@@ -23,11 +25,11 @@ export default function ConfirmModal({ open, title, message, confirmLabel = 'Ya,
         <div className="flex gap-2 justify-center">
           <button autoFocus onClick={onCancel}
             className="rounded-full bg-white dark:bg-white/10 border border-rose/50 dark:border-rose/20 px-5 py-2 text-sm font-bold text-plum dark:text-milk">
-            Batal
+            {t('Batal')}
           </button>
           <button onClick={onConfirm}
             className="rounded-full bg-red-500 text-white px-5 py-2 text-sm font-bold hover:bg-red-600 transition">
-            {confirmLabel}
+            {confirmLabel || t('Ya, hapus')}
           </button>
         </div>
       </div>

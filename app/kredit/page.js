@@ -1,5 +1,5 @@
 'use client'
-import { useT } from '../../lib/i18n'
+import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { fetchAllItems, imgOpt } from '../../lib/supabase'
@@ -48,7 +48,7 @@ export default function Kredit() {
     setError(false); setItems(null)
     fetchAllItems().then(setItems).catch(() => { setItems([]); setError(true) })
   }
-  useEffect(() => { document.title = 'Kredit Foto · Hearts2Hearts Gallery' }, [])
+  useDocTitle('Kredit Foto')
   useEffect(() => { load() }, [])
   const { official, others } = useMemo(() => groupCredits(items || []), [items])
   const tanpa = items ? items.length - [...official, ...others].reduce((n, g) => n + g.items.length, 0) : 0

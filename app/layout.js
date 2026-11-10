@@ -5,6 +5,7 @@ import ConfettiHearts from './components/ConfettiHearts'
 import TopBanner from './components/TopBanner'
 import ServiceWorker from './components/ServiceWorker'
 import { LangProvider } from '../lib/i18n'
+import { LANG_BOOT_SCRIPT, LANG_BOOT_STYLE } from '../lib/langBoot'
 
 const SITE_URL = 'https://kpop-gallery-coral.vercel.app'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -46,6 +47,9 @@ export default function RootLayout({ children }) {
     // suppressHydrationWarning: skrip tema di <head> menambah kelas "dark" sebelum React aktif.
     <html lang="id" className={`${fontDisplay.variable} ${fontBody.variable}`} suppressHydrationWarning>
       <head>
+        {/* Bahasa tersimpan diterapkan sebelum halaman tampil (lihat lib/i18n.js) — mencegah kilatan teks Indonesia untuk pengunjung EN. */}
+        <style dangerouslySetInnerHTML={{ __html: LANG_BOOT_STYLE }} />
+        <script dangerouslySetInnerHTML={{ __html: LANG_BOOT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: "try{if(localStorage.theme==='dark'||(!('theme' in localStorage)&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}" }} />
         {/* Semua foto galeri dimuat dari storage Supabase — buka koneksinya lebih awal. */}
         {SUPABASE_URL && <link rel="preconnect" href={SUPABASE_URL} crossOrigin="" />}
