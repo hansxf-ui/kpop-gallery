@@ -9,6 +9,7 @@ import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
 import { downloadBlob } from '../../lib/download'
 import { TAGS } from '../../lib/gallery'
+import AdminReports from '../components/AdminReports'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
@@ -354,6 +355,8 @@ export default function Admin() {
           </form>
           {msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}
 
+          <AdminReports items={items} onEdit={(it) => { startEdit(it); setTimeout(() => document.getElementById(`item-${it.id}`)?.scrollIntoView({ block: 'center' }), 50) }} />
+
           <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
             <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 Pengumuman comeback</h2>
             <p className="text-xs text-plum/50 dark:text-milk/50 mb-2">Muncul sebagai banner di atas beranda. Kosongkan lalu simpan untuk mematikannya.</p>
@@ -399,7 +402,7 @@ export default function Admin() {
           </div>
           <ul className="mt-3 space-y-2">
             {items.map((it) => (
-              <li key={it.id} className="rounded-xl bg-white/70 dark:bg-white/5 dark:text-milk px-4 py-2.5">
+              <li key={it.id} id={`item-${it.id}`} className="rounded-xl bg-white/70 dark:bg-white/5 dark:text-milk px-4 py-2.5">
                 {editing === it.id ? (
                   <div className="space-y-2">
                     <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder="Idol (opsional)" className={box} />

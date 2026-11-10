@@ -11,6 +11,7 @@ import { albumKeysOf, DISPLAY_NAME } from '../../lib/gallery'
 import { tagsOf, tagLabel } from '../../lib/gallery'
 import Reactions from './Reactions'
 import CollectionPicker from './CollectionPicker'
+import ReportButton from './ReportButton'
 
 // Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
 // versi lama: aktif = ukuran alami (max-h saja) sementara tetangga = bingkai tetap 3/4,
@@ -383,6 +384,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
         </div>
         {shareMsg && <p role="status" className="text-xs font-bold text-gold">{shareMsg}</p>}
         <Reactions key={it.id} itemId={it.id} />
+        <ReportButton itemId={it.id} />
       </div>
     </div>,
     document.body
