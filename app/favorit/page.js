@@ -8,6 +8,7 @@ import Lightbox from '../components/Lightbox'
 import GalleryCard from '../components/GalleryCard'
 import ScrollTopButton from '../components/ScrollTopButton'
 import Skeleton from '../components/Skeleton'
+import FavTransfer from '../components/FavTransfer'
 
 export default function Favorit() {
   const [items, setItems] = useState(null) // null = sedang memuat
@@ -69,6 +70,7 @@ export default function Favorit() {
         )}
       </header>
 
+      {items !== null && <FavTransfer onImported={load} />}
       {items === null && <Skeleton />}
       {items && !loadError && items.length === 0 && (
         <p className="text-center text-plum/60 dark:text-milk/60">Belum ada favorit. Ketuk ikon hati di galeri untuk menyimpan.</p>
