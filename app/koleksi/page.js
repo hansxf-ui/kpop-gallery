@@ -7,6 +7,7 @@ import {
   getCollections, createCollection, renameCollection, deleteCollection, toggleInCollection,
   pruneCollection, encodeCollection, importCollection, COLL_EVENT,
 } from '../../lib/collections'
+import { shareOrCopy } from '../../lib/share'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import GalleryCard from '../components/GalleryCard'
@@ -75,6 +76,13 @@ export default function Koleksi() {
     const c = createCollection(newName)
     setNewName('')
     pilih(c.id)
+  }
+
+  // Fitur 7: link album read-only — penerima langsung melihat isinya tanpa impor.
+  async function bagikanAlbum() {
+    const url = `${window.location.origin}/koleksi/lihat?kode=${encodeURIComponent(encodeCollection(active))}`
+    const m = await shareOrCopy(url, active.name)
+    if (m) setMsg(t(m))
   }
 
   async function salinKode() {
@@ -146,7 +154,8 @@ export default function Koleksi() {
               <>
                 <h2 className="mr-2 font-display text-3xl text-plum dark:text-milk">{active.name}</h2>
                 <button onClick={() => setRenaming(active.name)} className={tombol}>{t('Ganti nama')}</button>
-                <button onClick={salinKode} disabled={active.ids.length === 0} className={tombol}>🔗 {t('Salin kode bagikan')}</button>
+                <button onClick={bagikanAlbum} disabled={active.ids.length === 0} className={tombol}>🔗 {t('Bagikan link album')}</button>
+                <button onClick={salinKode} disabled={active.ids.length === 0} className={tombol}>📋 {t('Salin kode bagikan')}</button>
                 <button onClick={() => setPendingDelete(active)} className={`${tombol} text-red-600 dark:text-red-300`}>{t('Hapus')}</button>
               </>
             )}
