@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { sb, fetchAllItems } from '../../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../../lib/favorites'
+import { sameEra } from '../../../lib/eras'
 import { ALBUM_KEYS, DISPLAY_NAME, namesOf, matchesQuery, shuffleStable, newSeed } from '../../../lib/gallery'
 import ThemeToggle from '../../components/ThemeToggle'
 import SiteNav from '../../components/SiteNav'
@@ -61,7 +62,7 @@ export default function IdolAlbum() {
 
   const shown = useMemo(() => {
     let list = items || []
-    if (era !== 'Semua') list = list.filter((i) => i.era === era)
+    if (era !== 'Semua') list = list.filter((i) => sameEra(i.era, era))
     if (q.trim()) list = list.filter((i) => matchesQuery(i, q))
     list = [...list]
     if (sort === 'terlama') list.reverse()

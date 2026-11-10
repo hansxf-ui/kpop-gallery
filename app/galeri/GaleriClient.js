@@ -5,6 +5,7 @@ import { fetchAllItems, imgOpt } from '../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
+import { sameEra } from '../../lib/eras'
 import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -154,7 +155,7 @@ export default function GaleriClient() {
     })
     if (mediaType !== 'semua') list = list.filter((i) => (mediaType === 'foto' ? i.type === 'photo' : i.type !== 'photo'))
     if (group !== 'Semua') list = list.filter((i) => i.group_name === group)
-    if (era !== 'Semua') list = list.filter((i) => i.era === era)
+    if (era !== 'Semua') list = list.filter((i) => sameEra(i.era, era))
     if (q.trim()) list = list.filter((i) => matchesQuery(i, q))
     list = [...list]
     if (sort === 'terlama') list.reverse()
@@ -317,6 +318,10 @@ export default function GaleriClient() {
           ))}
         </div>
       )}
+
+      <p className="mb-4 text-center">
+        <Link href="/linimasa" className="text-xs font-bold text-plum/60 underline underline-offset-4 hover:text-plum dark:text-milk/60 dark:hover:text-milk">🕰️ Lihat per era (Linimasa)</Link>
+      </p>
 
       {filtered && (
         <p className="mb-4 text-center">
