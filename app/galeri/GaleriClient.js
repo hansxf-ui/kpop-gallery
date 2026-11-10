@@ -6,6 +6,7 @@ import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
 import { sameEra } from '../../lib/eras'
+import { visitBaseline, isNewSince } from '../../lib/lastVisit'
 import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf } from '../../lib/gallery'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
@@ -67,6 +68,8 @@ export default function GaleriClient() {
   const deepLinkDone = useRef(false) // ?item= di URL sudah diproses (sekali per kunjungan)
   const [urlReady, setUrlReady] = useState(false) // filter dari URL sudah dibaca
   const [shareMsg, setShareMsg] = useState('')
+  const [baseline, setBaseline] = useState(null) // fitur 5: patokan "Baru sejak kunjungan terakhir"
+  useEffect(() => { setBaseline(visitBaseline()) }, [])
   function loadItems() {
     setLoadError(false)
     setItems(null)
@@ -140,6 +143,9 @@ export default function GaleriClient() {
     for (let i = 0; i < n; i++) out.push(items[(start + i * step) % items.length])
     return out
   }, [items])
+
+  // Baru ditambahkan sejak kunjungan terakhir (fitur 5). items sudah urut terbaru dulu.
+  const newItems = useMemo(() => (items || []).filter((it) => isNewSince(it, baseline)), [items, baseline])
 
   const onThisDay = useMemo(() => {
     if (!items) return []
@@ -232,6 +238,29 @@ export default function GaleriClient() {
         <section className="mb-10">
           <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ Sorotan Minggu Ini</p>
           <FeaturedCarousel items={featuredList} onOpen={(i) => setSpot({ items: featuredList, index: i })} />
+        </section>
+      )}
+
+      {newItems.length > 0 && (
+        <section className="mb-10" aria-labelledby="baru-ditambahkan">
+          <p id="baru-ditambahkan" className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">
+            ✦ Baru ditambahkan sejak kunjungan terakhirmu ({newItems.length})
+          </p>
+          <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-1 pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+            {newItems.slice(0, 12).map((it, i) => (
+              <button key={it.id} onClick={() => setSpot({ items: newItems, index: i })} className="relative shrink-0" aria-label={`Buka ${it.title || it.idol}`}>
+                {it.type === 'video'
+                  ? <span className="grid h-32 w-24 place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
+                  : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" width={96} height={128} className="h-32 w-24 rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-gold px-1.5 text-[9px] font-bold uppercase text-plum">Baru</span>
+              </button>
+            ))}
+          </div>
+          {newItems.length > 1 && (
+            <p className="mt-2 text-center">
+              <button onClick={() => setSpot({ items: newItems, index: 0 })} className="text-sm font-bold text-gold underline underline-offset-4">Lihat semua yang baru →</button>
+            </p>
+          )}
         </section>
       )}
 
@@ -381,7 +410,7 @@ export default function GaleriClient() {
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (
-          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)}
+          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} isNew={isNewSince(it, baseline)}
             onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
             onFav={(x, y) => onFav(it, x, y)} />
         ))}

@@ -14,6 +14,7 @@ import AutoLoadMore from '../../components/AutoLoadMore'
 import ScrollTopButton from '../../components/ScrollTopButton'
 import Skeleton from '../../components/Skeleton'
 import MemberProfile from '../../components/MemberProfile'
+import { visitBaseline, isNewSince } from '../../../lib/lastVisit'
 
 export default function IdolAlbum() {
   const { name } = useParams()
@@ -28,6 +29,8 @@ export default function IdolAlbum() {
   const [openIndex, setOpenIndex] = useState(null)
   const [autoplay, setAutoplay] = useState(false)
   const [visibleCount, setVisibleCount] = useState(40)
+  const [baseline, setBaseline] = useState(null)
+  useEffect(() => { setBaseline(visitBaseline()) }, [])
 
   const key = idol.toUpperCase()
   const valid = ALBUM_KEYS.includes(key)
@@ -150,7 +153,7 @@ export default function IdolAlbum() {
 
       <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
         {visible.map((it) => (
-          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} showIdol={false}
+          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} showIdol={false} isNew={isNewSince(it, baseline)}
             onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
             onFav={(x, y) => onFav(it, x, y)} />
         ))}
