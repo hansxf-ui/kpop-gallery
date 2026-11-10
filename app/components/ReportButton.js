@@ -35,7 +35,7 @@ export default function ReportButton({ itemId }) {
       </fieldset>
       <textarea value={detail} onChange={(e) => setDetail(e.target.value)} maxLength={300} rows={2}
         placeholder={t('Keterangan (opsional), mis. “ini Yuha, bukan Ye-on”')} aria-label={t('Keterangan laporan')}
-        className="mt-2 w-full rounded-xl border border-rose/60 px-2 py-1 text-xs" />
+        className="mt-2 w-full rounded-xl border border-rose/60 bg-white px-2 py-1 text-xs text-plum placeholder:text-plum/45 [color-scheme:light]" />
       <div className="mt-2 flex gap-2">
         <button disabled={!reason || state === 'kirim'} className="rounded-full bg-plum px-4 py-1.5 text-xs font-bold text-milk disabled:opacity-50">
           {state === 'kirim' ? t('Mengirim…') : t('Kirim laporan')}
