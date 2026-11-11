@@ -5,6 +5,7 @@ import SiteNav from '../components/SiteNav'
 import { RELEASES, labelRilis } from '../../lib/eras'
 import { useT, useLang, useDocTitle } from '../../lib/i18n'
 import FandomStats from '../components/FandomStats'
+import CreditsSection from '../components/CreditsSection'
 
 // Isi halaman Tentang. Teks Indonesia = kunci kamus lib/i18n-en-data.js.
 // Posisi member memang istilah bahasa Inggris (Main Vocal, Leader, …) — tidak diterjemahkan.
@@ -94,12 +95,16 @@ export default function TentangClient() {
         </p>
         <p className={`${p} mt-3`}>
           {t('Situs ini dibuat oleh penggemar dan tidak berafiliasi dengan SM Entertainment maupun Hearts2Hearts.')}{' '}
-          {t('Hak cipta foto dan video tetap milik pemilik aslinya. Daftar sumbernya ada di')} <Link href="/kredit" className="font-bold text-gold underline underline-offset-4">{t('Kredit foto')}</Link>.
-        </p>
-        <p className="mt-8 text-center text-xs text-plum/40 dark:text-milk/40">
-          © 2026 Hearts2Hearts Gallery · {t('Dibuat dengan ♥ untuk S2U')}
+          {t('Hak cipta foto dan video tetap milik pemilik aslinya. Daftar sumbernya ada di')} <a href="#kredit" className="font-bold text-gold underline underline-offset-4">{t('Kredit foto')}</a>.
         </p>
       </section>
+
+      {/* Dulu halaman /kredit — sekarang /kredit dialihkan ke /tentang (next.config.js). */}
+      <CreditsSection className="mt-14" />
+
+      <p className="mt-8 text-center text-xs text-plum/40 dark:text-milk/40">
+        © 2026 Hearts2Hearts Gallery · {t('Dibuat dengan ♥ untuk S2U')}
+      </p>
     </main>
   )
 }

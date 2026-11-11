@@ -1,20 +1,18 @@
 'use client'
-import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { sb, fetchAllItems, imgOpt } from '../../lib/supabase'
 import { thumbOf, altOf } from '../../lib/gallery'
 import { groupCredits } from '../../lib/credits'
-import ThemeToggle from '../components/ThemeToggle'
-import SiteNav from '../components/SiteNav'
-import Skeleton from '../components/Skeleton'
+import { useT } from '../../lib/i18n'
+import Skeleton from './Skeleton'
 
 function Grup({ title, groups }) {
   const t = useT()
   if (groups.length === 0) return null
   return (
-    <section className="mb-12">
-      <h2 className="mb-4 font-display text-3xl text-plum dark:text-milk">{t(title)}</h2>
+    <div className="mb-10">
+      <h3 className="mb-4 font-display text-2xl text-plum dark:text-milk">{t(title)}</h3>
       <ul className="grid gap-3 sm:grid-cols-2">
         {groups.map((g) => (
           <li key={g.name} className="rounded-2xl border border-rose/40 bg-white/80 p-4 dark:border-rose/20 dark:bg-white/5">
@@ -35,12 +33,13 @@ function Grup({ title, groups }) {
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   )
 }
 
-// Kredit & sumber foto (fitur 14), dari kolom `credit` (catatan admin yang diawali "📷").
-export default function Kredit() {
+// Seksi "Kredit Foto" di halaman Tentang (dulu halaman /kredit, sekarang dialihkan ke /tentang).
+// Sumber dari kolom `credit` (catatan admin yang diawali "📷").
+export default function CreditsSection({ className = '' }) {
   const t = useT()
   const [items, setItems] = useState(null)
   const [error, setError] = useState(false)
@@ -50,7 +49,6 @@ export default function Kredit() {
     // Hanya item yang punya kredit (jumlah item tanpa kredit dihitung lewat query count terpisah).
     fetchAllItems({ filter: (q) => q.not('credit', 'is', null) }).then(setItems).catch(() => { setItems([]); setError(true) })
   }
-  useDocTitle('Kredit Foto')
   useEffect(() => {
     load()
     sb.from('items').select('id', { count: 'exact', head: true }).then(({ count }) => setTotal(count ?? null))
@@ -59,19 +57,14 @@ export default function Kredit() {
   const tanpa = items && total !== null ? Math.max(0, total - [...official, ...others].reduce((n, g) => n + g.items.length, 0)) : 0
 
   return (
-    <main className="mx-auto max-w-4xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
-      <header className="pt-16 pb-12 text-center">
-        <SiteNav className="mb-8" />
-        <p className="text-gold text-2xl" aria-hidden>📷</p>
-        <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{t('Kredit Foto')}</h1>
-        <p className="mx-auto mt-3 max-w-prose font-bold text-plum/70 dark:text-milk/70">
-          {t('Terima kasih untuk para fotografer, fansite, dan sumber resmi yang karyanya ada di galeri ini.')}
-        </p>
-        <p className="mx-auto mt-1 max-w-prose text-xs text-plum/50 dark:text-milk/50">
-          {t('Hak cipta foto dan video tetap milik pemilik aslinya. Penggolongan “sumber resmi” berdasarkan nama di kredit.')}
-        </p>
-      </header>
+    <section id="kredit" className={`scroll-mt-6 ${className}`} aria-labelledby="kredit-judul">
+      <h2 id="kredit-judul" className="font-display text-3xl text-plum dark:text-milk mb-2">📷 {t('Kredit Foto')}</h2>
+      <p className="max-w-prose leading-relaxed text-plum/80 dark:text-milk/80">
+        {t('Terima kasih untuk para fotografer, fansite, dan sumber resmi yang karyanya ada di galeri ini.')}
+      </p>
+      <p className="mt-1 mb-6 max-w-prose text-xs text-plum/50 dark:text-milk/50">
+        {t('Hak cipta foto dan video tetap milik pemilik aslinya. Penggolongan “sumber resmi” berdasarkan nama di kredit.')}
+      </p>
 
       {items === null && <Skeleton count={4} />}
       {error && (
@@ -81,11 +74,11 @@ export default function Kredit() {
         </div>
       )}
       {items && !error && official.length + others.length === 0 && (
-        <p className="text-center text-plum/60 dark:text-milk/60">{t('Belum ada kredit foto yang tercatat.')}</p>
+        <p className="text-plum/60 dark:text-milk/60">{t('Belum ada kredit foto yang tercatat.')}</p>
       )}
       <Grup title="Sumber resmi" groups={official} />
       <Grup title="Fansite & sumber lain" groups={others} />
-      {items && tanpa > 0 && <p className="text-center text-xs text-plum/50 dark:text-milk/50">{t('{n} item belum punya keterangan sumber.', { n: tanpa })}</p>}
-    </main>
+      {items && tanpa > 0 && <p className="text-xs text-plum/50 dark:text-milk/50">{t('{n} item belum punya keterangan sumber.', { n: tanpa })}</p>}
+    </section>
   )
 }

@@ -21,12 +21,10 @@ const LINKS = [
 
 // Halaman tambahan — baris tautan kecil di bawah navigasi utama supaya baris utama tidak penuh di HP.
 const EXTRA = [
-  ['/hari-ini', '☀️', 'Hari ini di H2H'],
   ['/linimasa', '🕰️', 'Linimasa era'],
   ['/banding', '⇆', 'Bandingkan era'],
   ['/koleksi', '📁', 'Koleksiku'],
   ['/kuis', '❓', 'Tebak member'],
-  ['/kredit', '📷', 'Kredit foto'],
 ]
 
 function aktif(path, href) {

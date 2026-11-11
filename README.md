@@ -94,8 +94,9 @@ create policy "admin update settings" on settings for update to authenticated us
   sebelum itu pengunjung EN melihat teks Indonesia (bukan terjemahan lama yang basi).
   Pengumuman banner punya kolom versi Inggris opsional di admin.
 - Tombol "Tambah ke kalender" (.ics) di setiap acara `/jadwal`
-- `/kredit` — daftar sumber/kredit foto dari kolom credit
-- `/hari-ini` — hitung mundur, acara hari ini, voting yang buka, foto kenangan harian (+ kartu ulang tahun di hari ulang tahun member)
+- Seksi "Kredit Foto" di `/tentang` — daftar sumber/kredit foto dari kolom credit (`/kredit` lama dialihkan ke `/tentang`)
+- Seksi "Hari ini" di beranda — acara hari ini, voting yang buka, foto kenangan harian (+ kartu ulang tahun di hari ulang tahun member).
+  `/hari-ini` lama dialihkan ke `/`; `/?tanggal=YYYY-MM-DD` untuk mencoba tanggal lain
 - Pengingat voting harian (.ics berulang sampai voting tutup) di `/voting`
 - `/banding` — satu member di dua era berdampingan
 - Cari per warna & konsep, saran tag otomatis di admin

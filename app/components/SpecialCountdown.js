@@ -6,7 +6,7 @@ import { nextOccurrences } from '../../lib/specialDates'
 // Hitung mundur ulang tahun member & anniversary debut (fitur 1).
 // Dirender setelah mount saja: tanggal "hari ini" bergantung zona waktu pengunjung,
 // jadi tidak boleh dihitung di server (hindari hydration mismatch).
-// now (opsional): tanggal patokan — dipakai /hari-ini?tanggal=… untuk mencoba hari lain.
+// now (opsional): tanggal patokan — dipakai beranda dengan ?tanggal=… untuk mencoba hari lain.
 export default function SpecialCountdown({ count = 3, now = null, className = 'mt-10' }) {
   const t = useT()
   const { lang } = useLang() // dipanggil sebelum return awal (aturan hooks)

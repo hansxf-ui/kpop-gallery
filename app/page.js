@@ -8,6 +8,8 @@ import ThemeToggle from './components/ThemeToggle'
 import SiteNav from './components/SiteNav'
 import SpecialCountdown from './components/SpecialCountdown'
 import FandomStats from './components/FandomStats'
+import TodaySection from './components/TodaySection'
+import { todayFrom } from '../lib/today'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
 // Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
@@ -132,6 +134,10 @@ export default function Landing() {
       .catch(() => { /* gagal memuat → tetap pakai angka cadangan */ })
     return () => { alive = false }
   }, [])
+  // Tanggal "hari ini" untuk seksi Hari ini & hitung mundur: zona waktu pengunjung, jadi baru diketahui
+  // setelah mount. ?tanggal=YYYY-MM-DD = mode coba tanggal (dulu di /hari-ini, kini dialihkan ke sini).
+  const [today, setToday] = useState(null)
+  useEffect(() => { setToday(todayFrom(window.location.search)) }, [])
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-16 sm:px-8">
       <ThemeToggle />
@@ -226,10 +232,8 @@ export default function Landing() {
         </section>
       ))}
 
-      <SpecialCountdown />
-      <p className="mt-4 text-center">
-        <Link href="/hari-ini" className="text-sm font-bold text-gold underline underline-offset-4">☀️ {t('Lihat semua yang terjadi hari ini →')}</Link>
-      </p>
+      <SpecialCountdown now={today?.override ? today.now : null} />
+      <TodaySection now={today?.now} override={today?.override} />
       <FandomStats />
 
       <div className="mt-12 text-center">

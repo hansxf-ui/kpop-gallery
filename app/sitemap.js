@@ -3,17 +3,15 @@ import { ALBUM_KEYS } from '../lib/gallery'
 
 // /sitemap.xml — daftar halaman publik untuk mesin pencari. Tidak memuat /admin, halaman pribadi
 // pengunjung (/favorit, /koleksi — isinya tersimpan di perangkat masing-masing), dan
-// /koleksi/lihat (butuh ?kode=).
+// /koleksi/lihat (butuh ?kode=), serta /hari-ini & /kredit yang sudah dialihkan (next.config.js).
 const PAGES = [
   ['/', 'daily', 1],
   ['/galeri', 'daily', 0.9],
   ['/jadwal', 'daily', 0.8],
   ['/voting', 'daily', 0.8],
-  ['/hari-ini', 'daily', 0.6],
   ['/linimasa', 'weekly', 0.6],
   ['/banding', 'weekly', 0.5],
   ['/kuis', 'monthly', 0.4],
-  ['/kredit', 'weekly', 0.4],
   ['/tentang', 'monthly', 0.5],
 ]
 
