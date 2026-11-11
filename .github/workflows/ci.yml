@@ -44,7 +44,10 @@ jobs:
       # Setelah lock diperbarui (`npm install` di komputer lalu commit package-lock.json),
       # baris ini boleh diganti `npm ci` supaya versi paket terkunci persis.
       - run: npm install --no-audit --no-fund
-      - run: npm run build
+      # Diulang sekali kalau gagal: Google Fonts kadang membalas dengan URL font tanpa ekstensi dan
+      # next/font 14 gagal ("Cannot read properties of null (reading '1')") — acak, hilang saat diulang.
+      # https://github.com/vercel/next.js/issues/99114
+      - run: npm run build || { echo "Build gagal, ulangi sekali (kemungkinan flake Google Fonts)…"; rm -rf .next; npm run build; }
         env:
           # Nilai palsu: build hanya butuh variabelnya ada. Tidak ada data asli yang dibaca.
           NEXT_PUBLIC_SUPABASE_URL: https://contoh.supabase.co
