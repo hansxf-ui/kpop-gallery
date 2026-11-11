@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       # Tes hanya memakai node:test bawaan, tanpa paket — tidak perlu npm ci.
       - run: npm test
 
@@ -37,9 +37,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-      - run: npm ci
+      # `npm install` (bukan `npm ci`), sama seperti Vercel. package-lock.json saat ini tertinggal
+      # dari package.json (lock: next 14.2.15, package.json: 14.2.35) sehingga `npm ci` menolak.
+      # Setelah lock diperbarui (`npm install` di komputer lalu commit package-lock.json),
+      # baris ini boleh diganti `npm ci` supaya versi paket terkunci persis.
+      - run: npm install --no-audit --no-fund
       - run: npm run build
         env:
           # Nilai palsu: build hanya butuh variabelnya ada. Tidak ada data asli yang dibaca.
