@@ -53,3 +53,16 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://contoh.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: kunci-palsu-untuk-build
           NEXT_TELEMETRY_DISABLED: '1'
+      # Link lama yang sudah tersebar harus tetap jalan (halaman yang digabung, lihat next.config.js).
+      - name: Cek pengalihan halaman lama
+        run: |
+          npx next start -p 3000 &
+          for i in $(seq 1 30); do curl -s -o /dev/null http://localhost:3000/robots.txt && break; sleep 1; done
+          check() {
+            got=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "http://localhost:3000$1")
+            echo "$1 -> $got"
+            [ "$got" = "308 http://localhost:3000$2" ] || { echo "::error::$1 harus dialihkan ke $2"; exit 1; }
+          }
+          check /hari-ini /
+          check '/hari-ini?tanggal=2026-12-25' '/?tanggal=2026-12-25'
+          check /kredit /tentang
