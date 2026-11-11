@@ -1,0 +1,48 @@
+# Cek otomatis tiap push ke main dan tiap pull request:
+#   - tes: `npm test` (logika kuis, kalender, cadangan, kelengkapan terjemahan Inggris, dll.)
+#   - build: `next build` — gagal di sini = deploy Vercel juga akan gagal.
+# Dua job terpisah supaya jelas mana yang merah. Kalau "tes" merah setelah update jadwal/voting,
+# biasanya ada teks Indonesia baru di lib/jadwal.js / lib/voting.js yang belum punya terjemahan
+# di lib/i18n-en-data.js (situs tetap jalan; pengunjung EN melihat teks Indonesia).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Tes hanya memakai node:test bawaan, tanpa paket — tidak perlu npm ci.
+      - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          # Nilai palsu: build hanya butuh variabelnya ada. Tidak ada data asli yang dibaca.
+          NEXT_PUBLIC_SUPABASE_URL: https://contoh.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: kunci-palsu-untuk-build
+          NEXT_TELEMETRY_DISABLED: '1'
