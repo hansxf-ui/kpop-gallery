@@ -18,12 +18,22 @@ import ReportButton from './ReportButton'
 // versi lama: aktif = ukuran alami (max-h saja) sementara tetangga = bingkai tetap 3/4,
 // jadi pas geser/commit ukuran badan foto berubah-ubah (kelihatan "mencong" & kedip kosong).
 // object-contain: foto tampil utuh tanpa crop di dalam bingkai yang stabil.
-// URL aktif juga lewat imgOpt(1000) — versi lama memuat file asli ukuran penuh (lambat,
-// kedip kosong di HP) sementara tetangga cuma 700px.
+// Foto lewat srcSet 640/1000/1600 (endpoint render Supabase), bukan file asli ukuran penuh.
+// Bingkainya maks. 380px lebar (76vw di HP), jadi browser memilih sesuai kepadatan layar:
+// layar 1× ≈ 640px, HP/laptop 2–3× ≈ 1000px, layar 3× lebar penuh ≈ 1600px.
+// Foto aktif dan tetangga memakai srcSet + sizes yang SAMA: saat digeser, foto tetangga yang
+// sudah termuat langsung dipakai lagi (dulu tetangga 700px → aktif 1000px = unduh ulang + kedip).
+const PHOTO_SIZES = '(min-width: 500px) 380px, 76vw'
+const photoSrc = (url) => {
+  const srcSet = [640, 1000, 1600].map((w) => `${imgOpt(url, w)} ${w}w`).join(', ')
+  // URL non-storage (imgOpt mengembalikan apa adanya) → tanpa srcSet.
+  return imgOpt(url, 1000) === url ? { src: url } : { src: imgOpt(url, 1000), srcSet, sizes: PHOTO_SIZES }
+}
+
 function Media({ it, videoRef, onEnded, ytTitle }) {
   if (it.type === 'photo') return (
     <span className="relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto">
-      <img src={imgOpt(it.url, 1000)} alt={altOf(it)} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
+      <img {...photoSrc(it.url)} alt={altOf(it)} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
     </span>
   )
   if (it.type === 'video') return <video ref={videoRef} onEnded={onEnded} src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
@@ -38,7 +48,7 @@ function MediaTetangga({ it }) {
   const frame = "relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto pointer-events-none"
   if (it.type === 'photo') return (
     <span className={frame}>
-      <img src={imgOpt(it.url, 700)} alt={altOf(it)} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+      <img {...photoSrc(it.url)} alt={altOf(it)} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
     </span>
   )
   if (it.type === 'video') return (
