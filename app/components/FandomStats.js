@@ -23,11 +23,15 @@ export default function FandomStats({ className = 'mt-10' }) {
       <h2 id="statistik-fandom" className="mb-3 text-center text-[10px] font-bold tracking-[0.22em] text-plum/50 dark:text-milk/50">
         <span className="text-gold">●</span>&nbsp; {t('STATISTIK FANDOM')}
       </h2>
-      <div className="mx-auto grid max-w-3xl gap-3 sm:grid-cols-[2fr_1fr]">
+      {/* Kolom grid WAJIB minmax(0, …) + kotak min-w-0. Tanpa itu kolom grid ikut melebar seukuran isi
+          terlebar (5 thumbnail = 466px), sehingga di HP halaman jadi 486px dan bisa digeser ke samping
+          (tombol tema ikut terdorong keluar layar), dan baris thumbnail di bawah tidak pernah menggulir. */}
+      <div className="mx-auto grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {topAll.length > 0 && (
-          <div className="rounded-2xl border border-rose/40 bg-white/80 p-4 dark:border-rose/20 dark:bg-white/5">
+          <div className="min-w-0 rounded-2xl border border-rose/40 bg-white/80 p-4 dark:border-rose/20 dark:bg-white/5">
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gold">♥ {t('Paling disukai sepanjang masa')}</p>
-            <ol className="flex gap-2 overflow-x-auto pb-1">
+            {/* Lebih dari muat (HP) → baris ini menggulir di dalam kotaknya sendiri. */}
+            <ol className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1">
               {topAll.map(({ it, jumlah }, i) => (
                 <li key={it.id} className="w-20 shrink-0 text-center">
                   <Link href={`/galeri?item=${it.id}`} aria-label={t('Peringkat {n}: {judul}, {j} reaksi', { n: i + 1, judul: altOf(it), j: jumlah })} className="relative block">
@@ -43,7 +47,7 @@ export default function FandomStats({ className = 'mt-10' }) {
           </div>
         )}
         {memberWeek && (
-          <div className="rounded-2xl border border-rose/40 bg-white/80 p-4 text-center dark:border-rose/20 dark:bg-white/5">
+          <div className="min-w-0 rounded-2xl border border-rose/40 bg-white/80 p-4 text-center dark:border-rose/20 dark:bg-white/5">
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gold">🔥 {t('Member paling disukai minggu ini')}</p>
             <Link href={`/idol/${memberWeek.member}`} className="font-display text-3xl text-plum underline-offset-4 hover:underline dark:text-milk">
               {DISPLAY_NAME[memberWeek.member] || memberWeek.member}
