@@ -10,6 +10,7 @@ import SpecialCountdown from './components/SpecialCountdown'
 import FandomStats from './components/FandomStats'
 import TodaySection from './components/TodaySection'
 import { todayFrom } from '../lib/today'
+import { WIRE_PATH, stringTop } from '../lib/lanyard'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
 // Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
@@ -54,7 +55,8 @@ function Kartu({ m, i, count }) {
     }
   }
   return (
-    <div className="lc-hang">
+    // --k2 / --k4: titik tali bertemu kawat untuk baris 2 kolom (HP & tablet) dan 4 kolom (≥1024px).
+    <div className="lc-hang" style={{ '--k2': stringTop(i % 2, 2), '--k4': stringTop(i % 4, 4) }}>
       <span className="lc-string" aria-hidden />
       <span className="lc-clip" aria-hidden />
       <div className="lc-sway" style={{ animationDuration: `${DUR[i]}s`, animationDelay: `${DEL[i]}s` }}>
@@ -120,18 +122,28 @@ function Kartu({ m, i, count }) {
   )
 }
 
+// Kawat satu baris kartu. Ketebalan garis tetap walau SVG direntang (vector-effect).
+function Wire({ className }) {
+  return (
+    <svg className={`lc-wire ${className}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <path d={WIRE_PATH} fill="none" stroke="currentColor" strokeWidth="1.6" vectorEffect="non-scaling-stroke" className="text-plum/25 dark:text-milk/25" />
+    </svg>
+  )
+}
+
 export default function Landing() {
   const t = useT()
   const loc = useLocale()
   // Jumlah item per member + total dihitung di database (view member_counts, lihat lib/counts.js)
   // — angka bawaan di MEMBERS hanya cadangan tampilan awal / saat gagal memuat.
   const [liveCounts, setLiveCounts] = useState(null)
-  const [liveTotal, setLiveTotal] = useState(1159)
+  // null = memuat (dulu angka cadangan 1159 tampil lalu berganti), false = gagal → angka disembunyikan.
+  const [liveTotal, setLiveTotal] = useState(null)
   useEffect(() => {
     let alive = true
     fetchMemberCounts()
       .then(({ counts, total }) => { if (alive) { setLiveCounts(counts); setLiveTotal(total) } })
-      .catch(() => { /* gagal memuat → tetap pakai angka cadangan */ })
+      .catch(() => { if (alive) setLiveTotal(false) /* kartu tetap pakai angka cadangan */ })
     return () => { alive = false }
   }, [])
   // Tanggal "hari ini" untuk seksi Hari ini & hitung mundur: zona waktu pengunjung, jadi baru diketahui
@@ -143,14 +155,32 @@ export default function Landing() {
       <ThemeToggle />
       <SiteNav className="mb-8" />
       <style>{`
-        .lc-hang{ position:relative; width:min(240px,44vw); padding-top:58px; }
-        .lc-string{ position:absolute; left:50%; top:0; width:1.5px; height:58px; transform:translateX(-50%); background:linear-gradient(#9db8cc,#c8d9e6); }
+        /* Papan kartu: satu kawat per baris kartu. 2 kolom di HP & tablet, 4 kolom mulai 1024px.
+           --H = tinggi ruang tali; panjang tiap tali dihitung dari lengkung kawat (lib/lanyard.js). */
+        .lc-board{ --H:40px; }
+        @media (min-width:640px){ .lc-board{ --H:52px; } }
+        @media (min-width:1024px){ .lc-board{ --H:58px; } }
+        .lc-row{ position:relative; display:flex; flex-direction:column; gap:1rem; }
+        .lc-pair{ position:relative; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+        .lc-cell{ display:flex; justify-content:center; padding:0 8px; }
+        .lc-wire{ position:absolute; left:0; right:0; top:0; width:100%; height:var(--H); pointer-events:none; overflow:visible; }
+        .lc-wire4{ display:none; }
+        @media (min-width:1024px){
+          .lc-row{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; }
+          .lc-pair{ display:contents; }
+          .lc-wire2{ display:none; }
+          .lc-wire4{ display:block; }
+        }
+        .lc-hang{ --k:var(--k2); position:relative; width:min(240px,100%); padding-top:var(--H); }
+        @media (min-width:1024px){ .lc-hang{ --k:var(--k4); } }
+        .lc-string{ position:absolute; left:50%; top:calc(var(--H) * var(--k)); width:1.5px; height:calc(var(--H) * (1 - var(--k))); transform:translateX(-50%); background:linear-gradient(#9db8cc,#c8d9e6); }
         html.dark .lc-string{ background:linear-gradient(#3d5a75,#5b7b99); }
-        .lc-clip{ position:absolute; left:50%; top:46px; transform:translateX(-50%); width:16px; height:22px; border-radius:4px; z-index:3; background:linear-gradient(145deg,#ffffff,#c9d8e4); box-shadow:0 1px 3px rgba(23,58,86,.25), inset 0 0 0 1px rgba(23,58,86,.08); }
+        .lc-clip{ position:absolute; left:50%; top:calc(var(--H) - 12px); transform:translateX(-50%); width:16px; height:22px; border-radius:4px; z-index:3; background:linear-gradient(145deg,#ffffff,#c9d8e4); box-shadow:0 1px 3px rgba(23,58,86,.25), inset 0 0 0 1px rgba(23,58,86,.08); }
         .lc-clip::after{ content:""; position:absolute; left:50%; top:4px; transform:translateX(-50%); width:6px; height:6px; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1.5px #9db8cc; }
-        .lc-sway{ transform-origin:50% -58px; animation-name:lcsway; animation-timing-function:ease-in-out; animation-iteration-count:infinite; will-change:transform; }
+        /* Kartu berayun dari titik gantungnya di kawat (ujung atas tali). */
+        .lc-sway{ transform-origin:50% calc(var(--H) * (var(--k) - 1)); animation-name:lcsway; animation-timing-function:ease-in-out; animation-iteration-count:infinite; will-change:transform; }
         @keyframes lcsway{ 0%,100%{ transform:rotate(1.15deg);} 50%{ transform:rotate(-1.15deg);} }
-        .lc-kickwrap{ transform-origin:50% -58px; }
+        .lc-kickwrap{ transform-origin:50% calc(var(--H) * (var(--k) - 1)); }
         .lc-flip{ position:relative; width:100%; aspect-ratio:240/338; transform-style:preserve-3d; transition:transform .85s cubic-bezier(.3,.7,.3,1); cursor:pointer; container-type:inline-size; }
         .lc-flip.lc-on{ transform:rotateY(180deg); }
         .lc-face{ position:absolute; inset:0; border-radius:18px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; display:flex; flex-direction:column; }
@@ -171,7 +201,6 @@ export default function Landing() {
         .lc-blink{ font-size:4.6cqw; padding:3.3cqw 0; margin-top:5cqw; }
         .lc-bsmall{ font-size:3.55cqw; }
         .lc-bqr{ width:26.7cqw; height:26.7cqw; padding:1.7cqw; }
-        .lc-wirem{ display:none; }
         .lc-holo{ background:linear-gradient(125deg,#f6d9ec,#d9e4fb,#d5f3e3,#f7ecd2,#e6dbfa,#f6d9ec); background-size:320% 320%; }
         .lc-flip.lc-on .lc-holo{ animation:lcholo 9s ease infinite; }
         @keyframes lcholo{ 0%,100%{ background-position:0% 40%; } 50%{ background-position:100% 60%; } }
@@ -179,18 +208,6 @@ export default function Landing() {
           .lc-sway{ animation:none; }
           .lc-flip{ transition:none; }
           .lc-flip.lc-on .lc-holo{ animation:none; }
-        }
-        .lc-wire{ position:absolute; left:0; right:0; top:20px; width:100%; height:56px; pointer-events:none; }
-        @media (max-width:700px){
-          .lc-hang{ padding-top:40px; }
-          .lc-string{ height:40px; }
-          .lc-clip{ top:28px; }
-          .lc-sway,.lc-kickwrap{ transform-origin:50% -40px; }
-          .lc-wire{ display:none; }
-          /* Kawat per pasang kartu khusus HP: tiap baris kartu punya kawatnya sendiri,
-             jadi tali tiap kartu selalu nyambung ke kawat (tidak ada tali putus). */
-          .lc-wirem{ display:block; flex:0 0 100%; height:22px; }
-          .lc-wirem svg{ width:100%; height:100%; display:block; }
         }
       `}</style>
 
@@ -206,31 +223,27 @@ export default function Landing() {
         </div>
         <p className="max-w-[260px] pt-2 text-xs leading-relaxed text-plum/55 dark:text-milk/55 sm:pt-6">
           {t('Delapan member Hearts2Hearts yang mengisi galeri ini — balik kartunya buat lihat profil singkat tiap member.')}
-          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; {t('8 MEMBER · {n} ITEM KOLEKSI', { n: liveTotal.toLocaleString(loc) })}</b>
+          <b className="mt-3 block text-[10px] tracking-[0.18em] text-plum dark:text-milk"><span className="text-gold">●</span>&nbsp; {liveTotal === false ? t('8 MEMBER') : t('8 MEMBER · {n} ITEM KOLEKSI', { n: liveTotal === null ? '…' : liveTotal.toLocaleString(loc) })}</b>
         </p>
       </header>
 
-      {[0, 4].map((start) => (
-        <section key={start} className="relative mt-2">
-          <svg className="lc-wire" viewBox="0 0 1200 56" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0,4 Q600,60 1200,4" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-plum/25 dark:text-milk/25" />
-          </svg>
-          <div className="relative mx-auto flex max-w-[1100px] flex-wrap justify-center gap-x-5 gap-y-1 pt-5 sm:justify-between">
-            {MEMBERS.slice(start, start + 4).flatMap((m, j) => {
-              const kartu = <Kartu key={m.key} m={m} i={start + j} count={liveCounts?.[m.key]} />
-              if (j % 2 !== 0) return [kartu]
-              return [
-                <div key={`w-${start}-${j}`} className="lc-wirem" aria-hidden="true">
-                  <svg viewBox="0 0 400 22" preserveAspectRatio="none">
-                    <path d="M0,2 Q200,24 400,2" fill="none" stroke="currentColor" strokeWidth="1.6" className="text-plum/25 dark:text-milk/25" />
-                  </svg>
-                </div>,
-                kartu,
-              ]
-            })}
-          </div>
-        </section>
-      ))}
+      <div className="lc-board mx-auto mt-4 w-full max-w-[1100px]">
+        {[0, 4].map((start) => (
+          <section key={start} className="lc-row mt-4">
+            <Wire className="lc-wire4" />
+            {[start, start + 2].map((p) => (
+              <div key={p} className="lc-pair">
+                <Wire className="lc-wire2" />
+                {MEMBERS.slice(p, p + 2).map((m, j) => (
+                  <div key={m.key} className="lc-cell">
+                    <Kartu m={m} i={p + j} count={liveCounts?.[m.key]} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </section>
+        ))}
+      </div>
 
       <SpecialCountdown now={today?.override ? today.now : null} />
       <TodaySection now={today?.now} override={today?.override} />

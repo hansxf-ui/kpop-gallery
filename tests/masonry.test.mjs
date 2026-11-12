@@ -73,3 +73,25 @@ test('pickWeekly sama dengan rumus lama; weeklyIndices = posisi yang sama', () =
   assert.deepEqual(W.weeklyIndices(0), [])
   assert.deepEqual(W.pickWeekly([]), [])
 })
+
+// ---------- Tali kartu beranda (lib/lanyard.js) ----------
+const L = await load('lanyard')
+
+test('tali kartu bertemu kawat persis: rumus = titik pada kurva SVG', () => {
+  // Sampel kurva kuadrat M0,y0 Q50,c 100,y0 secara numerik, bandingkan dengan wireAt.
+  const [, y0, c] = L.WIRE_PATH.match(/^M0,(\d+) Q50,(\d+) 100,\d+$/).map(Number)
+  for (const t of [0, 0.125, 0.25, 0.375, 0.5, 0.75, 1]) {
+    const x = 100 * t // x linear karena titik kendali di tengah
+    const y = (1 - t) ** 2 * y0 + 2 * (1 - t) * t * c + t * t * y0
+    assert.ok(Math.abs(x - 100 * t) < 1e-9)
+    assert.ok(Math.abs(L.wireAt(t) - y / 100) < 1e-9, `t=${t}`)
+  }
+})
+
+test('tali: simetris, tengah lebih rendah, selalu ada sisa tali di atas penjepit', () => {
+  assert.equal(L.stringTop(0, 4), L.stringTop(3, 4))
+  assert.equal(L.stringTop(0, 2), L.stringTop(1, 2))
+  assert.ok(L.stringTop(1, 4) > L.stringTop(0, 4))
+  // Penjepit mulai 12px di atas kartu; ruang tali terpendek (H = 40px) tetap menyisakan ≥ 8px tali.
+  for (const [j, n] of [[0, 2], [0, 4], [1, 4]]) assert.ok(40 * (1 - L.stringTop(j, n)) - 12 >= 8, `${j}/${n}`)
+})
