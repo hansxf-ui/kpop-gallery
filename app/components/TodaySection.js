@@ -34,8 +34,26 @@ export default function TodaySection({ now, override = false }) {
     return () => { alive = false }
   }, [nowMs])
 
-  // Ruang cadangan sebelum tanggal pengunjung diketahui (hindari lompatan layout besar).
-  if (!now) return <div id="hari-ini" className="mt-12 h-[420px] md:h-[300px]" aria-hidden />
+  // Sebelum tanggal pengunjung diketahui: kerangka dengan susunan yang sama (judul + 3 kotak),
+  // bukan kotak kosong setinggi tebakan — dulu tingginya meleset 200–500px dan konten di bawahnya melompat.
+  if (!now) return (
+    <section id="hari-ini" className="mx-auto mt-12 w-full max-w-5xl" aria-hidden>
+      <div className="mb-4 text-center">
+        <h2 className="font-display text-3xl text-plum dark:text-milk">☀ {t('Hari ini')}</h2>
+        <p className="mt-1 text-sm">&nbsp;</p>
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className={kotak}>
+            <div className="skeleton mb-4 h-3 w-1/2 rounded" />
+            <div className="skeleton h-4 w-4/5 rounded" />
+            <div className="skeleton mt-2 h-3 w-3/5 rounded" />
+            <div className="skeleton mt-5 h-3 w-1/3 rounded" />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
 
   const tgl = now.toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const events = eventsToday(now)
@@ -95,14 +113,23 @@ export default function TodaySection({ now, override = false }) {
         <section className={kotak} aria-labelledby="kenangan">
           <h3 id="kenangan" className={judulBagian}>💗 {t('Foto kenangan hari ini')}</h3>
           <p className="mb-3 text-xs text-plum/55 dark:text-milk/55">{t('Dipilih dari tanggal hari ini — semua pengunjung melihat foto yang sama, besok berganti.')}</p>
-          {memory === undefined && <div className="skeleton mx-auto aspect-[3/4] w-full max-w-xs rounded-2xl" />}
+          {/* Foto kecil di samping judul — dulu foto 3:4 selebar kotak membuat kotak ini ±2× lebih tinggi dari dua kotak lain. */}
+          {memory === undefined && (
+            <div className="flex items-center gap-3">
+              <div className="skeleton aspect-[3/4] w-24 shrink-0 rounded-xl" />
+              <div className="flex-1"><div className="skeleton h-4 w-4/5 rounded" /><div className="skeleton mt-2 h-3 w-1/2 rounded" /></div>
+            </div>
+          )}
           {memory === null && <p className="text-sm text-plum/60 dark:text-milk/60">{t('Foto kenangan belum bisa dimuat.')}</p>}
           {memory && (
-            <button onClick={() => setOpen(true)} className="card mx-auto block w-full max-w-xs pb-2 text-left">
-              <img src={imgOpt(memory.url, 700)} alt={altOf(memory)} loading="lazy" decoding="async"
-                className="aspect-[3/4] w-full rounded-2xl object-cover object-top bg-[#DCEBF6] dark:bg-[#1B3049]" />
-              <p className="truncate px-2 pt-2 text-sm font-bold dark:text-milk">{memory.title || memory.idol}</p>
-              <p className="px-2 text-xs font-bold text-gold">{memory.idol}</p>
+            <button onClick={() => setOpen(true)} className="group flex w-full items-center gap-3 text-left">
+              <img src={imgOpt(memory.url, 300)} alt={altOf(memory)} loading="lazy" decoding="async" width={96} height={128}
+                className="aspect-[3/4] w-24 shrink-0 rounded-xl object-cover object-top bg-[#DCEBF6] dark:bg-[#1B3049] transition group-hover:scale-[1.03]" />
+              <span className="min-w-0">
+                <span className="line-clamp-2 text-sm font-bold text-plum dark:text-milk">{memory.title || memory.idol}</span>
+                <span className="block text-xs font-bold text-gold">{memory.idol}</span>
+                <span className="mt-2 block text-xs font-bold text-plum/60 underline underline-offset-4 dark:text-milk/60">{t('Buka foto')}</span>
+              </span>
             </button>
           )}
         </section>
