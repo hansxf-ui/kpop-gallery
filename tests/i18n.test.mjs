@@ -128,6 +128,23 @@ test('voting: semua catatan, cara, label, status, info (dan kategori/event berba
   assert.deepEqual([...need].filter((k) => !(k in ALL)), [])
 })
 
+test('voting: setiap update catatan punya tanggal, teks ID, dan teks_en tanpa ribuan-titik', async () => {
+  const { VOTING } = await loadData('voting')
+  for (const v of VOTING) {
+    if (!v.updates) continue
+    assert.doesNotMatch(v.catatan, /UPDATE \d{1,2} \w+ \d{4}/, `${v.id}: catatan dasar masih mengandung UPDATE`)
+    for (const u of v.updates) {
+      assert.match(u.tanggal, /^\d{1,2} \w+ \d{4}$/, `${v.id}: tanggal update tidak valid`)
+      assert.equal(typeof u.teks, 'string')
+      assert.ok(u.teks.length > 0, `${v.id}: teks update kosong`)
+      assert.equal(typeof u.teks_en, 'string')
+      assert.ok(u.teks_en.length > 0, `${v.id}: teks_en update kosong`)
+      assert.doesNotMatch(u.teks_en, /\b\d{1,3}(?:\.\d{3})+\b/, `${v.id} ${u.tanggal}: teks_en memakai ribuan-titik`)
+      assert.doesNotMatch(u.teks, /UPDATE \d{1,2} \w+ \d{4}/, `${v.id}: teks update mengandung UPDATE bersarang`)
+    }
+  }
+})
+
 test('teks data Inggris: angka ribuan memakai koma, bukan titik (mis. 76,789,533)', () => {
   for (const [k, v] of Object.entries(EN_DATA)) {
     if (typeof v !== 'string') continue

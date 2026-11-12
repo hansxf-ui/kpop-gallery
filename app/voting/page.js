@@ -60,6 +60,9 @@ function KartuVoting({ v, now }) {
       <p className="mt-1 text-sm font-bold text-plum/70 dark:text-milk/70">{t(v.kategori)}</p>
       <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5">📱 {v.platform}</p>
       {v.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">⚠️ {t(v.catatan)}</p>}
+      {v.updates && v.updates.map((u) => (
+        <p key={u.tanggal} className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">🔄 UPDATE {u.tanggal} {loc === 'en-GB' ? u.teks_en : u.teks}</p>
+      ))}
       {cd && (
         <div className="flex gap-2 mt-4">
           <UnitCountdown angka={cd.hari} label={t('hari')} />
