@@ -10,14 +10,17 @@ import { downloadBlob } from '../../lib/download'
 import { makeWallpaperBlob, makePhotocardBlob } from '../../lib/cardMaker'
 import { albumKeysOf, DISPLAY_NAME, altOf } from '../../lib/gallery'
 import { tagsOf, tagLabel } from '../../lib/gallery'
+import { ratioOf, frameStyle, PHOTO_BOX_H } from '../../lib/photoFrame'
 import Reactions from './Reactions'
 import CollectionPicker from './CollectionPicker'
 import ReportButton from './ReportButton'
 
-// Foto aktif memakai BINGKAI YANG SAMA PERSIS dengan foto tetangga (lebar + rasio 3/4) —
-// versi lama: aktif = ukuran alami (max-h saja) sementara tetangga = bingkai tetap 3/4,
-// jadi pas geser/commit ukuran badan foto berubah-ubah (kelihatan "mencong" & kedip kosong).
-// object-contain: foto tampil utuh tanpa crop di dalam bingkai yang stabil.
+// Bingkai foto MENGIKUTI rasio foto (lib/photoFrame.js): foto mengisi bingkai dari tepi ke tepi
+// sampai ke sudut membulatnya, tanpa di-crop. Dulu bingkai tetap 3:4 + object-contain, jadi foto
+// 2:3 menyisakan celah gelap kiri-kanan dan foto landscape celah atas-bawah.
+// Foto aktif dan tetangga memakai bingkai yang SAMA, dan tiap slot foto setinggi kotak maksimum
+// (foto di tengahnya) — saat digeser, bingkai foto berikutnya sudah berukuran akhir dan tombol/teks
+// di bawahnya tidak melompat.
 // Foto lewat srcSet 640/1000/1600 (endpoint render Supabase), bukan file asli ukuran penuh.
 // Bingkainya maks. 380px lebar (76vw di HP), jadi browser memilih sesuai kepadatan layar:
 // layar 1× ≈ 640px, HP/laptop 2–3× ≈ 1000px, layar 3× lebar penuh ≈ 1600px.
@@ -30,12 +33,26 @@ const photoSrc = (url) => {
   return imgOpt(url, 1000) === url ? { src: url } : { src: imgOpt(url, 1000), srcSet, sizes: PHOTO_SIZES }
 }
 
-function Media({ it, videoRef, onEnded, ytTitle }) {
-  if (it.type === 'photo') return (
-    <span className="relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto">
-      <img {...photoSrc(it.url)} alt={altOf(it)} draggable={false} className="absolute inset-0 h-full w-full object-contain" />
+// Rasio dari width/height database (migrasi 02); kalau belum ada atau ternyata meleset dari foto
+// yang termuat, dipakai ukuran asli foto begitu termuat. Sebelum diketahui: bingkai 3:4 lama + contain.
+function PhotoFrame({ it, inert = false }) {
+  const [natural, setNatural] = useState(null)
+  const known = ratioOf(it)
+  const r = natural || known
+  function onLoad(e) {
+    const { naturalWidth: w, naturalHeight: h } = e.currentTarget
+    if (w > 0 && h > 0 && (!known || Math.abs(h / w - known) / known > 0.01)) setNatural(h / w)
+  }
+  return (
+    <span className={`relative block overflow-hidden rounded-2xl bg-white/5 mx-auto ${inert ? 'pointer-events-none' : ''}`} style={frameStyle(r)}>
+      <img {...photoSrc(it.url)} alt={altOf(it)} draggable={false} onLoad={onLoad}
+        className="absolute inset-0 h-full w-full object-contain" />
     </span>
   )
+}
+
+function Media({ it, videoRef, onEnded, ytTitle }) {
+  if (it.type === 'photo') return <PhotoFrame key={it.id} it={it} />
   if (it.type === 'video') return <video ref={videoRef} onEnded={onEnded} src={it.url} controls autoPlay playsInline className="max-h-[max(140px,calc(100dvh-320px))] sm:max-h-[calc(100dvh-280px)] rounded-2xl mx-auto" />
   return <iframe title={ytTitle} src={`https://www.youtube.com/embed/${ytId(it.url)}?autoplay=1`} allow="autoplay; fullscreen" allowFullScreen className="w-full max-h-[calc(100dvh-300px)] aspect-video rounded-2xl mx-auto" />
 }
@@ -46,11 +63,7 @@ function Media({ it, videoRef, onEnded, ytTitle }) {
 // badan yang kelihatan walau medianya belum selesai dimuat — tidak ada ruang kosong pas geser.
 function MediaTetangga({ it }) {
   const frame = "relative block aspect-[3/4] w-[76vw] max-w-[380px] overflow-hidden rounded-2xl bg-white/5 mx-auto pointer-events-none"
-  if (it.type === 'photo') return (
-    <span className={frame}>
-      <img {...photoSrc(it.url)} alt={altOf(it)} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
-    </span>
-  )
+  if (it.type === 'photo') return <PhotoFrame key={it.id} it={it} inert />
   if (it.type === 'video') return (
     <span className={frame}>
       <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="absolute inset-0 h-full w-full object-cover" />
@@ -334,11 +347,14 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
             {slots.map((s, i) => (
               <div key={`${s.it.id}-${s.active ? 'aktif' : 'tepi' + i}`} className="w-full shrink-0 flex items-start justify-center">
                 {s.it.type === 'photo' ? (
-                  <div className="relative w-fit">
-                    {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
-                    {s.active && (
-                      <button onClick={onClose} aria-label={t('Tutup')} className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">{t('Tutup')}</button>
-                    )}
+                  // Slot setinggi kotak maksimum, foto di tengah: tinggi rel sama untuk semua foto.
+                  <div className="flex items-center justify-center" style={{ height: PHOTO_BOX_H }}>
+                    <div className="relative w-fit">
+                      {s.active ? <Media it={s.it} /> : <MediaTetangga it={s.it} />}
+                      {s.active && (
+                        <button onClick={onClose} aria-label={t('Tutup')} className="absolute right-2.5 top-2.5 z-10 rounded-full bg-plum/70 px-3 py-1.5 text-xs font-bold text-milk shadow-lg backdrop-blur-sm">{t('Tutup')}</button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="relative flex flex-col">

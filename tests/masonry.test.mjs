@@ -95,3 +95,21 @@ test('tali: simetris, tengah lebih rendah, selalu ada sisa tali di atas penjepit
   // Penjepit mulai 12px di atas kartu; ruang tali terpendek (H = 40px) tetap menyisakan ≥ 8px tali.
   for (const [j, n] of [[0, 2], [0, 4], [1, 4]]) assert.ok(40 * (1 - L.stringTop(j, n)) - 12 >= 8, `${j}/${n}`)
 })
+
+// ---------- Bingkai foto lightbox (lib/photoFrame.js) ----------
+const F = await load('photoFrame')
+
+test('bingkai lightbox mengikuti rasio foto di dalam kotak 3:4 lama', () => {
+  assert.equal(F.ratioOf({ width: 1000, height: 1500 }), 1.5)
+  assert.equal(F.ratioOf({}), null)
+  // 2:3 portrait → setinggi kotak: lebar = (4/3) / 1,5 = 0,8889 kotak
+  assert.ok(Math.abs(F.widthFraction(1.5) - 8 / 9) < 1e-9)
+  assert.equal(F.widthFraction(4 / 3), 1) // 3:4 = persis kotak
+  assert.equal(F.widthFraction(2 / 3), 1) // landscape 3:2 → selebar kotak
+  assert.deepEqual(F.frameStyle(4 / 3), { width: F.PHOTO_BOX_W, aspectRatio: '1000 / 1333' })
+  assert.deepEqual(F.frameStyle(2 / 3), { width: F.PHOTO_BOX_W, aspectRatio: '1000 / 667' })
+  assert.equal(F.frameStyle(1.5).width, `calc(${F.PHOTO_BOX_W} * 0.888889)`)
+  assert.equal(F.frameStyle(null).aspectRatio, '1000 / 1333') // belum diketahui → bingkai 3:4 lama
+  // tinggi bingkai tidak pernah melebihi kotak
+  for (const r of [0.5, 0.75, 1, 4 / 3, 1.5, 2, 3]) assert.ok(F.widthFraction(r) * r <= 4 / 3 + 1e-9, String(r))
+})
