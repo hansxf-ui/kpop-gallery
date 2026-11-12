@@ -39,11 +39,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      # `npm install` (bukan `npm ci`), sama seperti Vercel. package-lock.json saat ini tertinggal
-      # dari package.json (lock: next 14.2.15, package.json: 14.2.35) sehingga `npm ci` menolak.
-      # Setelah lock diperbarui (`npm install` di komputer lalu commit package-lock.json),
-      # baris ini boleh diganti `npm ci` supaya versi paket terkunci persis.
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       # Diulang sekali kalau gagal: Google Fonts kadang membalas dengan URL font tanpa ekstensi dan
       # next/font 14 gagal ("Cannot read properties of null (reading '1')") — acak, hilang saat diulang.
       # https://github.com/vercel/next.js/issues/99114
