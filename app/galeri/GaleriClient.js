@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { fetchAllItems, imgOpt } from '../../lib/supabase'
+import { fetchAllItems, fetchItemCount, fetchItemsAtOffsets, fetchItemsByIds, imgOpt } from '../../lib/supabase'
+import { pickWeekly, weeklyIndices } from '../../lib/weekly'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
 import { parseGaleriQuery, replaceQuery, parseGaleriFilters, filterQueryPatch } from '../../lib/galeriUrl'
 import { shareOrCopy } from '../../lib/share'
@@ -19,6 +20,7 @@ import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
 import FeaturedCarousel from '../components/FeaturedCarousel'
 import GalleryCard from '../components/GalleryCard'
+import Masonry from '../components/Masonry'
 import AutoLoadMore from '../components/AutoLoadMore'
 import ScrollTopButton from '../components/ScrollTopButton'
 import Skeleton from '../components/Skeleton'
@@ -43,27 +45,31 @@ function FilmIcon() {
 
 const sorts = [['terbaru', 'Terbaru'], ['terlama', 'Terlama'], ['acak', 'Acak']]
 
-function weekNumber(d) {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-  const day = t.getUTCDay() || 7
-  t.setUTCDate(t.getUTCDate() + 4 - day)
-  const yStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1))
-  return Math.ceil(((t - yStart) / 86400000 + 1) / 7)
-}
-
-// "Pilihan minggu ini": 5 item menyebar dari daftar, titik mulai bergeser tiap minggu (logika lama).
-function pickWeekly(items) {
-  const n = Math.min(5, items.length)
-  const step = Math.max(1, Math.floor(items.length / n))
-  const start = weekNumber(new Date()) % items.length
-  const out = []
-  for (let i = 0; i < n; i++) out.push(items[(start + i * step) % items.length])
-  return out
+// Ruang cadangan "Pilihan minggu ini" seukuran FeaturedCarousel (label + kartu persegi + judul + titik),
+// selama kelima item belum diketahui — grid di bawahnya tidak melompat saat carousel muncul.
+function FeaturedPlaceholder({ label }) {
+  return (
+    <section className="mb-10" aria-hidden>
+      <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ {label}</p>
+      <div className="relative w-full max-w-xl mx-auto">
+        <div className="px-1">
+          <div className="featured-card block w-full overflow-hidden">
+            <span className="skeleton block w-full aspect-square rounded-2xl" />
+            <span className="block px-3 py-3 font-bold invisible">.</span>
+          </div>
+        </div>
+        <div className="mt-2 h-1.5" />
+      </div>
+    </section>
+  )
 }
 
 export default function GaleriClient() {
   const t = useT()
-  const [items, setItems] = useState(null)
+  const [items, setItems] = useState(null) // baris yang sudah termuat (bisa baru sebagian, lihat `complete`)
+  // Tampil progresif: halaman pertama (120 item terbaru) langsung ditampilkan, sisanya menyusul.
+  const [complete, setComplete] = useState(false)
+  const [early, setEarly] = useState(undefined) // "Pilihan minggu ini" langsung dari DB: undefined = memuat, null = gagal
   const [idol, setIdol] = useState('Semua')
   const [group, setGroup] = useState('Semua')
   const [era, setEra] = useState('Semua')
@@ -87,12 +93,37 @@ export default function GaleriClient() {
   const [shareMsg, setShareMsg] = useState('')
   const [baseline, setBaseline] = useState(null) // fitur 5: patokan "Baru sejak kunjungan terakhir"
   useEffect(() => { setBaseline(visitBaseline()) }, [])
-  const [top, setTop] = useState([]) // fitur 6: [{ item_id, jumlah }]
-  useEffect(() => { fetchTopReacted().then(setTop).catch(() => setTop([])) }, [])
+  // fitur 6: [{ item_id, jumlah }] + barisnya diambil langsung per id, supaya seksi "Paling disukai"
+  // tidak menunggu seluruh koleksi termuat (item lama yang ramai reaksi bisa belum ada di halaman pertama).
+  const [top, setTop] = useState(null) // null = memuat
+  const [topRows, setTopRows] = useState([])
+  useEffect(() => {
+    let alive = true
+    fetchTopReacted()
+      .then(async (tp) => {
+        const rows = tp.length ? await fetchItemsByIds(tp.map((x) => x.item_id)).catch(() => []) : []
+        if (alive) { setTopRows(rows); setTop(tp) }
+      })
+      .catch(() => { if (alive) setTop([]) })
+    return () => { alive = false }
+  }, [])
+  // "Pilihan minggu ini" = 5 posisi tetap dalam seluruh koleksi (lib/weekly.js). Diambil langsung
+  // (hitung jumlah + 5 request kecil) supaya carousel di layar pertama tidak menunggu semua item.
+  useEffect(() => {
+    let alive = true
+    fetchItemCount()
+      .then((n) => fetchItemsAtOffsets(weeklyIndices(n)))
+      .then((rows) => { if (alive) setEarly(rows.length && rows.every(Boolean) ? rows : null) })
+      .catch(() => { if (alive) setEarly(null) })
+    return () => { alive = false }
+  }, [])
   function loadItems() {
     setLoadError(false)
     setItems(null)
-    fetchAllItems().then(setItems).catch(() => { setItems([]); setLoadError(true) })
+    setComplete(false)
+    fetchAllItems({ firstPage: 120, onPage: setItems })
+      .then((rows) => { setItems(rows); setComplete(true) })
+      .catch(() => { setItems([]); setLoadError(true); setComplete(true) })
   }
   // Judul tab: link ?item= memakai judul item dari server (generateMetadata di page.js) — tidak
   // ditimpa. Tanpa ?item, judul "Galeri" ikut bahasa aktif.
@@ -160,34 +191,41 @@ export default function GaleriClient() {
   // "Pilihan minggu ini" (dulu "Sorotan Minggu Ini"): 5 item dipilih menyebar dari seluruh koleksi, titik mulai bergeser tiap minggu
   // Fitur 5: dengan mode fokus, sampel mingguan diambil dari item member itu (cara pilih sama),
   // kecuali itemnya kurang dari 5. Tanpa mode fokus: persis seperti sebelumnya.
+  // null = belum bisa ditentukan (ruangnya ditahan placeholder seukuran carousel).
   const featuredList = useMemo(() => {
-    if (!items || items.length === 0) return []
-    const biasItems = bias ? items.filter((it) => namesOf(it).includes(bias)) : []
-    const items_ = biasItems.length >= 5 ? biasItems : items
-    return pickWeekly(items_)
-  }, [items, bias])
+    if (!items) return null
+    if (items.length === 0) return []
+    if (bias) {
+      if (!complete) return null // butuh semua item member fokus
+      const biasItems = items.filter((it) => namesOf(it).includes(bias))
+      if (biasItems.length >= 5) return pickWeekly(biasItems)
+    }
+    if (early && early.length) return early
+    return complete ? pickWeekly(items) : null
+  }, [items, bias, complete, early])
 
   // Fitur 12: galeri yang sudah dimuat = foto baru sudah "dilihat" → lencana di navigasi hilang.
-  useEffect(() => { if (items && items.length) markFavNewSeen() }, [items])
+  useEffect(() => { if (complete && items && items.length) markFavNewSeen() }, [complete, items])
 
   // Baru ditambahkan sejak kunjungan terakhir (fitur 5). items sudah urut terbaru dulu.
   const newItems = useMemo(() => (items || []).filter((it) => isNewSince(it, baseline)), [items, baseline])
 
   // Paling disukai minggu ini (fitur 6): hanya item yang masih ada di galeri.
   const topItems = useMemo(() => {
-    if (!items || top.length === 0) return []
-    const byId = new Map(items.map((it) => [it.id, it]))
+    if (!top || top.length === 0) return []
+    const byId = new Map(topRows.map((it) => [it.id, it]))
     return top.map((t) => byId.get(t.item_id) && { it: byId.get(t.item_id), jumlah: t.jumlah }).filter(Boolean).slice(0, 6)
-  }, [items, top])
+  }, [top, topRows])
 
+  // Kenangan tahun-tahun lalu = item lama → baru dihitung setelah seluruh koleksi termuat.
   const onThisDay = useMemo(() => {
-    if (!items) return []
+    if (!items || !complete) return []
     const now = new Date()
     return items.filter((it) => {
       const d = new Date(it.created_at)
       return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() !== now.getFullYear()
     })
-  }, [items])
+  }, [items, complete])
 
   const shown = useMemo(() => {
     let list = (items || []).filter((i) => {
@@ -217,7 +255,7 @@ export default function GaleriClient() {
   // Link langsung: /galeri?item=<id> membuka item itu di lightbox begitu koleksi selesai dimuat.
   // Kalau item tersaring/belum termuat di grid, dibuka sendirian (spot) supaya tetap tampil.
   useEffect(() => {
-    if (!items || loadError || !urlReady || deepLinkDone.current) return
+    if (!items || !complete || loadError || !urlReady || deepLinkDone.current) return
     deepLinkDone.current = true
     const { item } = parseGaleriQuery(window.location.search)
     if (!item) return
@@ -226,7 +264,7 @@ export default function GaleriClient() {
     const it = items.find((x) => x.id === item)
     if (it) setSpot({ items: [it], index: 0 })
     else { setNotice(t('Item yang dibagikan sudah tidak ada di galeri.')); replaceQuery({ item: null }) }
-  }, [items, loadError, urlReady, shown])
+  }, [items, complete, loadError, urlReady, shown])
 
   // URL selalu menunjuk item yang sedang dibuka (bisa langsung disalin dari address bar);
   // ditutup = parameter item dihapus.
@@ -238,6 +276,12 @@ export default function GaleriClient() {
   const fotoCount = shown.filter((i) => i.type === 'photo').length
   const videoCount = shown.length - fotoCount
   const visible = shown.slice(0, visibleCount)
+  // Bagian atas (sorotan, paling disukai, baru) baru ditampilkan bersama grid, supaya grid tidak
+  // terdorong ke bawah oleh seksi yang muncul belakangan.
+  const ready = items !== null && top !== null
+  // Sebelum koleksi lengkap, grid hanya bisa tampil untuk urutan "Terbaru" tanpa urutan member fokus:
+  // hanya di situ halaman pertama = awal hasil akhir, jadi item yang menyusul cuma bertambah di belakang.
+  const gridReady = ready && (complete || (sort === 'terbaru' && !(bias && idol === 'Semua')))
 
   useEffect(() => { setVisibleCount(40) }, [idol, group, era, tag, q, sort, mediaType])
 
@@ -267,17 +311,18 @@ export default function GaleriClient() {
         </p>
         <h1 className="font-display text-5xl sm:text-7xl text-plum dark:text-milk mt-2">Hearts2Hearts Gallery</h1>
         <p className="mt-3 text-plum/70 dark:text-milk/70 font-bold">{t('Koleksi foto & video idol favoritku')}</p>
-        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('{f} foto · {v} video', { f: fotoCount, v: videoCount })}</p>
+        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{complete ? t('{f} foto · {v} video', { f: fotoCount, v: videoCount }) : '\u00a0'}</p>
       </header>
 
-      {featuredList.length > 0 && (
+      {ready && featuredList === null && !loadError && <FeaturedPlaceholder label={t('Pilihan minggu ini')} />}
+      {ready && featuredList && featuredList.length > 0 && (
         <section className="mb-10">
           <p className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">✦ {t('Pilihan minggu ini')}</p>
           <FeaturedCarousel items={featuredList} onOpen={(i) => setSpot({ items: featuredList, index: i })} />
         </section>
       )}
 
-      {topItems.length > 0 && (
+      {ready && topItems.length > 0 && (
         <section className="mb-10" aria-labelledby="paling-disukai">
           <p id="paling-disukai" className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">♥ {t('Paling disukai minggu ini')}</p>
           <ol className="mx-auto grid max-w-3xl grid-cols-3 gap-3 sm:grid-cols-6">
@@ -296,7 +341,7 @@ export default function GaleriClient() {
         </section>
       )}
 
-      {newItems.length > 0 && (
+      {ready && newItems.length > 0 && (
         <section className="mb-10" aria-labelledby="baru-ditambahkan">
           <p id="baru-ditambahkan" className="text-center text-xs font-bold uppercase tracking-widest text-gold mb-3">
             ✦ {t('Baru ditambahkan sejak kunjungan terakhirmu ({n})', { n: newItems.length })}
@@ -359,7 +404,7 @@ export default function GaleriClient() {
             </ul>
           )}
         </div>
-        {shown.length > 1 && (
+        {gridReady && shown.length > 1 && (
           <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
         )}
         <BiasPicker />
@@ -457,7 +502,7 @@ export default function GaleriClient() {
           {notice} <button onClick={() => setNotice('')} aria-label={t('Tutup pesan')} className="ml-2">✕</button>
         </p>
       )}
-      {items === null && <Skeleton />}
+      {!loadError && !gridReady && <Skeleton />}
       {loadError && (
         <div className="py-10 text-center">
           <p className="font-bold text-plum dark:text-milk">{t('Gagal memuat koleksi.')}</p>
@@ -465,7 +510,7 @@ export default function GaleriClient() {
           <button onClick={loadItems} className="mt-4 rounded-full bg-plum px-5 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">{t('Coba lagi')}</button>
         </div>
       )}
-      {items && !loadError && shown.length === 0 && (
+      {complete && !loadError && shown.length === 0 && (
         <div className="py-6 text-center">
           <p className="text-plum/60 dark:text-milk/60">{t('Tidak ada yang cocok.')}</p>
           {filtered && (
@@ -476,15 +521,15 @@ export default function GaleriClient() {
         </div>
       )}
 
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-        {visible.map((it) => (
-          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} isNew={isNewSince(it, baseline)}
-            onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
-            onFav={(x, y) => onFav(it, x, y)} />
-        ))}
-      </div>
+      {gridReady && <Masonry items={visible} renderItem={(it) => (
+        <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} isNew={isNewSince(it, baseline)}
+          onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
+          onFav={(x, y) => onFav(it, x, y)} />
+      )} />}
+      {/* Sisa koleksi masih dimuat dan semua item yang ada sudah tampil → kerangka kecil di bawah grid. */}
+      {gridReady && !complete && visible.length >= shown.length && <div className="mt-4"><Skeleton count={4} /></div>}
 
-      <AutoLoadMore hasMore={shown.length > visible.length} remaining={shown.length - visible.length}
+      <AutoLoadMore hasMore={gridReady && shown.length > visible.length} remaining={shown.length - visible.length}
         onMore={() => setVisibleCount((c) => Math.min(c + 40, shown.length))} />
 
       {openIndex !== null && (

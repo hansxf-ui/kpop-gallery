@@ -11,6 +11,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 import SiteNav from '../../components/SiteNav'
 import Lightbox from '../../components/Lightbox'
 import GalleryCard from '../../components/GalleryCard'
+import Masonry from '../../components/Masonry'
 import AutoLoadMore from '../../components/AutoLoadMore'
 import ScrollTopButton from '../../components/ScrollTopButton'
 import Skeleton from '../../components/Skeleton'
@@ -158,13 +159,11 @@ export default function IdolAlbum() {
       )}
       {valid && !loadError && items && shown.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">{t('Tidak ada yang cocok.')}</p>}
 
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-        {visible.map((it) => (
-          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} showIdol={false} isNew={isNewSince(it, baseline)}
-            onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
-            onFav={(x, y) => onFav(it, x, y)} />
-        ))}
-      </div>
+      <Masonry items={visible} renderItem={(it) => (
+        <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} showIdol={false} isNew={isNewSince(it, baseline)}
+          onOpen={() => { setOpenIndex(shown.findIndex((x) => x.id === it.id)); setAutoplay(false) }}
+          onFav={(x, y) => onFav(it, x, y)} />
+      )} />
 
       <AutoLoadMore hasMore={shown.length > visible.length} remaining={shown.length - visible.length}
         onMore={() => setVisibleCount((c) => Math.min(c + 40, shown.length))} />

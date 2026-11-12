@@ -11,6 +11,7 @@ import { shareOrCopy } from '../../lib/share'
 import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import GalleryCard from '../components/GalleryCard'
+import Masonry from '../components/Masonry'
 import Lightbox from '../components/Lightbox'
 import ConfirmModal from '../components/ConfirmModal'
 import BackupPanel from '../components/BackupPanel'
@@ -164,16 +165,14 @@ export default function Koleksi() {
           </div>
           {items === null && <Skeleton count={4} />}
           {items && items.length === 0 && <p className="text-center text-plum/60 dark:text-milk/60">{t('Koleksi ini masih kosong.')}</p>}
-          <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-            {(items || []).map((it, i) => (
-              <div key={it.id} className="relative">
-                <GalleryCard it={it} isFav={favs.includes(it.id)} onOpen={() => setOpenIndex(i)} onFav={(x, y) => onFav(it, x, y)} />
-                <button onClick={() => { toggleInCollection(active.id, it.id); setItems((cur) => cur.filter((x) => x.id !== it.id)) }}
-                  aria-label={t('Keluarkan {judul} dari koleksi', { judul: it.title || it.idol })}
-                  className="absolute left-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-sm font-bold text-plum shadow-sm">✕</button>
-              </div>
-            ))}
-          </div>
+          <Masonry items={items || []} renderItem={(it, i) => (
+            <div key={it.id} className="relative">
+              <GalleryCard it={it} isFav={favs.includes(it.id)} onOpen={() => setOpenIndex(i)} onFav={(x, y) => onFav(it, x, y)} />
+              <button onClick={() => { toggleInCollection(active.id, it.id); setItems((cur) => cur.filter((x) => x.id !== it.id)) }}
+                aria-label={t('Keluarkan {judul} dari koleksi', { judul: it.title || it.idol })}
+                className="absolute left-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-sm font-bold text-plum shadow-sm">✕</button>
+            </div>
+          )} />
         </section>
       )}
 

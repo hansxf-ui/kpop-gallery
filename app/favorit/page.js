@@ -7,6 +7,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
 import GalleryCard from '../components/GalleryCard'
+import Masonry from '../components/Masonry'
 import ScrollTopButton from '../components/ScrollTopButton'
 import Skeleton from '../components/Skeleton'
 import FavTransfer from '../components/FavTransfer'
@@ -101,13 +102,11 @@ export default function Favorit() {
         </div>
       )}
 
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-        {(items || []).map((it, i) => (
-          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)}
-            onOpen={() => { setOpenIndex(i); setAutoplay(false) }}
-            onFav={() => onFav(it)} />
-        ))}
-      </div>
+      <Masonry items={items || []} renderItem={(it, i) => (
+        <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)}
+          onOpen={() => { setOpenIndex(i); setAutoplay(false) }}
+          onFav={() => onFav(it)} />
+      )} />
 
       {openIndex !== null && items && items[openIndex] && (
         <Lightbox items={items} index={openIndex} onIndexChange={setOpenIndex}

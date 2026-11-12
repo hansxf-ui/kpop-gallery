@@ -8,6 +8,7 @@ import { useT, useDocTitle } from '../../../lib/i18n'
 import ThemeToggle from '../../components/ThemeToggle'
 import SiteNav from '../../components/SiteNav'
 import GalleryCard from '../../components/GalleryCard'
+import Masonry from '../../components/Masonry'
 import Lightbox from '../../components/Lightbox'
 import Skeleton from '../../components/Skeleton'
 
@@ -82,16 +83,14 @@ export default function LihatClient() {
       {col && items && items.length === 0 && !err && <p className="text-center text-plum/60 dark:text-milk/60">{t('Koleksi ini masih kosong.')}</p>}
       {hilang > 0 && <p className="mb-4 text-center text-xs text-plum/50 dark:text-milk/50">{t('{n} item di kode ini sudah tidak ada di galeri.', { n: hilang })}</p>}
 
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-        {(items || []).map((it, i) => (
-          <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} onOpen={() => setOpenIndex(i)}
-            onFav={(x, y) => {
-              const was = favs.includes(it.id)
-              setFavs(toggleFavorite(it.id))
-              if (!was) window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x, y } }))
-            }} />
-        ))}
-      </div>
+      <Masonry items={items || []} renderItem={(it, i) => (
+        <GalleryCard key={it.id} it={it} isFav={favs.includes(it.id)} onOpen={() => setOpenIndex(i)}
+          onFav={(x, y) => {
+            const was = favs.includes(it.id)
+            setFavs(toggleFavorite(it.id))
+            if (!was) window.dispatchEvent(new CustomEvent('h2h:favorite', { detail: { x, y } }))
+          }} />
+      )} />
 
       {openIndex !== null && items && items[openIndex] && (
         <Lightbox items={items} index={openIndex} onIndexChange={setOpenIndex} onClose={() => setOpenIndex(null)} />
