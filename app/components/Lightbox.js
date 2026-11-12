@@ -10,7 +10,7 @@ import { downloadBlob } from '../../lib/download'
 import { makeWallpaperBlob, makePhotocardBlob } from '../../lib/cardMaker'
 import { albumKeysOf, DISPLAY_NAME, altOf } from '../../lib/gallery'
 import { tagsOf, tagLabel } from '../../lib/gallery'
-import { ratioOf, frameStyle, PHOTO_BOX_H } from '../../lib/photoFrame'
+import { ratioOf, frameStyle, loadedRatio, noteLoaded, PHOTO_BOX_H } from '../../lib/photoFrame'
 import Reactions from './Reactions'
 import CollectionPicker from './CollectionPicker'
 import ReportButton from './ReportButton'
@@ -33,15 +33,15 @@ const photoSrc = (url) => {
   return imgOpt(url, 1000) === url ? { src: url } : { src: imgOpt(url, 1000), srcSet, sizes: PHOTO_SIZES }
 }
 
-// Rasio dari width/height database (migrasi 02); kalau belum ada atau ternyata meleset dari foto
-// yang termuat, dipakai ukuran asli foto begitu termuat. Sebelum diketahui: bingkai 3:4 lama + contain.
+// Rasio dari width/height database (migrasi 02); kalau belum ada atau foto yang termuat beda >0,1%,
+// dipakai ukuran asli foto begitu termuat. Sebelum diketahui: bingkai 3:4 lama + contain (foto utuh).
 function PhotoFrame({ it, inert = false }) {
-  const [natural, setNatural] = useState(null)
+  const [natural, setNatural] = useState(() => loadedRatio(it.url))
   const known = ratioOf(it)
   const r = natural || known
   function onLoad(e) {
-    const { naturalWidth: w, naturalHeight: h } = e.currentTarget
-    if (w > 0 && h > 0 && (!known || Math.abs(h / w - known) / known > 0.01)) setNatural(h / w)
+    const got = noteLoaded(it.url, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight, known)
+    if (got && got !== natural) setNatural(got)
   }
   return (
     <span className={`relative block overflow-hidden rounded-2xl bg-white/5 mx-auto ${inert ? 'pointer-events-none' : ''}`} style={frameStyle(r)}>

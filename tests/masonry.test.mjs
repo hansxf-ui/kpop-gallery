@@ -106,10 +106,19 @@ test('bingkai lightbox mengikuti rasio foto di dalam kotak 3:4 lama', () => {
   assert.ok(Math.abs(F.widthFraction(1.5) - 8 / 9) < 1e-9)
   assert.equal(F.widthFraction(4 / 3), 1) // 3:4 = persis kotak
   assert.equal(F.widthFraction(2 / 3), 1) // landscape 3:2 → selebar kotak
-  assert.deepEqual(F.frameStyle(4 / 3), { width: F.PHOTO_BOX_W, aspectRatio: '1000 / 1333' })
-  assert.deepEqual(F.frameStyle(2 / 3), { width: F.PHOTO_BOX_W, aspectRatio: '1000 / 667' })
+  assert.deepEqual(F.frameStyle(4 / 3), { width: F.PHOTO_BOX_W, aspectRatio: '1 / 1.333333' })
+  assert.deepEqual(F.frameStyle(2 / 3), { width: F.PHOTO_BOX_W, aspectRatio: '1 / 0.666667' })
   assert.equal(F.frameStyle(1.5).width, `calc(${F.PHOTO_BOX_W} * 0.888889)`)
-  assert.equal(F.frameStyle(null).aspectRatio, '1000 / 1333') // belum diketahui → bingkai 3:4 lama
+  assert.equal(F.frameStyle(null).aspectRatio, '1 / 1.333333') // belum diketahui → bingkai 3:4 lama
   // tinggi bingkai tidak pernah melebihi kotak
   for (const r of [0.5, 0.75, 1, 4 / 3, 1.5, 2, 3]) assert.ok(F.widthFraction(r) * r <= 4 / 3 + 1e-9, String(r))
+})
+
+test('rasio foto termuat dipakai bila beda > 0,1% dari database, dan diingat per URL', () => {
+  assert.equal(F.noteLoaded('u1', 1000, 1331, 1331 / 1000), null) // sama → tetap rasio database
+  assert.equal(F.loadedRatio('u1'), null)
+  assert.equal(F.noteLoaded('u2', 1000, 1329, 799 / 600), 1.329) // render Supabase membulatkan beda
+  assert.equal(F.loadedRatio('u2'), 1.329)
+  assert.equal(F.noteLoaded('u3', 600, 900, null), 1.5) // tanpa data database
+  assert.equal(F.noteLoaded('u4', 0, 0, 1.5), null)
 })
