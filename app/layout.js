@@ -6,8 +6,8 @@ import TopBanner from './components/TopBanner'
 import ServiceWorker from './components/ServiceWorker'
 import { LangProvider } from '../lib/i18n'
 import { LANG_BOOT_SCRIPT, LANG_BOOT_STYLE } from '../lib/langBoot'
+import { SITE_URL } from '../lib/site'
 
-const SITE_URL = 'https://kpop-gallery-coral.vercel.app'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 
 // Font di-host sendiri lewat next/font (bawaan Next, diunduh saat build): tidak ada lagi CSS

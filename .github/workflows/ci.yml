@@ -1,0 +1,68 @@
+# Cek otomatis tiap push ke main dan tiap pull request:
+#   - tes: `npm test` (logika kuis, kalender, cadangan, kelengkapan terjemahan Inggris, dll.)
+#   - build: `next build` — gagal di sini = deploy Vercel juga akan gagal.
+# Dua job terpisah supaya jelas mana yang merah. Kalau "tes" merah setelah update jadwal/voting,
+# biasanya ada teks Indonesia baru di lib/jadwal.js / lib/voting.js yang belum punya terjemahan
+# di lib/i18n-en-data.js (situs tetap jalan; pengunjung EN melihat teks Indonesia).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Tes hanya memakai node:test bawaan, tanpa paket — tidak perlu npm ci.
+      - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # `npm install` (bukan `npm ci`), sama seperti Vercel. package-lock.json saat ini tertinggal
+      # dari package.json (lock: next 14.2.15, package.json: 14.2.35) sehingga `npm ci` menolak.
+      # Setelah lock diperbarui (`npm install` di komputer lalu commit package-lock.json),
+      # baris ini boleh diganti `npm ci` supaya versi paket terkunci persis.
+      - run: npm install --no-audit --no-fund
+      # Diulang sekali kalau gagal: Google Fonts kadang membalas dengan URL font tanpa ekstensi dan
+      # next/font 14 gagal ("Cannot read properties of null (reading '1')") — acak, hilang saat diulang.
+      # https://github.com/vercel/next.js/issues/99114
+      - run: npm run build || { echo "Build gagal, ulangi sekali (kemungkinan flake Google Fonts)…"; rm -rf .next; npm run build; }
+        env:
+          # Nilai palsu: build hanya butuh variabelnya ada. Tidak ada data asli yang dibaca.
+          NEXT_PUBLIC_SUPABASE_URL: https://contoh.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: kunci-palsu-untuk-build
+          NEXT_TELEMETRY_DISABLED: '1'
+      # Link lama yang sudah tersebar harus tetap jalan (halaman yang digabung, lihat next.config.js).
+      - name: Cek pengalihan halaman lama
+        run: |
+          npx next start -p 3000 &
+          for i in $(seq 1 30); do curl -s -o /dev/null http://localhost:3000/robots.txt && break; sleep 1; done
+          check() {
+            got=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "http://localhost:3000$1")
+            echo "$1 -> $got"
+            [ "$got" = "308 http://localhost:3000$2" ] || { echo "::error::$1 harus dialihkan ke $2"; exit 1; }
+          }
+          check /hari-ini /
+          check '/hari-ini?tanggal=2026-12-25' '/?tanggal=2026-12-25'
+          check /kredit /tentang

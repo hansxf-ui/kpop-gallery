@@ -1,4 +1,4 @@
-// Tes "Hari ini di H2H" & logika tanggal bersama — jalankan: npm test
+// Tes seksi "Hari ini" (beranda) & logika tanggal bersama — jalankan: npm test
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'

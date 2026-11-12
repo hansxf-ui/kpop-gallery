@@ -1,6 +1,6 @@
 'use client'
 import { useT, useDocTitle } from '../../lib/i18n'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { sb, ytId, fetchAllItems, imgOpt } from '../../lib/supabase'
 import { compressImage } from '../../lib/compress'
 import { rotateImageFile } from '../../lib/rotate'
@@ -9,10 +9,15 @@ import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
 import { downloadBlob } from '../../lib/download'
-import { TAGS, tagLabel } from '../../lib/gallery'
+import { TAGS, tagLabel, canonIdol } from '../../lib/gallery'
 import { suggestTags } from '../../lib/tagSuggest'
 import AdminReports from '../components/AdminReports'
 import AdminTagSuggest from '../components/AdminTagSuggest'
+import AdminItemList from '../components/AdminItemList'
+import AdminDupes from '../components/AdminDupes'
+import AdminBackup from '../components/AdminBackup'
+import { dhashOfBlob, findSimilar, hamming, splitYoutubeDupes, SIMILAR_MAX } from '../../lib/dupes'
+import { missingColumnOf } from '../../lib/adminTools'
 
 const box = 'w-full rounded-xl border border-rose/60 dark:border-rose/25 bg-white dark:bg-white/10 dark:text-milk px-3 py-2.5'
 const btn = 'rounded-full bg-plum text-milk font-bold px-5 py-2.5 disabled:opacity-50'
@@ -44,23 +49,21 @@ function TagPicker({ value, onChange, suggestFrom = '' }) {
   )
 }
 
-// Simpan baris; kalau kolom baru (width/height/tags) belum ada di database, ulangi tanpa kolom itu.
+// Simpan baris; kalau kolom tambahan (width/height/tags/alt_text/phash) belum ada di database,
+// buang HANYA kolom itu lalu ulangi — dulu semua kolom tambahan ikut terbuang (mis. migrasi 14
+// belum jalan → dimensi & tag juga hilang). Kolom yang tidak terbaca dari pesan error → cara lama.
 async function insertItem(row, extra) {
-  let { error } = await sb.from('items').insert({ ...row, ...extra })
-  if (error && Object.keys(extra).length && isMissingColumnError(error)) ({ error } = await sb.from('items').insert(row))
+  let payload = { ...row, ...extra }
+  for (let i = 0; i <= Object.keys(extra).length; i++) {
+    const { error } = await sb.from('items').insert(payload)
+    if (!error || !isMissingColumnError(error)) return { error }
+    const col = missingColumnOf(error)
+    if (!col || !(col in extra) || !(col in payload)) break
+    const { [col]: _, ...rest } = payload
+    payload = rest
+  }
+  const { error } = await sb.from('items').insert(row)
   return { error }
-}
-
-const MEMBER_SET = ['JIWOO', 'CARMEN', 'YUHA', 'STELLA', 'JUUN', 'A-NA', 'IAN', 'YE-ON']
-// Bakuan bentuk idol: bila semua nama di dalamnya member H2H (solo/unit, pisah koma/&),
-// tulis UPPERCASE disambung ' & ' — mencegah varian Title Case yang lolos dari query album.
-// Nilai lain (mis. 'Hearts2Hearts') dikembalikan apa adanya.
-function canonIdol(v) {
-  const raw = (v || '').trim()
-  if (!raw) return raw
-  const parts = raw.split(/[,&]/).map((s) => s.trim().toUpperCase()).filter(Boolean)
-  if (parts.length && parts.every((p) => MEMBER_SET.includes(p))) return parts.join(' & ')
-  return raw
 }
 
 export default function Admin() {
@@ -133,6 +136,13 @@ export default function Admin() {
   function addFiles(fileList) {
     const arr = Array.from(fileList).map((file) => ({ id: qid++, file, url: URL.createObjectURL(file), rotation: 0, status: 'siap' }))
     setQueue((q) => [...q, ...arr])
+    // Sidik foto untuk peringatan foto ganda — dihitung di latar, antrean tetap bisa langsung dipakai.
+    for (const q of arr) {
+      if (!q.file.type.startsWith('image/')) continue
+      dhashOfBlob(q.file)
+        .then((hash) => setQueue((cur) => cur.map((it) => (it.id === q.id ? { ...it, hash } : it))))
+        .catch(() => {})
+    }
   }
   function rotateQueued(id) {
     setQueue((q) => q.map((it) => (it.id === id ? { ...it, rotation: (it.rotation + 90) % 360 } : it)))
@@ -141,12 +151,28 @@ export default function Admin() {
     setQueue((q) => q.filter((it) => it.id !== id))
   }
 
+  // Peringatan foto ganda per file di antrean: mirip foto di galeri, atau mirip file lain di antrean ini.
+  const queueDupes = useMemo(() => {
+    const out = {}
+    queue.forEach((q, i) => {
+      if (!q.hash) return
+      const inGallery = findSimilar(q.hash, items)[0]
+      const inQueue = queue.slice(0, i).find((o) => hamming(o.hash, q.hash) <= SIMILAR_MAX)
+      if (inGallery || inQueue) out[q.id] = { inGallery, inQueue }
+    })
+    return out
+  }, [queue, items])
+  const ytCheck = useMemo(() => splitYoutubeDupes(f.yt.split('\n').map((s) => s.trim()).filter(Boolean), items, ytId), [f.yt, items])
+
   async function add(e) {
     e.preventDefault()
     const ytLinks = f.yt.split('\n').map((s) => s.trim()).filter(Boolean)
-    const validYt = ytLinks.filter((l) => ytId(l))
+    // Link yang sudah ada di galeri (atau ditempel dua kali) dilewati.
+    const { fresh: validYt, dupes: ytDupes } = splitYoutubeDupes(ytLinks, items, ytId)
     const idolName = canonIdol(f.idol.trim() || f.group.trim() || 'Hearts2Hearts')
-    if (queue.length === 0 && validYt.length === 0) return setMsg(t('Pilih foto/video, atau tempel link YouTube yang valid.'))
+    if (queue.length === 0 && validYt.length === 0) {
+      return setMsg(ytDupes.length ? t('Semua link YouTube ini sudah ada di galeri.') : t('Pilih foto/video, atau tempel link YouTube yang valid.'))
+    }
     setBusy(true)
     const baseRow = { idol: idolName, group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
     // Tanggal manual (opsional): buat memasukkan foto lama agar urut di kategori terlama.
@@ -165,7 +191,8 @@ export default function Admin() {
       setBusy(false)
       if (ok === 0) return setMsg(t('Gagal menyimpan link YouTube.'))
       setF({ ...f, title: '', yt: '' })
-      setMsg(validYt.length > 1 ? t('Selesai: {ok}/{n} link tersimpan ✓', { ok, n: validYt.length }) : t('Tersimpan ✓'))
+      const done = validYt.length > 1 ? t('Selesai: {ok}/{n} link tersimpan ✓', { ok, n: validYt.length }) : t('Tersimpan ✓')
+      setMsg(ytDupes.length ? `${done} ${t('{n} link dilewati karena sudah ada.', { n: ytDupes.length })}` : done)
       load()
       return
     }
@@ -185,6 +212,8 @@ export default function Admin() {
         // Dimensi foto (fitur 4) — dipakai grid supaya ruang tiap foto sudah pas sebelum dimuat.
         let dims = {}
         if (file.type.startsWith('image/')) { try { dims = await measureFile(file) } catch { dims = {} } }
+        // Sidik foto (migrasi 14) dari file yang benar-benar disimpan (sudah diputar & dikompres).
+        if (file.type.startsWith('image/')) { try { dims.phash = await dhashOfBlob(file) } catch { /* lewati */ } }
         // Judul dari nama file boleh diawali "NAMA IDOL | " untuk idol per foto.
         let rowIdol = idolName
         let rowTitle = (f.title || q.file.name.replace(/\.\w+$/, '')).trim()
@@ -197,7 +226,7 @@ export default function Admin() {
           ...baseRow, idol: rowIdol, title: rowTitle,
           path, type: file.type.startsWith('video') ? 'video' : 'photo', url, ...backdate(seq++),
         }
-        // Kolom width/height/tags belum ada (migrasi 02/06 belum dijalankan) -> simpan tanpa kolom itu.
+        // Kolom width/height/tags/phash belum ada (migrasi 02/06/14 belum dijalankan) -> simpan tanpa kolom itu.
         const { error } = await insertItem(row, { ...dims, ...tagExtra })
         if (error) throw error
         ok++
@@ -232,6 +261,12 @@ export default function Admin() {
     }
     setPendingDelete(null)
     load()
+  }
+
+  // Buka form ubah lalu gulir ke barisnya di daftar (dipakai antrean laporan & foto ganda).
+  function editAndScroll(it) {
+    startEdit(it)
+    setTimeout(() => document.getElementById(`item-${it.id}`)?.scrollIntoView({ block: 'center' }), 50)
   }
 
   function startEdit(it) {
@@ -305,6 +340,30 @@ export default function Admin() {
   ).sort((a, b) => b[1] - a[1])
   const maxCount = stats[0]?.[1] || 1
 
+  // Form ubah satu item — dirender di dalam daftar (AdminItemList) pada baris yang sedang diubah.
+  const renderEditor = (it) => (
+    <div className="space-y-2">
+      <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder={t('Idol (opsional)')} className={box} />
+      <input value={editVal.title} onChange={(e) => setEditVal({ ...editVal, title: e.target.value })} placeholder={t('Judul')} className={box} />
+      <div className="grid grid-cols-2 gap-2">
+        <input value={editVal.group} onChange={(e) => setEditVal({ ...editVal, group: e.target.value })} placeholder={t('Grup')} className={box} />
+        <input value={editVal.era} onChange={(e) => setEditVal({ ...editVal, era: e.target.value })} placeholder="Era" className={box} />
+      </div>
+      <input value={editVal.note} onChange={(e) => setEditVal({ ...editVal, note: e.target.value })} placeholder={t('Catatan pribadi')} className={box} />
+      <TagPicker value={editVal.tags || []} onChange={(tags) => setEditVal({ ...editVal, tags })} suggestFrom={editVal.title} />
+      <input value={editVal.alt || ''} maxLength={300} onChange={(e) => setEditVal({ ...editVal, alt: e.target.value })}
+        placeholder={t('Teks alternatif (opsional) — gambarkan isi foto, mis. "Carmen tersenyum, kemeja putih, latar biru"')} aria-label={t('Teks alternatif')} className={box} />
+      <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
+        {t('Tanggal tayang (format YYYY-MM-DD — ubah buat membetulkan tanggal)')}
+        <input value={editVal.date} onChange={(e) => setEditVal({ ...editVal, date: e.target.value })} placeholder="2026-10-21" inputMode="numeric" className={`${box} mt-1`} />
+      </label>
+      <div className="flex gap-2">
+        <button onClick={() => saveEdit(it.id)} className="rounded-full bg-plum text-milk font-bold px-4 py-1.5 text-sm">{t('Simpan')}</button>
+        <button onClick={() => setEditing(null)} className="rounded-full bg-white dark:bg-white/10 border border-rose/40 px-4 py-1.5 text-sm font-bold">{t('Batal')}</button>
+      </div>
+    </div>
+  )
+
   if (user === undefined) return <main className="mx-auto max-w-3xl px-4 py-24 text-center font-bold text-plum/60 dark:text-milk/60">{t('Memuat sesi admin…')}</main>
   return (
     <main className="mx-auto max-w-2xl px-4 pt-16 pb-10 page-fade-in">
@@ -357,19 +416,42 @@ export default function Admin() {
               </div>
             </div>
 
+            {Object.keys(queueDupes).length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gold/60 bg-gold/10 px-3 py-2 text-xs font-bold text-plum dark:text-milk" role="status">
+                <span>⚠ {t('{n} file mirip foto yang sudah ada — periksa dulu sebelum diunggah.', { n: Object.keys(queueDupes).length })}</span>
+                <button type="button" onClick={() => setQueue((cur) => cur.filter((q) => !queueDupes[q.id]))} disabled={busy}
+                  className="rounded-full bg-plum px-3 py-1 text-milk disabled:opacity-50 dark:bg-gold dark:text-plum">{t('Buang yang mirip dari antrean')}</button>
+              </div>
+            )}
             {queue.length > 0 && (
               <ul className="space-y-2">
                 {queue.map((q) => (
-                  <li key={q.id} className="flex items-center gap-3 rounded-xl bg-white dark:bg-white/10 p-2">
-                    {q.file.type.startsWith('image/')
-                      ? <img src={q.url} style={{ transform: `rotate(${q.rotation}deg)` }} className="h-14 w-14 object-cover rounded-lg transition-transform" />
-                      : <video src={q.url} className="h-14 w-14 object-cover rounded-lg" muted />}
-                    <span className="flex-1 truncate text-xs dark:text-milk">{q.file.name}</span>
-                    <span className="text-xs font-bold text-gold shrink-0">{q.status}</span>
-                    {q.file.type.startsWith('image/') && (
-                      <button type="button" onClick={() => rotateQueued(q.id)} className="text-sm shrink-0" aria-label={t('Putar 90°')}>↻</button>
+                  <li key={q.id} className="rounded-xl bg-white dark:bg-white/10 p-2">
+                    <div className="flex items-center gap-3">
+                      {q.file.type.startsWith('image/')
+                        ? <img src={q.url} style={{ transform: `rotate(${q.rotation}deg)` }} className="h-14 w-14 object-cover rounded-lg transition-transform" />
+                        : <video src={q.url} className="h-14 w-14 object-cover rounded-lg" muted />}
+                      <span className="flex-1 truncate text-xs dark:text-milk">{q.file.name}</span>
+                      <span className="text-xs font-bold text-gold shrink-0">{q.status}</span>
+                      {q.file.type.startsWith('image/') && (
+                        <button type="button" onClick={() => rotateQueued(q.id)} className="text-sm shrink-0" aria-label={t('Putar 90°')}>↻</button>
+                      )}
+                      <button type="button" onClick={() => removeQueued(q.id)} className="text-sm text-rose font-bold shrink-0" aria-label={t('Hapus dari antrean')}>✕</button>
+                    </div>
+                    {queueDupes[q.id]?.inGallery && (
+                      <p className="mt-2 flex items-center gap-2 text-xs font-bold text-gold">
+                        <img src={imgOpt(queueDupes[q.id].inGallery.item.url, 120)} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+                        <span className="min-w-0">
+                          ⚠ {queueDupes[q.id].inGallery.dist === 0 ? t('Hampir pasti sudah ada di galeri:') : t('Mirip foto di galeri (beda {n}/64):', { n: queueDupes[q.id].inGallery.dist })}
+                          <span className="block truncate font-normal text-plum/70 dark:text-milk/70">
+                            {queueDupes[q.id].inGallery.item.idol} · {queueDupes[q.id].inGallery.item.title || t('tanpa judul')} · {String(queueDupes[q.id].inGallery.item.created_at || '').slice(0, 10)}
+                          </span>
+                        </span>
+                      </p>
                     )}
-                    <button type="button" onClick={() => removeQueued(q.id)} className="text-sm text-rose font-bold shrink-0" aria-label={t('Hapus dari antrean')}>✕</button>
+                    {!queueDupes[q.id]?.inGallery && queueDupes[q.id]?.inQueue && (
+                      <p className="mt-2 text-xs font-bold text-gold">⚠ {t('Mirip file lain di antrean ini: {nama}', { nama: queueDupes[q.id].inQueue.file.name })}</p>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -378,6 +460,9 @@ export default function Admin() {
             <p className="text-center text-sm text-plum/60 dark:text-milk/60">{t('atau, kalau tanpa file di atas — tempel link YouTube (boleh banyak, satu per baris)')}</p>
             <textarea placeholder={'https://youtu.be/...\nhttps://youtu.be/...'} value={f.yt}
               onChange={(e) => setF({ ...f, yt: e.target.value })} rows={3} className={box} />
+            {ytCheck.dupes.length > 0 && (
+              <p className="text-xs font-bold text-gold" role="status">⚠ {t('{n} link sudah ada di galeri (atau ditempel dua kali) dan akan dilewati.', { n: ytCheck.dupes.length })}</p>
+            )}
             <button disabled={busy} className={btn}>
               {queue.length > 1 ? t('Tambah {n} item ke galeri', { n: queue.length }) : f.yt.trim().includes('\n') || (f.yt.match(/youtu/g) || []).length > 1 ? t('Tambah semua link YouTube') : t('Tambah ke galeri')}
             </button>
@@ -387,7 +472,7 @@ export default function Admin() {
 
           <AdminTagSuggest items={items} onSaved={load} />
 
-          <AdminReports items={items} onEdit={(it) => { startEdit(it); setTimeout(() => document.getElementById(`item-${it.id}`)?.scrollIntoView({ block: 'center' }), 50) }} />
+          <AdminReports items={items} onEdit={editAndScroll} />
 
           <div className="mt-10 rounded-3xl bg-white/70 dark:bg-white/5 p-5 border border-rose/40 dark:border-rose/20">
             <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">📣 {t('Pengumuman comeback')}</h2>
@@ -413,6 +498,10 @@ export default function Admin() {
             {dimMsg && <p className="mt-2 text-sm font-bold dark:text-milk" role="status">{dimMsg}</p>}
           </div>
 
+          <AdminDupes items={items} onChanged={load} onEdit={editAndScroll} onDelete={setPendingDelete} />
+
+          <AdminBackup items={items} onChanged={load} />
+
           {stats.length > 0 && (
             <div className="mt-10">
               <h2 className="font-display text-2xl text-plum dark:text-milk mb-3">{t('Statistik koleksi')}</h2>
@@ -430,49 +519,15 @@ export default function Admin() {
             </div>
           )}
 
-          <div className="mt-10 flex items-center justify-between">
-            <h2 className="font-display text-2xl text-plum dark:text-milk">{t('Semua item ({n})', { n: items.length })}</h2>
-            <button onClick={exportData} className="text-sm font-bold text-gold underline underline-offset-4">⬇ {t('Ekspor backup (.json)')}</button>
-          </div>
-          <ul className="mt-3 space-y-2">
-            {items.map((it) => (
-              <li key={it.id} id={`item-${it.id}`} className="rounded-xl bg-white/70 dark:bg-white/5 dark:text-milk px-4 py-2.5">
-                {editing === it.id ? (
-                  <div className="space-y-2">
-                    <input value={editVal.idol} onChange={(e) => setEditVal({ ...editVal, idol: e.target.value })} placeholder={t('Idol (opsional)')} className={box} />
-                    <input value={editVal.title} onChange={(e) => setEditVal({ ...editVal, title: e.target.value })} placeholder={t('Judul')} className={box} />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input value={editVal.group} onChange={(e) => setEditVal({ ...editVal, group: e.target.value })} placeholder={t('Grup')} className={box} />
-                      <input value={editVal.era} onChange={(e) => setEditVal({ ...editVal, era: e.target.value })} placeholder="Era" className={box} />
-                    </div>
-                    <input value={editVal.note} onChange={(e) => setEditVal({ ...editVal, note: e.target.value })} placeholder={t('Catatan pribadi')} className={box} />
-                    <TagPicker value={editVal.tags || []} onChange={(tags) => setEditVal({ ...editVal, tags })} suggestFrom={editVal.title} />
-                    <input value={editVal.alt || ''} maxLength={300} onChange={(e) => setEditVal({ ...editVal, alt: e.target.value })}
-                      placeholder={t('Teks alternatif (opsional) — gambarkan isi foto, mis. "Carmen tersenyum, kemeja putih, latar biru"')} aria-label={t('Teks alternatif')} className={box} />
-                    <label className="block text-xs font-bold text-plum/60 dark:text-milk/60">
-                      {t('Tanggal tayang (format YYYY-MM-DD — ubah buat membetulkan tanggal)')}
-                      <input value={editVal.date} onChange={(e) => setEditVal({ ...editVal, date: e.target.value })} placeholder="2026-10-21" inputMode="numeric" className={`${box} mt-1`} />
-                    </label>
-                    <div className="flex gap-2">
-                      <button onClick={() => saveEdit(it.id)} className="rounded-full bg-plum text-milk font-bold px-4 py-1.5 text-sm">{t('Simpan')}</button>
-                      <button onClick={() => setEditing(null)} className="rounded-full bg-white dark:bg-white/10 border border-rose/40 px-4 py-1.5 text-sm font-bold">{t('Batal')}</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <span className="truncate block"><b>{it.idol}</b>{it.group_name ? ` (${it.group_name})` : ''}{it.era ? ` · ${it.era}` : ''} · {it.title || it.type}</span>
-                      {it.note && <span className="block text-xs text-plum/50 dark:text-milk/50 truncate">📝 {it.note}</span>}
-                    </div>
-                    <div className="flex gap-3 shrink-0">
-                      <button onClick={() => startEdit(it)} className="text-sm font-bold text-gold">{t('Ubah')}</button>
-                      <button onClick={() => setPendingDelete(it)} className="text-sm text-rose font-bold">{t('Hapus')}</button>
-                    </div>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+          <AdminItemList
+            items={items}
+            editing={editing}
+            renderEditor={renderEditor}
+            onEdit={startEdit}
+            onDelete={setPendingDelete}
+            onChanged={load}
+            headerExtra={<button onClick={exportData} className="text-sm font-bold text-gold underline underline-offset-4">⬇ {t('Ekspor backup (.json)')}</button>}
+          />
         </>
       )}
       {!user && msg && <p className="mt-3 font-bold dark:text-milk" role="status">{msg}</p>}

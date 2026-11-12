@@ -9,6 +9,14 @@ module.exports = {
     // Hanya berlaku kalau suatu saat ada <Image> tanpa loader khusus.
     remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/**' }],
   },
+  // Halaman yang digabung — link lama yang sudah tersebar tetap jalan. Query ikut terbawa
+  // (mis. /hari-ini?tanggal=2026-12-25 → /?tanggal=2026-12-25, mode coba tanggal di beranda).
+  async redirects() {
+    return [
+      { source: '/hari-ini', destination: '/', permanent: true }, // isinya jadi seksi "Hari ini" di beranda
+      { source: '/kredit', destination: '/tentang', permanent: true }, // isinya jadi seksi "Kredit Foto" di Tentang
+    ]
+  },
   async headers() {
     return [
       {

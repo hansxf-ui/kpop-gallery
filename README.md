@@ -94,8 +94,9 @@ create policy "admin update settings" on settings for update to authenticated us
   sebelum itu pengunjung EN melihat teks Indonesia (bukan terjemahan lama yang basi).
   Pengumuman banner punya kolom versi Inggris opsional di admin.
 - Tombol "Tambah ke kalender" (.ics) di setiap acara `/jadwal`
-- `/kredit` — daftar sumber/kredit foto dari kolom credit
-- `/hari-ini` — hitung mundur, acara hari ini, voting yang buka, foto kenangan harian (+ kartu ulang tahun di hari ulang tahun member)
+- Seksi "Kredit Foto" di `/tentang` — daftar sumber/kredit foto dari kolom credit (`/kredit` lama dialihkan ke `/tentang`)
+- Seksi "Hari ini" di beranda — acara hari ini, voting yang buka, foto kenangan harian (+ kartu ulang tahun di hari ulang tahun member).
+  `/hari-ini` lama dialihkan ke `/`; `/?tanggal=YYYY-MM-DD` untuk mencoba tanggal lain
 - Pengingat voting harian (.ics berulang sampai voting tutup) di `/voting`
 - `/banding` — satu member di dua era berdampingan
 - Cari per warna & konsep, saran tag otomatis di admin
@@ -108,6 +109,15 @@ create policy "admin update settings" on settings for update to authenticated us
 - Lencana "♥ N baru" untuk foto baru dari member favorit
 - `/jadwal` tampilan kalender bulanan
 - Teks alternatif foto (kolom opsional di admin)
+- Admin: cari & filter daftar item (member, jenis, era, tag, termasuk "tanpa era"/"tanpa tag"), thumbnail, dan
+  ubah massal untuk item yang dicentang (ganti era/grup/idol, tambah/buang tag, hapus)
+- Admin: peringatan foto ganda sebelum upload (sidik foto, tetap terdeteksi walau ukurannya beda), link YouTube
+  yang sudah ada dilewati otomatis, dan pencarian pasangan foto mirip di seluruh koleksi
+- Admin: cadangan lengkap (data + file foto/video, ZIP per ±300 MB) dan pulihkan dari cadangan — item yang
+  sudah ada dilewati, jadi aman diulang. Bisa juga dipakai pindah ke project Supabase baru
+  (skema & migrasi harus sudah dijalankan di project baru)
+- Halaman error yang ramah (bukan layar putih) kalau satu halaman gagal tampil
+- `sitemap.xml` & `robots.txt` otomatis (halaman admin tidak diindeks)
 
 ## Migrasi database (jalankan sekali di Supabase → SQL Editor)
 File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan tidak mengubah data yang ada.
@@ -129,13 +139,19 @@ File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan ti
 11. `20261114_11_fandom_stats.sql` — view statistik fandom (sebelum dijalankan, situs menghitung sendiri).
 12. `20261114_12_spam_gate_strict.sql` — **OPSIONAL**, mode ketat anti-spam. Baca syarat di file dulu.
 13. `20261114_13_alt_text.sql` — kolom opsional `alt_text` (teks alternatif foto).
+14. `20261115_14_photo_hash.sql` — kolom `phash` (sidik foto untuk deteksi foto ganda, hanya terbaca admin).
+    Sesudahnya, buka `/admin` → "Foto ganda" → "Hitung sidik foto lama" (upload baru terisi otomatis).
 
 ## Anti-spam Turnstile (opsional)
 Isi di Vercel → Project → Settings → Environment Variables (lihat `.env.example`):
 `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, dan (hanya untuk mode ketat) `SUPABASE_SERVICE_ROLE_KEY`.
 Kosong = laporan & reaksi tetap jalan seperti biasa.
 
-## Tes
+## Tes & CI
+Setiap push ke `main` dan setiap pull request menjalankan GitHub Actions (`.github/workflows/ci.yml`):
+`npm test` dan `next build`. Kalau **tes** merah setelah update jadwal/voting, biasanya ada teks Indonesia baru
+di `lib/jadwal.js` / `lib/voting.js` yang belum diterjemahkan di `lib/i18n-en-data.js`.
+
 `npm test` — logika kuis (tanpa foto ganda dalam satu ronde) dan kelengkapan kamus bahasa Inggris
 (memakai `node:test` bawaan Node, tanpa paket tambahan).
 

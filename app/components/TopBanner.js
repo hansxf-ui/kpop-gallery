@@ -51,7 +51,7 @@ export default function TopBanner() {
     <div className="relative z-30 bg-gradient-to-r from-rose via-gold/70 to-lilac text-plum text-center text-sm font-bold pl-10 pr-20 py-2.5">
       <span>{special ? '🎉 ' : '📣 '}{text}</span>
       {special && special.type === 'birthday' && (
-        <Link href="/hari-ini" className="ml-2 underline underline-offset-4">{t('Buat kartu ulang tahun →')}</Link>
+        <Link href="/#hari-ini" className="ml-2 underline underline-offset-4">{t('Buat kartu ulang tahun →')}</Link>
       )}
       <button onClick={dismiss} aria-label={t('Tutup pengumuman')} className="absolute left-3 top-1/2 -translate-y-1/2 font-bold">✕</button>
     </div>
