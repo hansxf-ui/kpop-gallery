@@ -7,7 +7,6 @@ import { namesOf } from '../../lib/gallery'
 import { useBias } from '../../lib/bias'
 import BiasPicker from '../components/BiasPicker'
 import { shareOrCopy } from '../../lib/share'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 
 // Kuis "Tebak member" (fitur 11).
@@ -72,7 +71,6 @@ export default function Kuis() {
   const btn = 'rounded-full bg-plum px-6 py-2.5 text-sm font-bold text-milk dark:bg-gold dark:text-plum'
   return (
     <main className="mx-auto max-w-xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-8 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>❓</p>

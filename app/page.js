@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { imgOpt } from '../lib/supabase'
 import { fetchMemberCounts } from '../lib/counts'
-import ThemeToggle from './components/ThemeToggle'
 import SiteNav from './components/SiteNav'
 import SpecialCountdown from './components/SpecialCountdown'
 import FandomStats from './components/FandomStats'
@@ -152,7 +151,6 @@ export default function Landing() {
   useEffect(() => { setToday(todayFrom(window.location.search)) }, [])
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-16 sm:px-8">
-      <ThemeToggle />
       <SiteNav className="mb-8" />
       <style>{`
         /* Papan kartu: satu kawat per baris kartu. 2 kolom di HP & tablet, 4 kolom mulai 1024px.

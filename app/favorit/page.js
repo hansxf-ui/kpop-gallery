@@ -3,7 +3,6 @@ import { useT, useDocTitle } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { fetchItemsByIds } from '../../lib/supabase'
 import { getFavorites, setFavorites, toggleFavorite, FAVS_EVENT } from '../../lib/favorites'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
 import GalleryCard from '../components/GalleryCard'
@@ -69,7 +68,6 @@ export default function Favorit() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-12 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>♥ ♥ ♥</p>

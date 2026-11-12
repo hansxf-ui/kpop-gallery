@@ -3,6 +3,7 @@ import { Playfair_Display, Quicksand } from 'next/font/google'
 import Background from './components/Background'
 import ConfettiHearts from './components/ConfettiHearts'
 import TopBanner from './components/TopBanner'
+import ThemeToggle from './components/ThemeToggle'
 import ServiceWorker from './components/ServiceWorker'
 import { LangProvider } from '../lib/i18n'
 import { LANG_BOOT_SCRIPT, LANG_BOOT_STYLE } from '../lib/langBoot'
@@ -57,6 +58,9 @@ export default function RootLayout({ children }) {
       <body>
         <LangProvider>
           <TopBanner />
+          {/* Sekali di sini, di luar <main> setiap halaman: <main> punya z-index 1 (banner pengumuman
+              bisa menutupi tombol) dan dulu animasi fade-in-nya membuat `fixed` menempel ke <main>. */}
+          <ThemeToggle />
           <Background />
           <ConfettiHearts />
           <ServiceWorker />

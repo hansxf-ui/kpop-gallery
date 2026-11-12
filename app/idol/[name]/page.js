@@ -7,7 +7,6 @@ import { sb, fetchAllItems } from '../../../lib/supabase'
 import { getFavorites, toggleFavorite, FAVS_EVENT } from '../../../lib/favorites'
 import { sameEra } from '../../../lib/eras'
 import { ALBUM_KEYS, DISPLAY_NAME, namesOf, matchesQuery, shuffleStable, newSeed } from '../../../lib/gallery'
-import ThemeToggle from '../../components/ThemeToggle'
 import SiteNav from '../../components/SiteNav'
 import Lightbox from '../../components/Lightbox'
 import GalleryCard from '../../components/GalleryCard'
@@ -91,7 +90,6 @@ export default function IdolAlbum() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-12 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>✦ ✧ ✦</p>

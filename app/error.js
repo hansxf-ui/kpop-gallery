@@ -2,7 +2,6 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { useT } from '../lib/i18n'
-import ThemeToggle from './components/ThemeToggle'
 import SiteNav from './components/SiteNav'
 
 // Halaman cadangan kalau satu halaman error saat tampil (bug di kode, data rusak, dst.).
@@ -14,7 +13,6 @@ export default function ErrorPage({ error, reset }) {
   useEffect(() => { console.error(error) }, [error])
   return (
     <main className="mx-auto max-w-3xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <SiteNav className="pt-16" />
       <div className="pt-16 pb-24 text-center" role="alert">
         <p className="text-gold text-2xl" aria-hidden>✦ ✧ ✦</p>

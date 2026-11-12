@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { sb, fetchAllItems, imgOpt } from '../../lib/supabase'
 import { thumbOf, altOf } from '../../lib/gallery'
 import { groupByEra, formatRilis } from '../../lib/eras'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Skeleton from '../components/Skeleton'
 
@@ -31,7 +30,6 @@ export default function Linimasa() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-12 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>✦ ✧ ✦</p>

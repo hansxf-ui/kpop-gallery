@@ -6,7 +6,6 @@ import { MEMBERS, DISPLAY_NAME, namesOf, altOf } from '../../lib/gallery'
 import { RELEASES, groupByEra, formatRilis } from '../../lib/eras'
 import { replaceQuery } from '../../lib/galeriUrl'
 import { useT, useLang, useDocTitle } from '../../lib/i18n'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
 
@@ -115,7 +114,6 @@ export default function BandingClient() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-8 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>⇆</p>

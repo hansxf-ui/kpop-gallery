@@ -54,8 +54,13 @@ html.dark .skeleton::after { background: linear-gradient(90deg, transparent, rgb
 }
 
 /* Transisi halaman halus */
+/* Muncul halus saat halaman dibuka. SENGAJA tanpa `transform`: elemen yang ber-transform (termasuk
+   transform: translateY(0) yang tertinggal oleh fill-mode `both`) menjadi patokan posisi semua
+   anak `position: fixed` — tombol tema, tombol ke atas, dan modal konfirmasi di dalam <main> jadi
+   menempel ke <main> (ikut ter-scroll, bergeser dari pojok layar), bukan ke layar.
+   Geser 10px memakai `top` (main sudah position: relative), yang tidak memengaruhi anak fixed. */
 .page-fade-in { animation: page-fade .45s ease both; }
-@keyframes page-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes page-fade { from { opacity: 0; top: 10px; } to { opacity: 1; top: 0; } }
 @media (prefers-reduced-motion: reduce) { .confetti-heart, .page-fade-in { animation: none; } }
 
 /* Featured banner & badge kecil */

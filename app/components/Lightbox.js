@@ -316,8 +316,8 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   }, [index, items, onClose])
 
   if (!it) return null
-  // Portal ke <body>: wajib di luar <main class="page-fade-in"> — animasi fade-nya memakai transform,
-  // dan elemen ber-transform jadi patokan posisi `fixed` (bukan viewport), bikin lightbox nyasar ke tengah halaman.
+  // Portal ke <body>: di luar <main> (stacking context z-index 1 dan animasi fade-in-nya), supaya
+  // lightbox selalu di atas semua elemen halaman dan patokan posisi `fixed`-nya pasti layar.
   return createPortal(
     <div ref={dialogRef} tabIndex={-1} onKeyDown={trapTab}
       role="dialog" aria-modal="true" aria-label={it.title || it.idol || t('Tampilan penuh')}
