@@ -64,7 +64,8 @@ export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true,
       <button type="button" onClick={fav} aria-pressed={isFav}
         aria-label={favLabel || t('Favoritkan {judul}', { judul: label })}
         className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-base shadow-sm transition hover:scale-110">
-        <Emoji char={isFav ? '❤' : '🤍'} size={18} />
+        {/* Belum favorit = ikon garis hati (hati putih Twemoji tidak terlihat di tombol putih). */}
+        {isFav ? <Emoji char="❤" size={18} /> : <Icon name="heart" size={18} strokeWidth={2.2} className="text-plum" />}
       </button>
       {showIdol && (
         <p className="w-fit px-2 pb-2.5 text-xs font-bold text-gold">

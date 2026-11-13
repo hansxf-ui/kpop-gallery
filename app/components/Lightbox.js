@@ -398,7 +398,7 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
           )}
           <button onClick={toggleFav} aria-pressed={favIds.includes(it.id)}
             className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">
-            <Emoji char={favIds.includes(it.id) ? '❤' : '🤍'} size={16} className="mr-1.5" />{favIds.includes(it.id) ? t('Favorit') : t('Favoritkan')}
+            {favIds.includes(it.id) ? <Emoji char="❤" size={16} className="mr-1.5" /> : <Icon name="heart" size={16} className="mr-1.5" />}{favIds.includes(it.id) ? t('Favorit') : t('Favoritkan')}
           </button>
           <CollectionPicker itemId={it.id} />
           <button onClick={share} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm"><Icon name="share" size={14} className="mr-1.5" />{t('Bagikan')}</button>

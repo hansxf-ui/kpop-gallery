@@ -7,7 +7,7 @@
 // lisensi CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Kredit juga ada di halaman Tentang.
 export const EMOJI = {
   '😍': '1f60d', '🔥': '1f525', '😭': '1f62d', '👏': '1f44f',
-  '❤': '2764', '🤍': '1f90d', '🎉': '1f389', '🎂': '1f382', '📣': '1f4e3',
+  '❤': '2764', '🎉': '1f389', '🎂': '1f382', '📣': '1f4e3',
 }
 
 // label kosong = hiasan (disembunyikan dari pembaca layar).
