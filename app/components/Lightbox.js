@@ -334,18 +334,25 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
   return createPortal(
     <div ref={dialogRef} tabIndex={-1} onKeyDown={trapTab}
       role="dialog" aria-modal="true" aria-label={it.title || it.idol || t('Tampilan penuh')}
-      onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] place-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4 outline-none">
+      onClick={() => { if (Date.now() - lastDragEnd.current < 350) return; onClose() }} className="fixed inset-0 z-50 grid h-dvh grid-cols-[minmax(0,1fr)] content-start justify-items-center overflow-y-auto overflow-x-hidden bg-[#0b1a2c]/95 p-4 outline-none">
       {/* Kolom WAJIB min-w-0 + max-w: tanpa itu lebar kolom ditentukan max-content rel geser
           (3 slot × lebar bingkai ≈ 889px) — lightbox jadi lebih lebar dari layar HP dan bisa
           kegeser menyamping, foto diamnya pun di luar tengah. Terukur pakai Chromium 390px. */}
-      <div onClick={(e) => e.stopPropagation()} className="relative mx-auto flex w-full min-w-0 max-w-[440px] flex-col items-center gap-3">
+      {/* Isi lightbox dipasang dari atas dengan jarak TETAP (bukan dipusatkan vertikal). Dulu seluruh isi
+          dipusatkan, jadi panjang judul/kredit/tag/tombol tiap item menggeser foto & judul naik-turun
+          ±20px saat berpindah item. Jaraknya ≈ posisi lama untuk isi rata-rata (slot foto + ±320px di
+          bawahnya); layar pendek → 0 dan isi bisa digulir (dulu bagian atasnya bisa terpotong). */}
+      <div onClick={(e) => e.stopPropagation()} className="relative mx-auto flex w-full min-w-0 max-w-[440px] flex-col items-center gap-3"
+        style={{ paddingTop: `max(0px, calc((100dvh - ${PHOTO_BOX_H} - 320px) / 2 - 16px))` }}>
         <div ref={viewRef} className="w-full min-w-0 overflow-hidden">
           <div
             className={`flex w-full select-none ${multi ? 'cursor-grab touch-pan-y active:cursor-grabbing' : ''}`}
-            style={multi ? { transform: `translateX(calc(-100% + ${dragX}px))`, transition: anim ? 'transform 300ms ease' : 'none' } : undefined}
+            /* Minimal setinggi kotak foto: item YouTube (lebih pendek) dipusatkan di dalamnya, jadi judul
+               di bawahnya tetap di posisi yang sama dengan item foto. */
+            style={{ minHeight: PHOTO_BOX_H, ...(multi ? { transform: `translateX(calc(-100% + ${dragX}px))`, transition: anim ? 'transform 300ms ease' : 'none' } : {}) }}
             onPointerDown={onPD}>
             {slots.map((s, i) => (
-              <div key={`${s.it.id}-${s.active ? 'aktif' : 'tepi' + i}`} className="w-full shrink-0 flex items-start justify-center">
+              <div key={`${s.it.id}-${s.active ? 'aktif' : 'tepi' + i}`} className="w-full shrink-0 flex items-center justify-center">
                 {s.it.type === 'photo' ? (
                   // Slot setinggi kotak maksimum, foto di tengah: tinggi rel sama untuk semua foto.
                   <div className="flex items-center justify-center" style={{ height: PHOTO_BOX_H }}>
