@@ -8,7 +8,6 @@ import {
   pruneCollection, encodeCollection, importCollection, COLL_EVENT,
 } from '../../lib/collections'
 import { shareOrCopy } from '../../lib/share'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import GalleryCard from '../components/GalleryCard'
 import Masonry from '../components/Masonry'
@@ -110,7 +109,6 @@ export default function Koleksi() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-10 text-center">
         <SiteNav className="mb-8" />
         <p className="text-gold text-2xl" aria-hidden>📁</p>

@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import { RELEASES, labelRilis } from '../../lib/eras'
 import { useT, useLang, useDocTitle } from '../../lib/i18n'
@@ -31,7 +30,6 @@ export default function TentangClient() {
   useDocTitle('Tentang')
   return (
     <main className="mx-auto max-w-4xl px-4 pb-24 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-14 text-center">
         <SiteNav className="mb-8" />
         <p className="flex justify-center items-center" aria-hidden="true">

@@ -5,7 +5,6 @@ import { sb, ytId, fetchAllItems, imgOpt } from '../../lib/supabase'
 import { compressImage } from '../../lib/compress'
 import { rotateImageFile } from '../../lib/rotate'
 import { measureFile, measureImage, isMissingColumnError } from '../../lib/imageLoader'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import ConfirmModal from '../components/ConfirmModal'
 import { downloadBlob } from '../../lib/download'
@@ -367,7 +366,6 @@ export default function Admin() {
   if (user === undefined) return <main className="mx-auto max-w-3xl px-4 py-24 text-center font-bold text-plum/60 dark:text-milk/60">{t('Memuat sesi admin…')}</main>
   return (
     <main className="mx-auto max-w-2xl px-4 pt-16 pb-10 page-fade-in">
-      <ThemeToggle />
       <SiteNav className="mb-8" />
       <h1 className="font-display text-4xl mb-6 text-plum dark:text-milk">{t('Admin ✦')}</h1>
       {user && isAdmin === false ? (

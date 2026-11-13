@@ -15,7 +15,6 @@ import BiasPicker from '../components/BiasPicker'
 import { visitBaseline, isNewSince } from '../../lib/lastVisit'
 import { fetchTopReacted } from '../../lib/topReacted'
 import { MEMBERS, namesOf, thumbOf as thumb, matchesQuery, shuffleStable, newSeed, TAGS, tagsOf, altOf } from '../../lib/gallery'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
 import FeaturedCarousel from '../components/FeaturedCarousel'
@@ -302,7 +301,6 @@ export default function GaleriClient() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-12 text-center">
         <SiteNav className="mb-8" />
         <p className="flex justify-center items-center" aria-hidden="true">

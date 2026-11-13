@@ -1,7 +1,6 @@
 'use client'
 import { useT, useLocale, useDocTitle } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
-import ThemeToggle from '../components/ThemeToggle'
 import SiteNav from '../components/SiteNav'
 import { VOTING, VOTING_CARMEN, PANDUAN_APLIKASI } from '../../lib/voting'
 import { hitungMundur, statusVote } from '../../lib/schedule'
@@ -123,7 +122,6 @@ export default function VotingPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-20 page-fade-in">
-      <ThemeToggle />
       <header className="pt-16 pb-12 text-center">
         <SiteNav className="mb-8" />
         <p className="flex justify-center items-center" aria-hidden="true">
