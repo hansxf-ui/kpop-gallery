@@ -7,6 +7,8 @@ import { useT } from '../../lib/i18n'
 // Carousel sorotan beranda — adaptasi demo Carousel shadcn/ui kiriman pemilik (18 Okt 2026)
 // ke stack situs ini (galeri tidak memakai shadcn/embla): rel geser scroll-snap + panah prev/next,
 // kartu persegi seperti demo, isi = item sorotan beneran (bukan angka contoh).
+// Tanpa titik indikator di bawah (lebih simpel, hemat tempat): posisi terbaca dari panah yang
+// tersembunyi di foto pertama/terakhir.
 export default function FeaturedCarousel({ items, onOpen }) {
   const t = useT()
   const trackRef = useRef(null)
@@ -51,7 +53,6 @@ export default function FeaturedCarousel({ items, onOpen }) {
         ))}
       </div>
       {items.length > 1 && (
-        <>
           {/* Lapisan seukuran FOTO slide yang tampil: inset = px-1 rel (4px) + border (1px) + padding
               .featured-card (10px), tinggi = lebar (foto persegi). Panah dipusatkan pada foto, 10px dari
               tepinya — dulu top-[36%] dari seluruh kartu (termasuk judul) dan left-3 dari tepi luar, jadi
@@ -64,12 +65,6 @@ export default function FeaturedCarousel({ items, onOpen }) {
               </button>
             ))}
           </div>
-          <div className="mt-2 flex justify-center gap-1.5" aria-hidden>
-            {items.map((it, i) => (
-              <span key={it.id} className={`h-1.5 rounded-full transition-all ${i === active ? 'w-5 bg-gold' : 'w-1.5 bg-plum/25 dark:bg-milk/25'}`} />
-            ))}
-          </div>
-        </>
       )}
     </div>
   )

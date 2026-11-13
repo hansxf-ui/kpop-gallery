@@ -44,7 +44,7 @@ function FilmIcon() {
 
 const sorts = [['terbaru', 'Terbaru'], ['terlama', 'Terlama'], ['acak', 'Acak']]
 
-// Ruang cadangan "Pilihan minggu ini" seukuran FeaturedCarousel (label + kartu persegi + judul + titik),
+// Ruang cadangan "Pilihan minggu ini" seukuran FeaturedCarousel (label + kartu persegi + judul),
 // selama kelima item belum diketahui — grid di bawahnya tidak melompat saat carousel muncul.
 function FeaturedPlaceholder({ label }) {
   return (
@@ -57,7 +57,6 @@ function FeaturedPlaceholder({ label }) {
             <span className="block px-3 py-3 font-bold invisible">.</span>
           </div>
         </div>
-        <div className="mt-2 h-1.5" />
       </div>
     </section>
   )
