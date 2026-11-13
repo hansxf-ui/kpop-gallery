@@ -52,10 +52,18 @@ export default function FeaturedCarousel({ items, onOpen }) {
       </div>
       {items.length > 1 && (
         <>
-          <button onClick={() => go(-1)} aria-label={t('Pilihan sebelumnya')}
-            className="absolute left-3 top-[36%] z-10 grid h-9 w-9 place-items-center rounded-full border border-rose/40 bg-white/85 text-lg font-bold text-plum shadow backdrop-blur dark:border-rose/20 dark:bg-white/10 dark:text-milk">‹</button>
-          <button onClick={() => go(1)} aria-label={t('Pilihan berikutnya')}
-            className="absolute right-3 top-[36%] z-10 grid h-9 w-9 place-items-center rounded-full border border-rose/40 bg-white/85 text-lg font-bold text-plum shadow backdrop-blur dark:border-rose/20 dark:bg-white/10 dark:text-milk">›</button>
+          {/* Lapisan seukuran FOTO slide yang tampil: inset = px-1 rel (4px) + border (1px) + padding
+              .featured-card (10px), tinggi = lebar (foto persegi). Panah dipusatkan pada foto, 10px dari
+              tepinya — dulu top-[36%] dari seluruh kartu (termasuk judul) dan left-3 dari tepi luar, jadi
+              panah menindih tepi foto & bingkai kartu dan tidak sejajar tengah foto. */}
+          <div className="pointer-events-none absolute left-[15px] right-[15px] top-[11px] aspect-square">
+            {[[-1, 'Pilihan sebelumnya', 'left-2.5', 'M15 18l-6-6 6-6', active === 0], [1, 'Pilihan berikutnya', 'right-2.5', 'M9 18l6-6-6-6', active === items.length - 1]].map(([dir, label, side, d, ujung]) => (
+              <button key={dir} onClick={() => go(dir)} aria-label={t(label)} disabled={ujung} tabIndex={ujung ? -1 : 0}
+                className={`pointer-events-auto absolute ${side} top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-black/35 text-white shadow-[0_2px_10px_rgba(0,0,0,.25)] ring-1 ring-white/50 backdrop-blur-sm transition hover:bg-black/50 focus-visible:bg-black/50 ${ujung ? 'pointer-events-none opacity-0' : 'opacity-100'}`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
+              </button>
+            ))}
+          </div>
           <div className="mt-2 flex justify-center gap-1.5" aria-hidden>
             {items.map((it, i) => (
               <span key={it.id} className={`h-1.5 rounded-full transition-all ${i === active ? 'w-5 bg-gold' : 'w-1.5 bg-plum/25 dark:bg-milk/25'}`} />
