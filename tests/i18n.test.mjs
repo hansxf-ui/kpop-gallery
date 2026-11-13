@@ -34,6 +34,8 @@ const DYNAMIC = [
   'Beranda', 'Galeri', 'Favoritku', 'Jadwal', 'Voting', 'Tentang', 'Linimasa era', 'Koleksiku', 'Tebak member', 'Bandingkan era', 'Tebak era', 'Foto potongan', 'Daftar', 'Kalender',
   // urutan, jenis media, tag
   'Terbaru', 'Terlama', 'Acak', 'Semua', 'Foto', 'Video', 'Semua konsep', 'Panggung', 'MV', 'Fansign', 'Bandara', 'Di balik layar',
+  // panah carousel Pilihan minggu ini (t(label))
+  'Pilihan sebelumnya', 'Pilihan berikutnya',
   // reaksi & laporan
   'Suka banget', 'Keren', 'Terharu', 'Tepuk tangan', 'Salah member', 'Gambar rusak / tidak muncul', 'Salah era', 'Lainnya',
   'Pilih alasan laporan.', 'Laporan gagal dikirim. Coba lagi nanti.',

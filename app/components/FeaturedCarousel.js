@@ -52,10 +52,22 @@ export default function FeaturedCarousel({ items, onOpen }) {
       </div>
       {items.length > 1 && (
         <>
-          <button onClick={() => go(-1)} aria-label={t('Pilihan sebelumnya')}
-            className="absolute left-3 top-[36%] z-10 grid h-9 w-9 place-items-center rounded-full border border-rose/40 bg-white/85 text-lg font-bold text-plum shadow backdrop-blur dark:border-rose/20 dark:bg-white/10 dark:text-milk">‹</button>
-          <button onClick={() => go(1)} aria-label={t('Pilihan berikutnya')}
-            className="absolute right-3 top-[36%] z-10 grid h-9 w-9 place-items-center rounded-full border border-rose/40 bg-white/85 text-lg font-bold text-plum shadow backdrop-blur dark:border-rose/20 dark:bg-white/10 dark:text-milk">›</button>
+          {/* Lapisan seukuran FOTO slide yang tampil: inset = px-1 rel (4px) + border (1px) + padding
+              .featured-card (10px), tinggi = lebar (foto persegi). Panah dipusatkan vertikal pada foto, dekat
+              tepinya — dulu top-[36%] dari seluruh kartu (termasuk judul) dan left-3 dari tepi luar, jadi
+              panah menindih tepi foto & bingkai kartu dan tidak sejajar tengah foto. */}
+          <div className="pointer-events-none absolute left-[15px] right-[15px] top-[11px] aspect-square">
+            {[[-1, 'Pilihan sebelumnya', 'left-0 justify-start pl-1.5', 'M15 18l-6-6 6-6', active === 0], [1, 'Pilihan berikutnya', 'right-0 justify-end pr-1.5', 'M9 18l6-6-6-6', active === items.length - 1]].map(([dir, label, side, d, ujung]) => (
+              <button key={dir} onClick={() => go(dir)} aria-label={t(label)} disabled={ujung} tabIndex={ujung ? -1 : 0}
+                className={`pointer-events-auto absolute ${side} top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center text-white transition hover:scale-110 ${ujung ? 'pointer-events-none opacity-0' : 'opacity-90 hover:opacity-100'}`}>
+                {/* Hanya panah, tanpa lingkaran (permintaan pemilik), ±8px dari tepi foto. viewBox dipotong pas
+                    ke garis panah (bukan kotak 24×24 yang menyisakan ruang kosong 9px di kiri-kanannya).
+                    Bayangan gelap tipis supaya terbaca di foto terang; area ketuk tetap 44px, menjorok ke dalam. */}
+                <svg width="12" height="21" viewBox="8 5 8 14" overflow="visible" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+                  style={{ filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(0,0,0,.35))' }}><path d={d} /></svg>
+              </button>
+            ))}
+          </div>
           <div className="mt-2 flex justify-center gap-1.5" aria-hidden>
             {items.map((it, i) => (
               <span key={it.id} className={`h-1.5 rounded-full transition-all ${i === active ? 'w-5 bg-gold' : 'w-1.5 bg-plum/25 dark:bg-milk/25'}`} />
