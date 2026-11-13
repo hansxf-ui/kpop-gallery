@@ -53,16 +53,17 @@ export default function FeaturedCarousel({ items, onOpen }) {
       {items.length > 1 && (
         <>
           {/* Lapisan seukuran FOTO slide yang tampil: inset = px-1 rel (4px) + border (1px) + padding
-              .featured-card (10px), tinggi = lebar (foto persegi). Panah dipusatkan pada foto, area ketuknya 10px dari
+              .featured-card (10px), tinggi = lebar (foto persegi). Panah dipusatkan vertikal pada foto, dekat
               tepinya — dulu top-[36%] dari seluruh kartu (termasuk judul) dan left-3 dari tepi luar, jadi
               panah menindih tepi foto & bingkai kartu dan tidak sejajar tengah foto. */}
           <div className="pointer-events-none absolute left-[15px] right-[15px] top-[11px] aspect-square">
-            {[[-1, 'Pilihan sebelumnya', 'left-2.5', 'M15 18l-6-6 6-6', active === 0], [1, 'Pilihan berikutnya', 'right-2.5', 'M9 18l6-6-6-6', active === items.length - 1]].map(([dir, label, side, d, ujung]) => (
+            {[[-1, 'Pilihan sebelumnya', 'left-0 justify-start pl-1.5', 'M15 18l-6-6 6-6', active === 0], [1, 'Pilihan berikutnya', 'right-0 justify-end pr-1.5', 'M9 18l6-6-6-6', active === items.length - 1]].map(([dir, label, side, d, ujung]) => (
               <button key={dir} onClick={() => go(dir)} aria-label={t(label)} disabled={ujung} tabIndex={ujung ? -1 : 0}
-                className={`pointer-events-auto absolute ${side} top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full text-white transition hover:scale-110 ${ujung ? 'pointer-events-none opacity-0' : 'opacity-90 hover:opacity-100'}`}>
-                {/* Hanya panah, tanpa lingkaran (permintaan pemilik). Bayangan gelap tipis supaya tetap terbaca
-                    di foto yang terang; area ketuk tetap 44px walau yang terlihat hanya panahnya. */}
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+                className={`pointer-events-auto absolute ${side} top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center text-white transition hover:scale-110 ${ujung ? 'pointer-events-none opacity-0' : 'opacity-90 hover:opacity-100'}`}>
+                {/* Hanya panah, tanpa lingkaran (permintaan pemilik), ±8px dari tepi foto. viewBox dipotong pas
+                    ke garis panah (bukan kotak 24×24 yang menyisakan ruang kosong 9px di kiri-kanannya).
+                    Bayangan gelap tipis supaya terbaca di foto terang; area ketuk tetap 44px, menjorok ke dalam. */}
+                <svg width="16" height="28" viewBox="8 5 8 14" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
                   style={{ filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(0,0,0,.35))' }}><path d={d} /></svg>
               </button>
             ))}
