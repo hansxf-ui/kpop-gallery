@@ -63,7 +63,7 @@ export default function FeaturedCarousel({ items, onOpen }) {
                 {/* Hanya panah, tanpa lingkaran (permintaan pemilik), ±8px dari tepi foto. viewBox dipotong pas
                     ke garis panah (bukan kotak 24×24 yang menyisakan ruang kosong 9px di kiri-kanannya).
                     Bayangan gelap tipis supaya terbaca di foto terang; area ketuk tetap 44px, menjorok ke dalam. */}
-                <svg width="16" height="28" viewBox="8 5 8 14" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+                <svg width="12" height="21" viewBox="8 5 8 14" overflow="visible" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
                   style={{ filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(0,0,0,.35))' }}><path d={d} /></svg>
               </button>
             ))}
