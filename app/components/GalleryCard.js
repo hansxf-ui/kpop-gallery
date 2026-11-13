@@ -6,6 +6,8 @@ import Image from 'next/image'
 import { imgOpt } from '../../lib/supabase'
 import { supabaseLoader, hasDimensions } from '../../lib/imageLoader'
 import { thumbOf, albumKeysOf, altOf } from '../../lib/gallery'
+import Icon from './Icon'
+import Emoji from './Emoji'
 
 // Kartu grid bersama untuk /galeri, /idol/[name], dan /favorit.
 // - Tombol hati = <button> sendiri (dulu <span role="button"> di dalam <button>: tidak bisa
@@ -54,7 +56,7 @@ export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true,
                 alt={altOf(it)} loading="lazy" decoding="async"
                 onLoad={() => setLoaded(true)} onError={() => setLoaded(true)}
                 className={`w-full transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`} />}
-          {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-4xl text-white drop-shadow-lg" aria-hidden>▶</span>}
+          {it.type !== 'photo' && <span className="absolute inset-0 grid place-items-center text-white drop-shadow-lg" aria-hidden><Icon name="play" fill size={36} /></span>}
           {isNew && <span className="absolute left-2 top-2 rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-plum shadow">{t('Baru')}</span>}
         </div>
         <p className={`truncate px-2 text-sm font-bold dark:text-milk ${showIdol ? 'pt-2.5' : 'py-2.5'}`}>{label}</p>
@@ -62,7 +64,8 @@ export default function GalleryCard({ it, isFav, onOpen, onFav, showIdol = true,
       <button type="button" onClick={fav} aria-pressed={isFav}
         aria-label={favLabel || t('Favoritkan {judul}', { judul: label })}
         className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-base shadow-sm transition hover:scale-110">
-        {isFav ? '❤️' : '🤍'}
+        {/* Belum favorit = ikon garis hati (hati putih Twemoji tidak terlihat di tombol putih). */}
+        {isFav ? <Emoji char="❤" size={18} /> : <Icon name="heart" size={18} strokeWidth={2.2} className="text-plum" />}
       </button>
       {showIdol && (
         <p className="w-fit px-2 pb-2.5 text-xs font-bold text-gold">

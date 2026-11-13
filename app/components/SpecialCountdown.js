@@ -2,6 +2,7 @@
 import { useT, useLang } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { nextOccurrences } from '../../lib/specialDates'
+import Emoji from './Emoji'
 
 // Hitung mundur ulang tahun member & anniversary debut (fitur 1).
 // Dirender setelah mount saja: tanggal "hari ini" bergantung zona waktu pengunjung,
@@ -33,7 +34,7 @@ export default function SpecialCountdown({ count = 3, now = null, className = 'm
           const judul = s.type === 'debut' ? t('Anniversary debut ke-{n}', { n: s.anniversary }) : t('Ulang tahun {nama}', { nama: s.name })
           return (
             <li key={`${s.month}-${s.day}`} className="rounded-2xl border border-rose/40 bg-white/80 px-4 py-3 text-center dark:border-rose/20 dark:bg-white/5">
-              <p className="text-lg" aria-hidden>{s.type === 'debut' ? '🎉' : '🎂'}</p>
+              <p className="flex justify-center" aria-hidden><Emoji char={s.type === 'debut' ? '🎉' : '🎂'} size={24} /></p>
               <p className="font-bold text-plum dark:text-milk">{judul}</p>
               <p className="text-xs text-plum/55 dark:text-milk/55">{fmt(s.date)}</p>
               <p className="mt-1 font-display text-2xl text-gold tabular-nums">

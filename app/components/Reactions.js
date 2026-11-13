@@ -3,27 +3,17 @@ import { useT, useLang } from '../../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { sb } from '../../lib/supabase'
 import { protectedWrite } from '../../lib/turnstile'
+import Emoji from './Emoji'
 
-// Gambar emoji asli Apple (gaya iOS), dimuat dari CDN supaya tampilnya
-// sama di semua HP — termasuk Android.
+// Gambar emoji Twemoji (SVG, disimpan di situs sendiri — app/components/Emoji.js), supaya tampil sama di
+// semua HP termasuk Android. Dulu memakai gambar emoji Apple dari CDN luar (lisensinya tidak jelas).
 // key tetap emoji aslinya supaya hitungan reaksi yang sudah tersimpan di database tidak hilang.
-const APPLE_CDN = 'https://cdn.jsdelivr.net/gh/iamcal/emoji-data@master/img-apple-64'
-
 const REACTIONS = [
-  { key: '😍', code: '1f60d', label: 'Suka banget' },
-  { key: '🔥', code: '1f525', label: 'Keren' },
-  { key: '😭', code: '1f62d', label: 'Terharu' },
-  { key: '👏', code: '1f44f', label: 'Tepuk tangan' },
+  { key: '😍', label: 'Suka banget' },
+  { key: '🔥', label: 'Keren' },
+  { key: '😭', label: 'Terharu' },
+  { key: '👏', label: 'Tepuk tangan' },
 ]
-
-function AppleEmoji({ code, char, label }) {
-  const [failed, setFailed] = useState(false)
-  if (failed) return <span className="text-[18px] leading-none">{char}</span>
-  return (
-    <img src={`${APPLE_CDN}/${code}.png`} alt={label} width="22" height="22"
-      draggable={false} onError={() => setFailed(true)} />
-  )
-}
 
 const storeKey = (itemId) => `h2h-reacted-${itemId}`
 
@@ -146,12 +136,12 @@ export default function Reactions({ itemId }) {
   return (
     <div className="flex flex-col items-center gap-1">
     <div className="flex items-center justify-center gap-2" role="group" aria-label={t('Reaksi')}>
-      {REACTIONS.map(({ key, code, label }) => {
+      {REACTIONS.map(({ key, label }) => {
         const active = has(key)
         return (
           <button key={key} onClick={() => toggle(key)} aria-label={t(label)} title={t(label)} aria-pressed={active}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold border transition ${active ? 'bg-gold/30 border-gold' : 'bg-white/90 border-transparent hover:bg-white'} text-plum`}>
-            <AppleEmoji code={code} char={key} label={t(label)} />
+            <Emoji char={key} size={22} />
             {counts[key] ? <span className="text-xs">{counts[key]}</span> : null}
           </button>
         )

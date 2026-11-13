@@ -119,6 +119,11 @@ create policy "admin update settings" on settings for update to authenticated us
 - Halaman error yang ramah (bukan layar putih) kalau satu halaman gagal tampil
 - `sitemap.xml` & `robots.txt` otomatis (halaman admin tidak diindeks)
 
+## Ikon & emoji
+- Ikon fungsi (tombol, navigasi, judul seksi): SVG garis di `app/components/Icon.js`, bentuk dari [Lucide](https://lucide.dev) (ISC). Menambah ikon: salin elemen dari `icons/<nama>.svg` di repo Lucide.
+- Emoji ekspresif (reaksi, banner, hitung mundur hari spesial, hati favorit): SVG [Twemoji](https://github.com/jdecked/twemoji) v17 (CC-BY 4.0) di `public/emoji/`, lewat `app/components/Emoji.js`. Kredit tercantum di halaman Tentang.
+- Emoji di dalam kalimat (teks bagikan, ucapan kuis, kartu ulang tahun) tetap emoji bawaan HP.
+
 ## Migrasi database (jalankan sekali di Supabase → SQL Editor)
 File di `supabase/migrations/`, jalankan berurutan. Keduanya aman diulang dan tidak mengubah data yang ada.
 1. `20261110_01_member_counts.sql` — view `member_counts` untuk jumlah item per member di beranda.

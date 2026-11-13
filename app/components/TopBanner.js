@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { sb } from '../../lib/supabase'
 import { todaysSpecialDate } from '../../lib/specialDates'
 import { useT, useLang } from '../../lib/i18n'
+import Emoji from './Emoji'
 
 const lsGet = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 const lsSet = (k, v) => { try { localStorage.setItem(k, v) } catch {} }
@@ -49,7 +50,7 @@ export default function TopBanner() {
 
   return (
     <div className="relative z-30 bg-gradient-to-r from-rose via-gold/70 to-lilac text-plum text-center text-sm font-bold pl-10 pr-20 py-2.5">
-      <span>{special ? '🎉 ' : '📣 '}{text}</span>
+      <span><Emoji char={special ? '🎉' : '📣'} size={17} className="mr-1.5" />{text}</span>
       {special && special.type === 'birthday' && (
         <Link href="/#hari-ini" className="ml-2 underline underline-offset-4">{t('Buat kartu ulang tahun →')}</Link>
       )}

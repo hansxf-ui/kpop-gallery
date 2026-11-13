@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { buildBackup, parseBackup, restoreBackup } from '../../lib/backup'
 import { downloadBlob } from '../../lib/download'
 import { useT } from '../../lib/i18n'
+import Icon from './Icon'
 
 // Fitur 10: cadangan favorit + koleksi dalam satu file. Dipakai di /favorit dan /koleksi.
 export default function BackupPanel({ onRestored }) {
@@ -29,7 +30,7 @@ export default function BackupPanel({ onRestored }) {
   const tombol = 'rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 dark:border-rose/20 font-bold px-4 py-2 text-sm'
   return (
     <div className="mx-auto mb-10 max-w-md rounded-3xl border border-gold/50 bg-white/70 p-4 text-center text-sm dark:border-gold/30 dark:bg-white/5">
-      <p className="font-bold text-plum dark:text-milk">💾 {t('Cadangan lengkap: favorit + koleksi')}</p>
+      <p className="font-bold text-plum dark:text-milk"><Icon name="save" size={15} className="mr-1.5" />{t('Cadangan lengkap: favorit + koleksi')}</p>
       <p className="mt-1 text-xs text-plum/55 dark:text-milk/55">{t('Satu file untuk pindah HP. Pulihkan menambahkan ke yang sudah ada — tidak ada yang terhapus.')}</p>
       <div className="mt-3 flex flex-wrap justify-center gap-2">
         <button onClick={ekspor} className={tombol}>{t('Unduh cadangan')}</button>

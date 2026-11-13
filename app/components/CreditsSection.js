@@ -6,6 +6,7 @@ import { thumbOf, altOf } from '../../lib/gallery'
 import { groupCredits } from '../../lib/credits'
 import { useT } from '../../lib/i18n'
 import Skeleton from './Skeleton'
+import Icon from './Icon'
 
 function Grup({ title, groups }) {
   const t = useT()
@@ -16,7 +17,7 @@ function Grup({ title, groups }) {
       <ul className="grid gap-3 sm:grid-cols-2">
         {groups.map((g) => (
           <li key={g.name} className="rounded-2xl border border-rose/40 bg-white/80 p-4 dark:border-rose/20 dark:bg-white/5">
-            <p className="break-words font-bold text-plum dark:text-milk">📷 {g.name}</p>
+            <p className="break-words font-bold text-plum dark:text-milk"><Icon name="camera" size={15} className="mr-1.5 text-gold" />{g.name}</p>
             <p className="text-xs text-plum/55 dark:text-milk/55">{t('{n} item di galeri', { n: g.items.length })}</p>
             <div className="mt-2 flex gap-1.5">
               {g.items.filter((it) => it.type === 'photo').slice(0, 4).map((it) => (
@@ -58,7 +59,7 @@ export default function CreditsSection({ className = '' }) {
 
   return (
     <section id="kredit" className={`scroll-mt-6 ${className}`} aria-labelledby="kredit-judul">
-      <h2 id="kredit-judul" className="font-display text-3xl text-plum dark:text-milk mb-2">📷 {t('Kredit Foto')}</h2>
+      <h2 id="kredit-judul" className="font-display text-3xl text-plum dark:text-milk mb-2"><Icon name="camera" size={26} className="mr-2 text-gold" />{t('Kredit Foto')}</h2>
       <p className="max-w-prose leading-relaxed text-plum/80 dark:text-milk/80">
         {t('Terima kasih untuk para fotografer, fansite, dan sumber resmi yang karyanya ada di galeri ini.')}
       </p>
