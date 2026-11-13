@@ -27,6 +27,67 @@ const MEMBERS = [
 const DUR = [5.2, 6.1, 5.6, 6.5, 5.9, 6.3, 5.4, 6.0]
 const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
 
+// CSS kartu member, dipasang lewat dangerouslySetInnerHTML (bukan teks anak <style>{`…`}</style>).
+// Sebagai teks anak, React 18 meng-escape & dan " saat render server (mis. "HP &amp; tablet",
+// content:&quot;&quot;) sedangkan browser membaca & dan " apa adanya → teks server ≠ klien
+// (React error #425, seluruh halaman digambar ulang di browser). Isi CSS-nya tidak berubah.
+const KARTU_CSS = `
+        /* Papan kartu: satu kawat per baris kartu. 2 kolom di HP & tablet, 4 kolom mulai 1024px.
+           --H = tinggi ruang tali; panjang tiap tali dihitung dari lengkung kawat (lib/lanyard.js). */
+        .lc-board{ --H:40px; }
+        @media (min-width:640px){ .lc-board{ --H:52px; } }
+        @media (min-width:1024px){ .lc-board{ --H:58px; } }
+        .lc-row{ position:relative; display:flex; flex-direction:column; gap:1rem; }
+        .lc-pair{ position:relative; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+        .lc-cell{ display:flex; justify-content:center; padding:0 8px; }
+        .lc-wire{ position:absolute; left:0; right:0; top:0; width:100%; height:var(--H); pointer-events:none; overflow:visible; }
+        .lc-wire4{ display:none; }
+        @media (min-width:1024px){
+          .lc-row{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; }
+          .lc-pair{ display:contents; }
+          .lc-wire2{ display:none; }
+          .lc-wire4{ display:block; }
+        }
+        .lc-hang{ --k:var(--k2); position:relative; width:min(240px,100%); padding-top:var(--H); }
+        @media (min-width:1024px){ .lc-hang{ --k:var(--k4); } }
+        .lc-string{ position:absolute; left:50%; top:calc(var(--H) * var(--k)); width:1.5px; height:calc(var(--H) * (1 - var(--k))); transform:translateX(-50%); background:linear-gradient(#9db8cc,#c8d9e6); }
+        html.dark .lc-string{ background:linear-gradient(#3d5a75,#5b7b99); }
+        .lc-clip{ position:absolute; left:50%; top:calc(var(--H) - 12px); transform:translateX(-50%); width:16px; height:22px; border-radius:4px; z-index:3; background:linear-gradient(145deg,#ffffff,#c9d8e4); box-shadow:0 1px 3px rgba(23,58,86,.25), inset 0 0 0 1px rgba(23,58,86,.08); }
+        .lc-clip::after{ content:""; position:absolute; left:50%; top:4px; transform:translateX(-50%); width:6px; height:6px; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1.5px #9db8cc; }
+        /* Kartu berayun dari titik gantungnya di kawat (ujung atas tali). */
+        .lc-sway{ transform-origin:50% calc(var(--H) * (var(--k) - 1)); animation-name:lcsway; animation-timing-function:ease-in-out; animation-iteration-count:infinite; will-change:transform; }
+        @keyframes lcsway{ 0%,100%{ transform:rotate(1.15deg);} 50%{ transform:rotate(-1.15deg);} }
+        .lc-kickwrap{ transform-origin:50% calc(var(--H) * (var(--k) - 1)); }
+        .lc-flip{ position:relative; width:100%; aspect-ratio:240/338; transform-style:preserve-3d; transition:transform .85s cubic-bezier(.3,.7,.3,1); cursor:pointer; container-type:inline-size; }
+        .lc-flip.lc-on{ transform:rotateY(180deg); }
+        .lc-face{ position:absolute; inset:0; border-radius:18px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; display:flex; flex-direction:column; }
+        .lc-back{ transform:rotateY(180deg); padding:7.5cqw 7.5cqw 6.7cqw; }
+        /* Semua ukuran isi kartu pakai cqw (persen lebar kartu) — kartu menyusut = isi ikut
+           menyusut proporsional, jadi di HP pun tidak ada isi yang kepotong. */
+        .lc-meta{ font-size:3.55cqw; }
+        .lc-fname{ font-size:9.2cqw; }
+        .lc-fpos{ font-size:5cqw; }
+        .lc-dot{ width:8.75cqw; height:8.75cqw; font-size:4.6cqw; }
+        .lc-btop{ gap:4.2cqw; }
+        .lc-bthumb{ width:18.3cqw; height:18.3cqw; }
+        .lc-bname{ font-size:7.1cqw; }
+        .lc-bpos{ font-size:4.4cqw; }
+        .lc-brows{ margin-top:5.8cqw; }
+        .lc-brow{ padding:2.9cqw 0; font-size:4.6cqw; }
+        .lc-blab{ font-size:3.75cqw; }
+        .lc-blink{ font-size:4.6cqw; padding:3.3cqw 0; margin-top:5cqw; }
+        .lc-bsmall{ font-size:3.55cqw; }
+        .lc-bqr{ width:26.7cqw; height:26.7cqw; padding:1.7cqw; }
+        .lc-holo{ background:linear-gradient(125deg,#f6d9ec,#d9e4fb,#d5f3e3,#f7ecd2,#e6dbfa,#f6d9ec); background-size:320% 320%; }
+        .lc-flip.lc-on .lc-holo{ animation:lcholo 9s ease infinite; }
+        @keyframes lcholo{ 0%,100%{ background-position:0% 40%; } 50%{ background-position:100% 60%; } }
+        @media (prefers-reduced-motion: reduce){
+          .lc-sway{ animation:none; }
+          .lc-flip{ transition:none; }
+          .lc-flip.lc-on .lc-holo{ animation:none; }
+        }
+`
+
 function Kartu({ m, i, count }) {
   const t = useT()
   const [flip, setFlip] = useState(false)
@@ -152,62 +213,7 @@ export default function Landing() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-10 pt-16 sm:px-8">
       <SiteNav className="mb-8" />
-      <style>{`
-        /* Papan kartu: satu kawat per baris kartu. 2 kolom di HP & tablet, 4 kolom mulai 1024px.
-           --H = tinggi ruang tali; panjang tiap tali dihitung dari lengkung kawat (lib/lanyard.js). */
-        .lc-board{ --H:40px; }
-        @media (min-width:640px){ .lc-board{ --H:52px; } }
-        @media (min-width:1024px){ .lc-board{ --H:58px; } }
-        .lc-row{ position:relative; display:flex; flex-direction:column; gap:1rem; }
-        .lc-pair{ position:relative; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
-        .lc-cell{ display:flex; justify-content:center; padding:0 8px; }
-        .lc-wire{ position:absolute; left:0; right:0; top:0; width:100%; height:var(--H); pointer-events:none; overflow:visible; }
-        .lc-wire4{ display:none; }
-        @media (min-width:1024px){
-          .lc-row{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; }
-          .lc-pair{ display:contents; }
-          .lc-wire2{ display:none; }
-          .lc-wire4{ display:block; }
-        }
-        .lc-hang{ --k:var(--k2); position:relative; width:min(240px,100%); padding-top:var(--H); }
-        @media (min-width:1024px){ .lc-hang{ --k:var(--k4); } }
-        .lc-string{ position:absolute; left:50%; top:calc(var(--H) * var(--k)); width:1.5px; height:calc(var(--H) * (1 - var(--k))); transform:translateX(-50%); background:linear-gradient(#9db8cc,#c8d9e6); }
-        html.dark .lc-string{ background:linear-gradient(#3d5a75,#5b7b99); }
-        .lc-clip{ position:absolute; left:50%; top:calc(var(--H) - 12px); transform:translateX(-50%); width:16px; height:22px; border-radius:4px; z-index:3; background:linear-gradient(145deg,#ffffff,#c9d8e4); box-shadow:0 1px 3px rgba(23,58,86,.25), inset 0 0 0 1px rgba(23,58,86,.08); }
-        .lc-clip::after{ content:""; position:absolute; left:50%; top:4px; transform:translateX(-50%); width:6px; height:6px; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1.5px #9db8cc; }
-        /* Kartu berayun dari titik gantungnya di kawat (ujung atas tali). */
-        .lc-sway{ transform-origin:50% calc(var(--H) * (var(--k) - 1)); animation-name:lcsway; animation-timing-function:ease-in-out; animation-iteration-count:infinite; will-change:transform; }
-        @keyframes lcsway{ 0%,100%{ transform:rotate(1.15deg);} 50%{ transform:rotate(-1.15deg);} }
-        .lc-kickwrap{ transform-origin:50% calc(var(--H) * (var(--k) - 1)); }
-        .lc-flip{ position:relative; width:100%; aspect-ratio:240/338; transform-style:preserve-3d; transition:transform .85s cubic-bezier(.3,.7,.3,1); cursor:pointer; container-type:inline-size; }
-        .lc-flip.lc-on{ transform:rotateY(180deg); }
-        .lc-face{ position:absolute; inset:0; border-radius:18px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; display:flex; flex-direction:column; }
-        .lc-back{ transform:rotateY(180deg); padding:7.5cqw 7.5cqw 6.7cqw; }
-        /* Semua ukuran isi kartu pakai cqw (persen lebar kartu) — kartu menyusut = isi ikut
-           menyusut proporsional, jadi di HP pun tidak ada isi yang kepotong. */
-        .lc-meta{ font-size:3.55cqw; }
-        .lc-fname{ font-size:9.2cqw; }
-        .lc-fpos{ font-size:5cqw; }
-        .lc-dot{ width:8.75cqw; height:8.75cqw; font-size:4.6cqw; }
-        .lc-btop{ gap:4.2cqw; }
-        .lc-bthumb{ width:18.3cqw; height:18.3cqw; }
-        .lc-bname{ font-size:7.1cqw; }
-        .lc-bpos{ font-size:4.4cqw; }
-        .lc-brows{ margin-top:5.8cqw; }
-        .lc-brow{ padding:2.9cqw 0; font-size:4.6cqw; }
-        .lc-blab{ font-size:3.75cqw; }
-        .lc-blink{ font-size:4.6cqw; padding:3.3cqw 0; margin-top:5cqw; }
-        .lc-bsmall{ font-size:3.55cqw; }
-        .lc-bqr{ width:26.7cqw; height:26.7cqw; padding:1.7cqw; }
-        .lc-holo{ background:linear-gradient(125deg,#f6d9ec,#d9e4fb,#d5f3e3,#f7ecd2,#e6dbfa,#f6d9ec); background-size:320% 320%; }
-        .lc-flip.lc-on .lc-holo{ animation:lcholo 9s ease infinite; }
-        @keyframes lcholo{ 0%,100%{ background-position:0% 40%; } 50%{ background-position:100% 60%; } }
-        @media (prefers-reduced-motion: reduce){
-          .lc-sway{ animation:none; }
-          .lc-flip{ transition:none; }
-          .lc-flip.lc-on .lc-holo{ animation:none; }
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: KARTU_CSS }} />
 
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
