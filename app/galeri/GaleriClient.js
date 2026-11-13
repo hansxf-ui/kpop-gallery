@@ -23,6 +23,7 @@ import Masonry from '../components/Masonry'
 import AutoLoadMore from '../components/AutoLoadMore'
 import ScrollTopButton from '../components/ScrollTopButton'
 import Skeleton from '../components/Skeleton'
+import Icon from '../components/Icon'
 
 function CameraIcon() {
   return (
@@ -328,7 +329,7 @@ export default function GaleriClient() {
               <li key={it.id}>
                 <button onClick={() => setSpot({ items: topItems.map((x) => x.it), index: i })} className="relative block w-full" aria-label={t('Peringkat {n}: {judul}, {j} reaksi minggu ini', { n: i + 1, judul: altOf(it), j: jumlah })}>
                   {it.type === 'video'
-                    ? <span className="grid aspect-[3/4] w-full place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
+                    ? <span className="grid aspect-[3/4] w-full place-items-center rounded-xl bg-[#1B3049] text-white"><Icon name="play" fill size={26} /></span>
                     : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
                   <span className="absolute left-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-plum text-xs font-bold text-milk">{i + 1}</span>
                   <span className="mt-1 block text-center text-[11px] font-bold text-plum/70 dark:text-milk/70">{t('{j} reaksi minggu ini', { j: jumlah })}</span>
@@ -348,7 +349,7 @@ export default function GaleriClient() {
             {newItems.slice(0, 12).map((it, i) => (
               <button key={it.id} onClick={() => setSpot({ items: newItems, index: i })} className="relative shrink-0" aria-label={t('Buka {judul}', { judul: altOf(it) })}>
                 {it.type === 'video'
-                  ? <span className="grid h-32 w-24 place-items-center rounded-xl bg-[#1B3049] text-3xl text-white">▶</span>
+                  ? <span className="grid h-32 w-24 place-items-center rounded-xl bg-[#1B3049] text-white"><Icon name="play" fill size={26} /></span>
                   : <img src={imgOpt(thumb(it), 300)} alt="" loading="lazy" decoding="async" width={96} height={128} className="h-32 w-24 rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
                 <span className="absolute left-1.5 top-1.5 rounded-full bg-gold px-1.5 text-[9px] font-bold uppercase text-plum">{t('Baru')}</span>
               </button>
@@ -366,7 +367,7 @@ export default function GaleriClient() {
         <section className="mb-10 text-center">
           <button onClick={() => setSpot({ items: onThisDay, index: 0 })}
             className="inline-block rounded-full bg-lilac/40 dark:bg-lilac/15 border border-lilac/60 dark:border-lilac/25 px-4 py-2 text-sm font-bold text-plum dark:text-milk">
-            🗓️ {t('{n} kenangan dari hari ini di tahun sebelumnya — lihat lagi', { n: onThisDay.length })}
+            <Icon name="calendarHeart" size={16} className="mr-1.5" />{t('{n} kenangan dari hari ini di tahun sebelumnya — lihat lagi', { n: onThisDay.length })}
           </button>
         </section>
       )}
@@ -403,7 +404,7 @@ export default function GaleriClient() {
           )}
         </div>
         {gridReady && shown.length > 1 && (
-          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
+          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm"><Icon name="play" fill size={13} className="mr-1.5" />{t('Putar semua')}</button>
         )}
         <BiasPicker />
       </div>
@@ -453,7 +454,7 @@ export default function GaleriClient() {
 
       {usedColors.length > 0 && (
         <div className="flex flex-wrap justify-center gap-1.5 mb-3" role="group" aria-label={t('Cari per warna')}>
-          <span className="self-center text-xs font-bold text-plum/50 dark:text-milk/50" aria-hidden>🎨</span>
+          <span className="self-center text-xs font-bold text-plum/50 dark:text-milk/50" aria-hidden><Icon name="palette" size={15} /></span>
           {usedColors.map((k) => (
             <button key={k} onClick={() => setQ(colorKeyOf(q) === k ? '' : k)} aria-pressed={colorKeyOf(q) === k}
               className={`px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize ${colorKeyOf(q) === k ? 'bg-plum text-milk border-plum dark:bg-milk dark:text-plum dark:border-milk' : 'bg-white/60 dark:bg-white/10 border-rose/40 dark:border-rose/20'}`}>
@@ -475,13 +476,13 @@ export default function GaleriClient() {
       )}
 
       <p className="mb-4 text-center">
-        <Link href="/linimasa" className="text-xs font-bold text-plum/60 underline underline-offset-4 hover:text-plum dark:text-milk/60 dark:hover:text-milk">🕰️ {t('Lihat per era (Linimasa)')}</Link>
+        <Link href="/linimasa" className="text-xs font-bold text-plum/60 underline underline-offset-4 hover:text-plum dark:text-milk/60 dark:hover:text-milk"><Icon name="timeline" size={13} className="mr-1" />{t('Lihat per era (Linimasa)')}</Link>
       </p>
 
       {filtered && (
         <p className="mb-4 text-center">
           <button onClick={shareView} className="text-xs font-bold text-plum/60 underline underline-offset-4 hover:text-plum dark:text-milk/60 dark:hover:text-milk">
-            🔗 {t('Bagikan tampilan ini')}
+            <Icon name="share" size={13} className="mr-1" />{t('Bagikan tampilan ini')}
           </button>
           {shareMsg && <span role="status" className="ml-2 text-xs font-bold text-gold">{shareMsg}</span>}
         </p>

@@ -7,6 +7,7 @@ import { memoryOfDay } from '../../lib/today'
 import { makeBirthdayStoryBlob } from '../../lib/cardMaker'
 import { downloadBlob } from '../../lib/download'
 import { useT, useLocale } from '../../lib/i18n'
+import Emoji from './Emoji'
 
 // Kartu ulang tahun (fitur 6): hanya tampil di hari ulang tahun member menurut lib/specialDates.js
 // (tanggal & bulan saja — tahun lahir tidak tercatat, jadi umur tidak disebut).
@@ -62,7 +63,7 @@ export default function BirthdayCard({ now }) {
         <>
           <img src={imgOpt(photo.url, 500)} alt={altOf(photo)} className="mx-auto mt-4 aspect-[55/85] w-44 rounded-2xl border-4 border-white object-cover object-top shadow-lg" />
           <button onClick={buat} disabled={busy} className="mt-4 rounded-full bg-plum px-5 py-2.5 text-sm font-bold text-milk disabled:opacity-50 dark:bg-gold dark:text-plum">
-            🎂 {busy ? t('Membuat…') : t('Buat & bagikan kartu ulang tahun')}
+            <Emoji char="🎂" size={18} className="mr-1.5" />{busy ? t('Membuat…') : t('Buat & bagikan kartu ulang tahun')}
           </button>
           <p className="mt-2 text-xs text-plum/55 dark:text-milk/55">{t('Ukuran Story (9:16) — siap untuk X, IG Story, atau WhatsApp.')}</p>
         </>

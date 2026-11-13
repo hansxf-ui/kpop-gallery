@@ -8,6 +8,7 @@ import { useBias } from '../../lib/bias'
 import BiasPicker from '../components/BiasPicker'
 import { shareOrCopy } from '../../lib/share'
 import SiteNav from '../components/SiteNav'
+import Icon from '../components/Icon'
 
 // Kuis "Tebak member" (fitur 11).
 export default function Kuis() {
@@ -73,7 +74,7 @@ export default function Kuis() {
     <main className="mx-auto max-w-xl px-4 pb-20 page-fade-in">
       <header className="pt-16 pb-8 text-center">
         <SiteNav className="mb-8" />
-        <p className="text-gold text-2xl" aria-hidden>❓</p>
+        <p className="flex justify-center text-gold" aria-hidden><Icon name="help" size={30} /></p>
         <h1 className="font-display text-5xl text-plum dark:text-milk mt-2">{t('Tebak Member')}</h1>
         <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">{t('Siapa member di foto ini? {n} soal dari koleksi galeri.', { n: ROUND })}</p>
         <div className="mt-4 flex flex-wrap justify-center gap-1.5" role="group" aria-label={t('Mode kuis')}>
@@ -146,7 +147,7 @@ export default function Kuis() {
           <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Skor terbaik: {b}/{n}', { b: best, n: ROUND })}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <button onClick={mulai} className={btn}>{t('Main lagi')}</button>
-            <button onClick={bagikan} className="rounded-full border border-rose/50 bg-white/80 px-6 py-2.5 text-sm font-bold dark:border-rose/25 dark:bg-white/10 dark:text-milk">🔗 {t('Ajak teman')}</button>
+            <button onClick={bagikan} className="rounded-full border border-rose/50 bg-white/80 px-6 py-2.5 text-sm font-bold dark:border-rose/25 dark:bg-white/10 dark:text-milk"><Icon name="share" size={14} className="mr-1.5" />{t('Ajak teman')}</button>
           </div>
           {shareMsg && <p role="status" className="mt-2 text-xs font-bold text-gold">{shareMsg}</p>}
         </section>

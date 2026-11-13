@@ -12,6 +12,7 @@ import Skeleton from '../components/Skeleton'
 import FavTransfer from '../components/FavTransfer'
 import BackupPanel from '../components/BackupPanel'
 import { readCachedRows, syncOffline } from '../../lib/offline'
+import Icon from '../components/Icon'
 
 export default function Favorit() {
   const t = useT()
@@ -76,14 +77,14 @@ export default function Favorit() {
         <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Favorit tersimpan di perangkat ini saja.')}</p>
         {items && items.length > 1 && (
           <p className="mt-4">
-            <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
+            <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm"><Icon name="play" fill size={13} className="mr-1.5" />{t('Putar semua')}</button>
           </p>
         )}
       </header>
 
       {offline && (
         <p role="status" className="mx-auto mb-6 w-fit rounded-full bg-lilac/40 px-4 py-2 text-center text-sm font-bold text-plum dark:bg-lilac/15 dark:text-milk">
-          📴 {t('Mode offline — menampilkan salinan favorit yang tersimpan di perangkat ini.')}
+          <Icon name="offline" size={15} className="mr-1.5" />{t('Mode offline — menampilkan salinan favorit yang tersimpan di perangkat ini.')}
         </p>
       )}
       {items !== null && <FavTransfer onImported={load} />}

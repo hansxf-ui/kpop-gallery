@@ -15,6 +15,7 @@ import Lightbox from '../components/Lightbox'
 import ConfirmModal from '../components/ConfirmModal'
 import BackupPanel from '../components/BackupPanel'
 import Skeleton from '../components/Skeleton'
+import Icon from '../components/Icon'
 
 const tombol = 'rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 dark:border-rose/20 font-bold px-4 py-2 text-sm disabled:opacity-50'
 
@@ -111,10 +112,10 @@ export default function Koleksi() {
     <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
       <header className="pt-16 pb-10 text-center">
         <SiteNav className="mb-8" />
-        <p className="text-gold text-2xl" aria-hidden>📁</p>
+        <p className="flex justify-center text-gold" aria-hidden><Icon name="folderHeart" size={30} /></p>
         <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2">{t('Koleksiku')}</h1>
         <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">{t('Kelompokkan foto favoritmu sendiri, mis. “Carmen era Focus”.')}</p>
-        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Tersimpan di perangkat ini. Tambahkan foto lewat tombol 📁 Koleksi saat foto dibuka.')}</p>
+        <p className="mt-1 text-xs text-plum/50 dark:text-milk/50">{t('Tersimpan di perangkat ini. Tambahkan foto lewat tombol Koleksi saat foto dibuka.')}</p>
       </header>
 
       <section className="mx-auto mb-8 max-w-2xl">
@@ -155,8 +156,8 @@ export default function Koleksi() {
               <>
                 <h2 className="mr-2 font-display text-3xl text-plum dark:text-milk">{active.name}</h2>
                 <button onClick={() => setRenaming(active.name)} className={tombol}>{t('Ganti nama')}</button>
-                <button onClick={bagikanAlbum} disabled={active.ids.length === 0} className={tombol}>🔗 {t('Bagikan link album')}</button>
-                <button onClick={salinKode} disabled={active.ids.length === 0} className={tombol}>📋 {t('Salin kode bagikan')}</button>
+                <button onClick={bagikanAlbum} disabled={active.ids.length === 0} className={tombol}><Icon name="share" size={14} className="mr-1.5" />{t('Bagikan link album')}</button>
+                <button onClick={salinKode} disabled={active.ids.length === 0} className={tombol}><Icon name="copy" size={14} className="mr-1.5" />{t('Salin kode bagikan')}</button>
                 <button onClick={() => setPendingDelete(active)} className={`${tombol} text-red-600 dark:text-red-300`}>{t('Hapus')}</button>
               </>
             )}

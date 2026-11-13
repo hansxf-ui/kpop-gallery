@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { getFavorites, setFavorites } from '../../lib/favorites'
 import { downloadBlob } from '../../lib/download'
 import { encodeFavCode, decodeFavCode, favFileContent, parseFavFile, mergeFavorites } from '../../lib/favoritesTransfer'
+import Icon from './Icon'
 
 // Ekspor/impor favorit (fitur 5). Impor MENGGABUNGKAN — favorit yang sudah ada tidak hilang.
 export default function FavTransfer({ onImported }) {
@@ -45,7 +46,7 @@ export default function FavTransfer({ onImported }) {
   const tombol = 'rounded-full bg-white/80 dark:bg-white/10 border border-rose/40 dark:border-rose/20 font-bold px-4 py-2 text-sm disabled:opacity-50'
   return (
     <details className="mx-auto mb-10 max-w-md rounded-3xl border border-rose/40 bg-white/70 p-4 text-left dark:border-rose/20 dark:bg-white/5">
-      <summary className="cursor-pointer text-center text-sm font-bold text-plum dark:text-milk">📲 {t('Pindahkan favorit ke HP lain')}</summary>
+      <summary className="cursor-pointer text-center text-sm font-bold text-plum dark:text-milk"><Icon name="phone" size={15} className="mr-1.5" />{t('Pindahkan favorit ke HP lain')}</summary>
       <div className="mt-4 space-y-4 text-sm">
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gold">{t('Ekspor')}</p>

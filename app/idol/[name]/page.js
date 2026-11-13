@@ -16,6 +16,7 @@ import ScrollTopButton from '../../components/ScrollTopButton'
 import Skeleton from '../../components/Skeleton'
 import MemberProfile from '../../components/MemberProfile'
 import { visitBaseline, isNewSince } from '../../../lib/lastVisit'
+import Icon from '../../components/Icon'
 
 export default function IdolAlbum() {
   const t = useT()
@@ -109,7 +110,7 @@ export default function IdolAlbum() {
       {valid && <MemberProfile albumKey={key} items={items} />}
       {valid && key !== 'HEARTS2HEARTS' && (
         <p className="-mt-6 mb-8 text-center">
-          <Link href={`/banding?member=${key}`} className="text-sm font-bold text-gold underline underline-offset-4">⇆ {t('Bandingkan {nama} di dua era →', { nama })}</Link>
+          <Link href={`/banding?member=${key}`} className="text-sm font-bold text-gold underline underline-offset-4"><Icon name="swap" size={14} className="mr-1" />{t('Bandingkan {nama} di dua era →', { nama })}</Link>
         </p>
       )}
 
@@ -125,7 +126,7 @@ export default function IdolAlbum() {
           <option value="acak">{t('Acak')}</option>
         </select>
         {shown.length > 1 && (
-          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm">▶ {t('Putar semua')}</button>
+          <button onClick={() => { setOpenIndex(0); setAutoplay(true) }} className="rounded-full bg-plum text-milk font-bold px-4 py-2 text-sm"><Icon name="play" fill size={13} className="mr-1.5" />{t('Putar semua')}</button>
         )}
       </div>
 

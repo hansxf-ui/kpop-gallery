@@ -6,6 +6,7 @@ import { VOTING, VOTING_CARMEN, PANDUAN_APLIKASI } from '../../lib/voting'
 import { hitungMundur, statusVote } from '../../lib/schedule'
 import { buildVotingReminderIcs, votingIcsFilename } from '../../lib/ics'
 import { downloadBlob } from '../../lib/download'
+import Icon from '../components/Icon'
 
 // Format tanggal ikut bahasa aktif (loc = 'id-ID' / 'en-GB').
 // Tanggal "terakhir dicek" footer — nilainya sama seperti sebelumnya (16 Okt 2026), hanya
@@ -55,12 +56,12 @@ function KartuVoting({ v, now }) {
     <article className="relative overflow-hidden rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/85 dark:bg-plum/60 p-5 sm:p-6">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose via-gold to-lilac" aria-hidden />
       <div>{badge}</div>
-      <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-2">🏆 {t(v.event)}</h2>
+      <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-2"><Icon name="trophy" size={22} className="mr-2 text-gold" />{t(v.event)}</h2>
       <p className="mt-1 text-sm font-bold text-plum/70 dark:text-milk/70">{t(v.kategori)}</p>
-      <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5">📱 {v.platform}</p>
-      {v.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">⚠️ {t(v.catatan)}</p>}
+      <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5"><Icon name="phone" size={12} className="mr-1" />{v.platform}</p>
+      {v.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed"><Icon name="info" size={13} className="mr-1" />{t(v.catatan)}</p>}
       {v.updates && v.updates.map((u) => (
-        <p key={u.tanggal} className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">🔄 UPDATE {u.tanggal} {loc === 'en-GB' ? u.teks_en : u.teks}</p>
+        <p key={u.tanggal} className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed"><Icon name="refresh" size={12} className="mr-1" />UPDATE {u.tanggal} {loc === 'en-GB' ? u.teks_en : u.teks}</p>
       ))}
       {cd && (
         <div className="flex gap-2 mt-4">
@@ -82,7 +83,7 @@ function KartuVoting({ v, now }) {
             const ics = buildVotingReminderIcs(v, { siteUrl: window.location.origin, tr: t })
             if (ics) downloadBlob(new Blob([ics], { type: 'text/calendar;charset=utf-8' }), votingIcsFilename(v))
           }} className="rounded-full border border-rose/50 bg-white/80 px-4 py-1.5 text-xs font-bold text-plum dark:border-rose/25 dark:bg-white/10 dark:text-milk">
-            🔔 {t('Pengingat harian sampai voting tutup (.ics)')}
+            <Icon name="bell" size={14} className="mr-1.5" />{t('Pengingat harian sampai voting tutup (.ics)')}
           </button>
         </p>
       )}
@@ -96,6 +97,18 @@ function KartuVoting({ v, now }) {
       )}
     </article>
   )
+}
+
+// Penanda status voting (dulu emoji 🔴 🟡 ⚪ ⚫ — lingkaran putih hampir tak terlihat di latar terang).
+// Titik CSS dengan warna tetap + cincin tipis, sama di semua HP; "live" berdenyut halus.
+function StatusDot({ kind }) {
+  const cls = {
+    live: 'bg-red-500 ring-red-500/30 motion-safe:animate-pulse',
+    soon: 'bg-amber-400 ring-amber-400/30',
+    tba: 'bg-transparent ring-plum/40 dark:ring-milk/40',
+    done: 'bg-plum/40 ring-plum/20 dark:bg-milk/40 dark:ring-milk/20',
+  }[kind]
+  return <span aria-hidden className={`mr-2 inline-block h-2.5 w-2.5 rounded-full ring-2 align-[0.05em] ${cls}`} />
 }
 
 export default function VotingPage() {
@@ -133,40 +146,40 @@ export default function VotingPage() {
       </header>
 
       <section className="space-y-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-gold">🔴 {t('Sedang berlangsung')}</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-gold"><StatusDot kind="live" />{t('Sedang berlangsung')}</p>
         {buka.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">{t('Belum ada voting yang buka saat ini.')}</p>}
         {buka.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
       </section>
 
       {segera.length > 0 && (
         <section className="space-y-4 mt-10">
-          <p className="text-xs font-bold uppercase tracking-widest text-gold">🟡 {t('Segera')}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-gold"><StatusDot kind="soon" />{t('Segera')}</p>
           {segera.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
         </section>
       )}
 
       {tunggu.length > 0 && (
         <section className="space-y-4 mt-10">
-          <p className="text-xs font-bold uppercase tracking-widest text-gold">⚪ {t('Belum diumumkan')}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-gold"><StatusDot kind="tba" />{t('Belum diumumkan')}</p>
           {tunggu.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
         </section>
       )}
 
       {tutup.length > 0 && (
         <section className="space-y-4 mt-10">
-          <p className="text-xs font-bold uppercase tracking-widest text-gold">⚫ {t('Sudah tutup')}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-gold"><StatusDot kind="done" />{t('Sudah tutup')}</p>
           {tutup.map(v => <KartuVoting key={v.id} v={v} now={now} />)}
         </section>
       )}
 
       <section className="mt-10">
-        <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">💗 {t('Voting Carmen')}</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3"><Icon name="heart" size={13} className="mr-1.5" />{t('Voting Carmen')}</p>
         <div className="rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/70 dark:bg-plum/40 p-5 sm:p-6">
           <p className="text-sm font-bold text-plum/70 dark:text-milk/70">{t(VOTING_CARMEN.status)}</p>
           <ul className="mt-3 space-y-2.5">
             {VOTING_CARMEN.daftar.map(d => (
               <li key={d.platform} className="text-sm text-plum/60 dark:text-milk/60 leading-relaxed">
-                <span className="font-bold text-plum/80 dark:text-milk/80">📱 {d.platform}</span> — {t(d.info)}
+                <span className="font-bold text-plum/80 dark:text-milk/80"><Icon name="phone" size={12} className="mr-1" />{d.platform}</span> — {t(d.info)}
               </li>
             ))}
           </ul>
@@ -174,7 +187,7 @@ export default function VotingPage() {
       </section>
 
       <section className="mt-10">
-        <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3">📱 {t('Panduan aplikasi')}</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-gold mb-3"><Icon name="phone" size={13} className="mr-1.5" />{t('Panduan aplikasi')}</p>
         <div className="rounded-2xl border border-rose/40 dark:border-rose/20 bg-white/70 dark:bg-plum/40 p-5 sm:p-6">
           <p className="text-xs text-plum/50 dark:text-milk/50 mb-3 leading-relaxed">
             {t('Voting acara musik mingguan — dipakai saat H2H comeback/promosi. Pola umum: download gratis → daftar akun → vote di periode yang berlaku.')}

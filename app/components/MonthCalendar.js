@@ -4,6 +4,7 @@ import { JADWAL, RIWAYAT_2026, TIPE_LABEL } from '../../lib/jadwal'
 import { monthGrid, eventsByDay, shiftMonth } from '../../lib/calendar'
 import { dayKey, parseTanggal, isDateOnly } from '../../lib/schedule'
 import { useT, useLocale } from '../../lib/i18n'
+import Icon, { eventIcon } from './Icon'
 
 // Kalender bulanan (fitur 13). now: tanggal patokan dari halaman (diisi setelah mount).
 export default function MonthCalendar({ now }) {
@@ -43,9 +44,9 @@ export default function MonthCalendar({ now }) {
               <span className={`tabular-nums ${d.key === today ? 'text-gold' : 'text-plum dark:text-milk'}`}>{d.date.getDate()}</span>
               {ev.length > 0 && (
                 <>
-                  <span className="text-sm leading-none sm:hidden" aria-hidden>{ev[0].emoji}{ev.length > 1 ? '+' : ''}</span>
+                  <span className="flex items-center text-[10px] leading-none text-gold sm:hidden" aria-hidden><Icon name={eventIcon(ev[0].tipe)} size={14} />{ev.length > 1 ? '+' : ''}</span>
                   <span className="hidden w-full space-y-0.5 text-left sm:block">
-                    {ev.slice(0, 2).map((e) => <span key={e.id} className="block truncate text-[10px] font-bold text-plum/80 dark:text-milk/80">{e.emoji} {t(e.judul)}</span>)}
+                    {ev.slice(0, 2).map((e) => <span key={e.id} className="block truncate text-[10px] font-bold text-plum/80 dark:text-milk/80"><Icon name={eventIcon(e.tipe)} size={10} className="mr-0.5 text-gold" />{t(e.judul)}</span>)}
                     {ev.length > 2 && <span className="block text-[10px] text-plum/50 dark:text-milk/50">+{ev.length - 2}</span>}
                   </span>
                 </>
@@ -61,11 +62,11 @@ export default function MonthCalendar({ now }) {
         <ul className="space-y-2">
           {tampil.map(([k, e]) => (
             <li key={`${k}-${e.id}`} className="text-sm">
-              <span className="font-bold text-plum dark:text-milk">{e.emoji} {t(e.judul)}</span>
+              <span className="font-bold text-plum dark:text-milk"><Icon name={eventIcon(e.tipe)} size={15} className="mr-1.5 text-gold" />{t(e.judul)}</span>
               <span className="block text-xs text-plum/60 dark:text-milk/60">
                 {!sel && `${fmt(k)} · `}{t(TIPE_LABEL[e.tipe] || e.tipe)}
                 {!isDateOnly(e.tanggal) && ` · ${parseTanggal(e.tanggal).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}`}
-                {e.lokasi && ` · 📍 ${t(e.lokasi)}`}
+                {e.lokasi && <> · <Icon name="mapPin" size={12} className="mr-0.5" />{t(e.lokasi)}</>}
                 {e.riwayat && e.catatan && ` · ${t(e.catatan)}`}
               </span>
             </li>

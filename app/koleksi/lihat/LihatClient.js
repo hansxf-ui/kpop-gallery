@@ -10,6 +10,7 @@ import GalleryCard from '../../components/GalleryCard'
 import Masonry from '../../components/Masonry'
 import Lightbox from '../../components/Lightbox'
 import Skeleton from '../../components/Skeleton'
+import Icon from '../../components/Icon'
 
 // Album bersama (fitur 7): isi koleksi dari kode bagikan, tampil read-only tanpa impor.
 // Kode didekode di browser (format H2HK1- yang sama dengan kode bagikan) — tidak ada server baru.
@@ -55,7 +56,7 @@ export default function LihatClient() {
     <main className="mx-auto max-w-6xl px-4 pb-20 page-fade-in">
       <header className="pt-16 pb-10 text-center">
         <SiteNav className="mb-8" />
-        <p className="text-gold text-2xl" aria-hidden>📁</p>
+        <p className="flex justify-center text-gold" aria-hidden><Icon name="folderHeart" size={30} /></p>
         <p className="text-xs font-bold uppercase tracking-widest text-gold">{t('Album bersama')}</p>
         <h1 className="font-display text-5xl sm:text-6xl text-plum dark:text-milk mt-2 break-words">{col ? col.name : t('Album bersama')}</h1>
         {col && items && <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">{t('{n} item tersimpan', { n: items.length })}</p>}
@@ -63,7 +64,7 @@ export default function LihatClient() {
           <p className="mt-4">
             {saved
               ? <Link href={`/koleksi?k=${saved.id}`} className="text-sm font-bold text-gold underline underline-offset-4">{t('Tersimpan di Koleksiku sebagai “{nama}” →', { nama: saved.name })}</Link>
-              : <button onClick={simpan} className="rounded-full bg-plum px-4 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum">📁 {t('Simpan ke Koleksiku')}</button>}
+              : <button onClick={simpan} className="rounded-full bg-plum px-4 py-2 text-sm font-bold text-milk dark:bg-gold dark:text-plum"><Icon name="folderHeart" size={15} className="mr-1.5" />{t('Simpan ke Koleksiku')}</button>}
           </p>
         )}
         <p className="mt-2 text-xs text-plum/50 dark:text-milk/50">{t('Hanya untuk dilihat — album ini tidak berubah walau kamu menyimpannya.')}</p>

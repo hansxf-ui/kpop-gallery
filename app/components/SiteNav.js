@@ -7,6 +7,7 @@ import { getFavorites, FAVS_EVENT } from '../../lib/favorites'
 import { fetchFavNew, markFavNewSeen, NEWFAV_EVENT } from '../../lib/favNew'
 import { BIAS_EVENT } from '../../lib/bias'
 import { DISPLAY_NAME } from '../../lib/gallery'
+import Icon from './Icon'
 
 // Satu-satunya navigasi situs — dipakai di semua halaman supaya isi dan gayanya sama
 // (dulu tiap halaman punya baris link sendiri dengan isi berbeda-beda).
@@ -21,10 +22,10 @@ const LINKS = [
 
 // Halaman tambahan — baris tautan kecil di bawah navigasi utama supaya baris utama tidak penuh di HP.
 const EXTRA = [
-  ['/linimasa', '🕰️', 'Linimasa era'],
-  ['/banding', '⇆', 'Bandingkan era'],
-  ['/koleksi', '📁', 'Koleksiku'],
-  ['/kuis', '❓', 'Tebak member'],
+  ['/linimasa', 'timeline', 'Linimasa era'],
+  ['/banding', 'swap', 'Bandingkan era'],
+  ['/koleksi', 'folderHeart', 'Koleksiku'],
+  ['/kuis', 'help', 'Tebak member'],
 ]
 
 function aktif(path, href) {
@@ -83,10 +84,10 @@ export default function SiteNav({ className = '' }) {
         </Link>
       )}
       <span className="flex w-full flex-wrap justify-center gap-x-4 gap-y-1 pt-1">
-        {EXTRA.map(([href, emoji, label]) => (
+        {EXTRA.map(([href, icon, label]) => (
           <Link key={href} href={href} aria-current={aktif(path, href) ? 'page' : undefined}
             className={`text-xs font-bold underline-offset-4 hover:underline ${aktif(path, href) ? 'text-gold underline' : 'text-plum/60 dark:text-milk/60'}`}>
-            <span aria-hidden>{emoji}</span> {t(label)}
+            <Icon name={icon} size={13} className="mr-1" />{t(label)}
           </Link>
         ))}
         {/* Fitur 12: pilihan bahasa. Indonesia bawaan; pilihan disimpan di perangkat. */}

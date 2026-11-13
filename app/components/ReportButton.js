@@ -2,6 +2,7 @@
 import { useT, useLang } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import { REPORT_REASONS, sendReport, alreadyReported } from '../../lib/reports'
+import Icon from './Icon'
 
 // "🚩 Laporkan foto" di lightbox (fitur 9). Laporan masuk ke antrean admin.
 export default function ReportButton({ itemId }) {
@@ -20,9 +21,9 @@ export default function ReportButton({ itemId }) {
     catch (err) { setState(t(err.message)) }
   }
 
-  if (state === 'terkirim') return <p className="text-[11px] font-bold text-milk/50">🚩 {t('Laporan untuk foto ini sudah terkirim. Terima kasih!')}</p>
+  if (state === 'terkirim') return <p className="text-[11px] font-bold text-milk/50"><Icon name="flag" size={11} className="mr-1" />{t('Laporan untuk foto ini sudah terkirim. Terima kasih!')}</p>
   if (!open) return (
-    <button onClick={() => setOpen(true)} className="text-[11px] font-bold text-milk/50 underline underline-offset-4 hover:text-milk">🚩 {t('Laporkan foto ini')}</button>
+    <button onClick={() => setOpen(true)} className="text-[11px] font-bold text-milk/50 underline underline-offset-4 hover:text-milk"><Icon name="flag" size={11} className="mr-1" />{t('Laporkan foto ini')}</button>
   )
   return (
     <form onSubmit={kirim} className="w-full max-w-xs rounded-2xl bg-white/95 p-3 text-left text-sm text-plum">

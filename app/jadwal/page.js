@@ -8,6 +8,7 @@ import { downloadBlob } from '../../lib/download'
 import { parseTanggal, hitungMundur, hariIni, sudahLewat } from '../../lib/schedule'
 import { replaceQuery } from '../../lib/galeriUrl'
 import MonthCalendar from '../components/MonthCalendar'
+import Icon, { eventIcon } from '../components/Icon'
 
 // Unduh file .ics (fitur 13) — dibuka HP/laptop langsung di aplikasi kalender.
 function unduhIcs(events, filename, tr) {
@@ -50,9 +51,9 @@ function KartuEvent({ event, now }) {
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose via-gold to-lilac" aria-hidden />
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-bold uppercase tracking-widest text-gold">{t(TIPE_LABEL[event.tipe] || event.tipe)}</p>
-        <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-1">{event.emoji} {t(event.judul)}</h2>
+        <h2 className="font-display text-xl sm:text-2xl text-plum dark:text-milk mt-1"><Icon name={eventIcon(event.tipe)} size={22} className="mr-2 text-gold" />{t(event.judul)}</h2>
           <p className="mt-1 text-sm font-bold text-plum/70 dark:text-milk/70">{formatTanggal(event.tanggal, loc)}</p>
-          {event.lokasi && <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5">📍 {t(event.lokasi)}</p>}
+          {event.lokasi && <p className="text-xs text-plum/50 dark:text-milk/50 mt-0.5"><Icon name="mapPin" size={12} className="mr-1" />{t(event.lokasi)}</p>}
           {event.catatan && <p className="text-xs text-plum/60 dark:text-milk/60 mt-2 leading-relaxed">{t(event.catatan)}</p>}
       </div>
       <div className="mt-4">
@@ -78,7 +79,7 @@ function KartuEvent({ event, now }) {
         {event.tanggal && !isLewat && (
           <button onClick={() => unduhIcs([event], icsFilename(event), t)}
             className="mt-4 rounded-full border border-rose/50 bg-white/80 px-4 py-1.5 text-xs font-bold text-plum dark:border-rose/25 dark:bg-white/10 dark:text-milk">
-            📅 {t('Tambah ke kalender')}
+            <Icon name="calendarPlus" size={14} className="mr-1.5" />{t('Tambah ke kalender')}
           </button>
         )}
       </div>
@@ -124,10 +125,10 @@ export default function JadwalPage() {
       </header>
 
       <div className="mb-6 flex justify-center gap-1.5" role="group" aria-label={t('Tampilan jadwal')}>
-        {[['daftar', '📋', 'Daftar'], ['kalender', '🗓️', 'Kalender']].map(([v, e, label]) => (
+        {[['daftar', 'list', 'Daftar'], ['kalender', 'calendarDays', 'Kalender']].map(([v, e, label]) => (
           <button key={v} onClick={() => pilihTampilan(v)} aria-pressed={tampilan === v}
             className={`rounded-full border px-4 py-1.5 text-sm font-bold ${tampilan === v ? 'border-plum bg-plum text-milk dark:border-gold dark:bg-gold dark:text-plum' : 'border-rose/50 bg-white/70 dark:border-rose/20 dark:bg-white/10 dark:text-milk'}`}>
-            <span aria-hidden>{e}</span> {t(label)}
+            <Icon name={e} size={15} className="mr-1.5" />{t(label)}
           </button>
         ))}
       </div>
@@ -140,7 +141,7 @@ export default function JadwalPage() {
           <p className="text-xs font-bold uppercase tracking-widest text-gold">✦ {t('Akan datang')}</p>
           {upcoming.some((e) => e.tanggal) && (
             <button onClick={() => unduhIcs(upcoming.filter((e) => e.tanggal), 'jadwal-hearts2hearts.ics', t)}
-              className="text-xs font-bold text-plum/70 underline underline-offset-4 dark:text-milk/70">📅 {t('Tambah semua ke kalender')}</button>
+              className="text-xs font-bold text-plum/70 underline underline-offset-4 dark:text-milk/70"><Icon name="calendarPlus" size={13} className="mr-1" />{t('Tambah semua ke kalender')}</button>
           )}
         </div>
         {upcoming.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">{t('Belum ada jadwal baru yang dikonfirmasi.')}</p>}

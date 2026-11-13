@@ -8,6 +8,7 @@ import { replaceQuery } from '../../lib/galeriUrl'
 import { useT, useLang, useDocTitle } from '../../lib/i18n'
 import SiteNav from '../components/SiteNav'
 import Lightbox from '../components/Lightbox'
+import Icon from '../components/Icon'
 
 const pilihan = 'rounded-full border border-rose/50 bg-white/80 px-3 py-2 text-sm font-bold text-plum dark:border-rose/25 dark:bg-white/10 dark:text-milk'
 
@@ -116,7 +117,7 @@ export default function BandingClient() {
     <main className="mx-auto max-w-4xl px-4 pb-20 page-fade-in">
       <header className="pt-16 pb-8 text-center">
         <SiteNav className="mb-8" />
-        <p className="text-gold text-2xl" aria-hidden>⇆</p>
+        <p className="flex justify-center text-gold" aria-hidden><Icon name="swap" size={30} /></p>
         <h1 className="font-display text-5xl text-plum dark:text-milk mt-2">{t('Bandingkan era')}</h1>
         <p className="mt-3 font-bold text-plum/70 dark:text-milk/70">{t('Lihat satu member di dua era berdampingan.')}</p>
       </header>
@@ -132,7 +133,7 @@ export default function BandingClient() {
         <select value={b} onChange={(e) => setB(e.target.value)} aria-label={t('Era kedua')} className={pilihan}>
           {eraOptions.map((e) => <option key={e} value={e}>{e}</option>)}
         </select>
-        <button onClick={() => { const x = a; setA(b); setB(x) }} className={pilihan} aria-label={t('Tukar era')}>⇄</button>
+        <button onClick={() => { const x = a; setA(b); setB(x) }} className={pilihan} aria-label={t('Tukar era')}><Icon name="swap" size={16} /></button>
       </div>
 
       {items === null && <div className="grid grid-cols-2 gap-3"><div className="skeleton aspect-[3/4] rounded-3xl" /><div className="skeleton aspect-[3/4] rounded-3xl" /></div>}

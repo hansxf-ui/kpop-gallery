@@ -9,6 +9,7 @@ import { eventsToday, nextEvent, openVotes, memoryOfDay } from '../../lib/today'
 import { parseTanggal, isDateOnly } from '../../lib/schedule'
 import { TIPE_LABEL } from '../../lib/jadwal'
 import BirthdayCard from './BirthdayCard'
+import Icon, { eventIcon } from './Icon'
 
 // Lightbox hanya dimuat saat foto kenangan diketuk — beranda tidak ikut berat.
 const Lightbox = dynamic(() => import('./Lightbox'), { ssr: false })
@@ -39,7 +40,7 @@ export default function TodaySection({ now, override = false }) {
   if (!now) return (
     <section id="hari-ini" className="mx-auto mt-12 w-full max-w-5xl" aria-hidden>
       <div className="mb-4 text-center">
-        <h2 className="font-display text-3xl text-plum dark:text-milk">☀ {t('Hari ini')}</h2>
+        <h2 className="font-display text-3xl text-plum dark:text-milk"><Icon name="sun" size={26} className="mr-2 text-gold" />{t('Hari ini')}</h2>
         <p className="mt-1 text-sm">&nbsp;</p>
       </div>
       <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -65,7 +66,7 @@ export default function TodaySection({ now, override = false }) {
   return (
     <section id="hari-ini" className="mx-auto mt-12 w-full max-w-5xl scroll-mt-6" aria-labelledby="hari-ini-judul">
       <div className="mb-4 text-center">
-        <h2 id="hari-ini-judul" className="font-display text-3xl text-plum dark:text-milk">☀ {t('Hari ini')}</h2>
+        <h2 id="hari-ini-judul" className="font-display text-3xl text-plum dark:text-milk"><Icon name="sun" size={26} className="mr-2 text-gold" />{t('Hari ini')}</h2>
         <p className="mt-1 text-sm font-bold text-plum/60 dark:text-milk/60">{tgl}</p>
         {override && <p className="mt-1 text-xs font-bold text-gold">{t('Mode coba tanggal — buka beranda tanpa ?tanggal untuk kembali ke hari ini.')}</p>}
       </div>
@@ -74,36 +75,36 @@ export default function TodaySection({ now, override = false }) {
 
       <div className="mt-4 grid gap-4 md:grid-cols-3">
         <section className={kotak} aria-labelledby="acara-hari-ini">
-          <h3 id="acara-hari-ini" className={judulBagian}>📅 {t('Acara hari ini')}</h3>
+          <h3 id="acara-hari-ini" className={judulBagian}><Icon name="calendar" size={14} className="mr-1.5" />{t('Acara hari ini')}</h3>
           {events.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">{t('Tidak ada acara H2H yang tercatat hari ini.')}</p>}
           <ul className="space-y-2">
             {events.map((e) => (
               <li key={e.id}>
-                <p className="font-bold text-plum dark:text-milk">{e.emoji} {t(e.judul)}</p>
+                <p className="font-bold text-plum dark:text-milk"><Icon name={eventIcon(e.tipe)} size={15} className="mr-1.5 text-gold" />{t(e.judul)}</p>
                 <p className="text-xs text-plum/60 dark:text-milk/60">
                   {t(TIPE_LABEL[e.tipe] || e.tipe)}
                   {!isDateOnly(e.tanggal) && ` · ${parseTanggal(e.tanggal).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}`}
-                  {e.lokasi && ` · 📍 ${t(e.lokasi)}`}
+                  {e.lokasi && <> · <Icon name="mapPin" size={12} className="mr-0.5" />{t(e.lokasi)}</>}
                 </p>
               </li>
             ))}
           </ul>
           {next && (
             <p className="mt-3 text-sm text-plum/70 dark:text-milk/70">
-              {t('Acara berikutnya:')} <b>{next.emoji} {t(next.judul)}</b> — {fmtTgl(next.tanggal)}
+              {t('Acara berikutnya:')} <b><Icon name={eventIcon(next.tipe)} size={14} className="mr-1 text-gold" />{t(next.judul)}</b> — {fmtTgl(next.tanggal)}
             </p>
           )}
           <Link href="/jadwal" className="mt-3 inline-block text-sm font-bold text-gold underline underline-offset-4">{t('Lihat semua jadwal →')}</Link>
         </section>
 
         <section className={kotak} aria-labelledby="voting-buka">
-          <h3 id="voting-buka" className={judulBagian}>🗳 {t('Voting yang sedang buka')}</h3>
+          <h3 id="voting-buka" className={judulBagian}><Icon name="vote" size={14} className="mr-1.5" />{t('Voting yang sedang buka')}</h3>
           {votes.length === 0 && <p className="text-sm text-plum/60 dark:text-milk/60">{t('Belum ada voting yang buka saat ini.')}</p>}
           <ul className="space-y-2">
             {votes.map((v) => (
               <li key={v.id}>
-                <p className="font-bold text-plum dark:text-milk">🏆 {t(v.event)}</p>
-                <p className="text-xs text-plum/60 dark:text-milk/60">{t(v.kategori)} · 📱 {v.platform} · {t('tutup {tgl}', { tgl: fmtTutup(v.selesai) })}</p>
+                <p className="font-bold text-plum dark:text-milk"><Icon name="trophy" size={15} className="mr-1.5 text-gold" />{t(v.event)}</p>
+                <p className="text-xs text-plum/60 dark:text-milk/60">{t(v.kategori)} · <Icon name="phone" size={12} className="mr-0.5" />{v.platform} · {t('tutup {tgl}', { tgl: fmtTutup(v.selesai) })}</p>
               </li>
             ))}
           </ul>
@@ -111,7 +112,7 @@ export default function TodaySection({ now, override = false }) {
         </section>
 
         <section className={kotak} aria-labelledby="kenangan">
-          <h3 id="kenangan" className={judulBagian}>💗 {t('Foto kenangan hari ini')}</h3>
+          <h3 id="kenangan" className={judulBagian}><Icon name="heart" size={14} className="mr-1.5" />{t('Foto kenangan hari ini')}</h3>
           <p className="mb-3 text-xs text-plum/55 dark:text-milk/55">{t('Dipilih dari tanggal hari ini — semua pengunjung melihat foto yang sama, besok berganti.')}</p>
           {/* Foto kecil di samping judul — dulu foto 3:4 selebar kotak membuat kotak ini ±2× lebih tinggi dari dua kotak lain. */}
           {memory === undefined && (

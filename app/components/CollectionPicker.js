@@ -3,6 +3,7 @@ import { useT } from '../../lib/i18n'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getCollections, createCollection, toggleInCollection, COLL_EVENT } from '../../lib/collections'
+import Icon from './Icon'
 
 // Tombol "Koleksi" di lightbox (fitur 8): centang koleksi tempat foto ini disimpan,
 // atau buat koleksi baru langsung berisi foto ini.
@@ -30,7 +31,7 @@ export default function CollectionPicker({ itemId }) {
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
         className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">
-        📁 {t('Koleksi')}{inCount ? ` (${inCount})` : ''}
+        <Icon name="folderHeart" size={14} className="mr-1.5" />{t('Koleksi')}{inCount ? ` (${inCount})` : ''}
       </button>
       {open && (
         // HP: panel di bawah layar selebar layar (dulu popup 256px di tengah tombol terpotong di tepi

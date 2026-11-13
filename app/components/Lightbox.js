@@ -14,6 +14,8 @@ import { ratioOf, frameStyle, loadedRatio, noteLoaded, PHOTO_BOX_H } from '../..
 import Reactions from './Reactions'
 import CollectionPicker from './CollectionPicker'
 import ReportButton from './ReportButton'
+import Icon from './Icon'
+import Emoji from './Emoji'
 
 // Bingkai foto MENGIKUTI rasio foto (lib/photoFrame.js): foto mengisi bingkai dari tepi ke tepi
 // sampai ke sudut membulatnya, tanpa di-crop. Dulu bingkai tetap 3:4 + object-contain, jadi foto
@@ -67,7 +69,7 @@ function MediaTetangga({ it }) {
   if (it.type === 'video') return (
     <span className={frame}>
       <video src={it.url + '#t=0.1'} preload="metadata" muted playsInline className="absolute inset-0 h-full w-full object-cover" />
-      <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>
+      <span className="absolute inset-0 grid place-items-center text-white drop-shadow-lg" aria-hidden><Icon name="play" fill size={44} /></span>
     </span>
   )
   return (
@@ -76,7 +78,7 @@ function MediaTetangga({ it }) {
       <img src={`https://img.youtube.com/vi/${ytId(it.url)}/maxresdefault.jpg`}
         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `https://img.youtube.com/vi/${ytId(it.url)}/hqdefault.jpg` }}
         alt={altOf(it)} draggable={false} className="w-full max-h-[calc(100dvh-300px)] aspect-video object-cover rounded-2xl" />
-      <span className="absolute inset-0 grid place-items-center text-5xl text-white drop-shadow-lg" aria-hidden>▶</span>
+      <span className="absolute inset-0 grid place-items-center text-white drop-shadow-lg" aria-hidden><Icon name="play" fill size={44} /></span>
     </span>
   )
 }
@@ -392,32 +394,28 @@ export default function Lightbox({ items, index, onIndexChange, onClose, autopla
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {items.length > 1 && (
-            <button onClick={() => setPlaying((p) => !p)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">{playing ? `⏸ ${t('Jeda')}` : `▶ ${t('Putar semua')}`}</button>
+            <button onClick={() => setPlaying((p) => !p)} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">{playing ? <><Icon name="pause" fill size={14} className="mr-1.5" />{t('Jeda')}</> : <><Icon name="play" fill size={14} className="mr-1.5" />{t('Putar semua')}</>}</button>
           )}
           <button onClick={toggleFav} aria-pressed={favIds.includes(it.id)}
             className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">
-            {favIds.includes(it.id) ? `❤️ ${t('Favorit')}` : `🤍 ${t('Favoritkan')}`}
+            <Emoji char={favIds.includes(it.id) ? '❤' : '🤍'} size={16} className="mr-1.5" />{favIds.includes(it.id) ? t('Favorit') : t('Favoritkan')}
           </button>
           <CollectionPicker itemId={it.id} />
-          <button onClick={share} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm">🔗 {t('Bagikan')}</button>
+          <button onClick={share} className="px-3 py-1.5 rounded-full bg-white/90 text-plum font-bold text-sm"><Icon name="share" size={14} className="mr-1.5" />{t('Bagikan')}</button>
           {it.type !== 'youtube' ? (
-            <a href={`${it.url}?download=${encodeURIComponent(it.url.split('/').pop() || 'hearts2hearts')}`} className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">⬇ {t('Unduh')}</a>
+            <a href={`${it.url}?download=${encodeURIComponent(it.url.split('/').pop() || 'hearts2hearts')}`} className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm"><Icon name="download" size={14} className="mr-1.5" />{t('Unduh')}</a>
           ) : (
             <a href={it.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-full bg-gold text-plum font-bold text-sm">{t('Buka di YouTube')}</a>
           )}
           {it.type === 'photo' && (
             <button onClick={makeWallpaper} disabled={!!making} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <rect x="3" y="3" width="18" height="18" rx="3" />
-                <circle cx="8.5" cy="9" r="1.5" />
-                <path d="M21 15l-5-5-9 9" />
-              </svg>
+              <Icon name="image" size={15} />
               {making === 'wallpaper' ? t('Membuat…') : t('Wallpaper HP')}
             </button>
           )}
           {it.type === 'photo' && (
             <button onClick={makePhotocard} disabled={!!making} className="px-3 py-1.5 rounded-full bg-lilac text-plum font-bold text-sm disabled:opacity-50">
-              🎴 {making === 'pc' ? t('Membuat…') : t('Photocard')}
+              <Icon name="card" size={15} className="mr-1.5" />{making === 'pc' ? t('Membuat…') : t('Photocard')}
             </button>
           )}
         </div>

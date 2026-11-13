@@ -5,6 +5,7 @@ import { imgOpt } from '../../lib/supabase'
 import { thumbOf, altOf, DISPLAY_NAME } from '../../lib/gallery'
 import { fetchFandomStats } from '../../lib/fandomStats'
 import { useT } from '../../lib/i18n'
+import Icon from './Icon'
 
 // Statistik fandom kecil (fitur 8). Tersembunyi sepenuhnya kalau belum ada reaksi
 // (atau gagal dimuat) — tidak pernah menampilkan "0 reaksi" yang menyesatkan.
@@ -36,7 +37,7 @@ export default function FandomStats({ className = 'mt-10' }) {
                 <li key={it.id} className="w-20 shrink-0 text-center">
                   <Link href={`/galeri?item=${it.id}`} aria-label={t('Peringkat {n}: {judul}, {j} reaksi', { n: i + 1, judul: altOf(it), j: jumlah })} className="relative block">
                     {it.type === 'video'
-                      ? <span className="grid aspect-[3/4] w-20 place-items-center rounded-xl bg-[#1B3049] text-2xl text-white">▶</span>
+                      ? <span className="grid aspect-[3/4] w-20 place-items-center rounded-xl bg-[#1B3049] text-white"><Icon name="play" fill size={22} /></span>
                       : <img src={imgOpt(thumbOf(it), 200)} alt="" loading="lazy" width={80} height={107} className="aspect-[3/4] w-20 rounded-xl object-cover bg-[#DCEBF6] dark:bg-[#1B3049]" />}
                     <span className="absolute left-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-plum text-[10px] font-bold text-milk">{i + 1}</span>
                   </Link>
@@ -48,7 +49,7 @@ export default function FandomStats({ className = 'mt-10' }) {
         )}
         {memberWeek && (
           <div className="min-w-0 rounded-2xl border border-rose/40 bg-white/80 p-4 text-center dark:border-rose/20 dark:bg-white/5">
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gold">🔥 {t('Member paling disukai minggu ini')}</p>
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gold"><Icon name="flame" size={14} className="mr-1" />{t('Member paling disukai minggu ini')}</p>
             <Link href={`/idol/${memberWeek.member}`} className="font-display text-3xl text-plum underline-offset-4 hover:underline dark:text-milk">
               {DISPLAY_NAME[memberWeek.member] || memberWeek.member}
             </Link>

@@ -100,7 +100,10 @@ export default function TentangClient() {
       {/* Dulu halaman /kredit — sekarang /kredit dialihkan ke /tentang (next.config.js). */}
       <CreditsSection className="mt-14" />
 
-      <p className="mt-8 text-center text-xs text-plum/40 dark:text-milk/40">
+      <p className="mt-8 text-center text-[11px] text-plum/40 dark:text-milk/40">
+        {t('Emoji:')} <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Twemoji</a> (CC-BY 4.0) · {t('Ikon:')} <a href="https://lucide.dev" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Lucide</a> (ISC)
+      </p>
+      <p className="mt-2 text-center text-xs text-plum/40 dark:text-milk/40">
         © 2026 Hearts2Hearts Gallery · {t('Dibuat dengan ♥ untuk S2U')}
       </p>
     </main>
