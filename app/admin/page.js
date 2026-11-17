@@ -176,7 +176,9 @@ export default function Admin() {
     const baseRow = { idol: idolName, group_name: f.group.trim() || null, era: f.era.trim() || null, note: f.note.trim() || null }
     // Tanggal manual (opsional): buat memasukkan foto lama agar urut di kategori terlama.
     // Per item digeser +1 menit supaya urutan dalam batch tetap terjaga.
-    const baseTime = f.date ? new Date(`${f.date}T00:00:00`).getTime() : null
+    // 'Z' wajib: tanpa itu tanggal dibaca tengah malam WAKTU LOKAL (di WITA = sehari
+    // sebelumnya 16:00 UTC) sehingga created_at tersimpan 1 hari lebih awal.
+    const baseTime = f.date ? new Date(`${f.date}T00:00:00Z`).getTime() : null
     const backdate = (i) => (baseTime ? { created_at: new Date(baseTime + i * 60000).toISOString() } : {})
     const tagExtra = { ...(f.tags.length ? { tags: f.tags } : {}), ...(f.alt.trim() ? { alt_text: f.alt.trim().slice(0, 300) } : {}) }
 
