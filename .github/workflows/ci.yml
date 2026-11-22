@@ -40,10 +40,18 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      # Diulang sekali kalau gagal: Google Fonts kadang membalas dengan URL font tanpa ekstensi dan
+      # Dicoba sampai 3 kali dengan jeda: Google Fonts kadang membalas dengan URL font tanpa ekstensi dan
       # next/font 14 gagal ("Cannot read properties of null (reading '1')") — acak, hilang saat diulang.
+      # Sekali ulang ternyata belum cukup (22 Nov 2026 gagal dua kali beruntun).
       # https://github.com/vercel/next.js/issues/99114
-      - run: npm run build || { echo "Build gagal, ulangi sekali (kemungkinan flake Google Fonts)…"; rm -rf .next; npm run build; }
+      - run: |
+          for i in 1 2 3; do
+            npm run build && exit 0
+            echo "Build gagal (percobaan $i), kemungkinan flake Google Fonts — ulangi…"
+            rm -rf .next
+            sleep 15
+          done
+          exit 1
         env:
           # Nilai palsu: build hanya butuh variabelnya ada. Tidak ada data asli yang dibaca.
           NEXT_PUBLIC_SUPABASE_URL: https://contoh.supabase.co
