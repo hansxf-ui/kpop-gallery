@@ -12,17 +12,17 @@ import { todayFrom } from '../lib/today'
 import { WIRE_PATH, stringTop } from '../lib/lanyard'
 
 const SB = 'https://lpuvkrbdctankydvmzpy.supabase.co/storage/v1/object/public/gallery/'
-// Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (audit DB 18 Okt 2026).
+// Foto pilihan dari koleksi galeri sendiri + jumlah item yang menyebut tiap member (disamakan dengan database 23 Nov 2026).
 // Foto seragam sekolah era 'FOCUS' — satu set seragam (abu + kemeja putih + dasi), pose tegak serius.
 const MEMBERS = [
-  { key: 'JIWOO', name: 'Jiwoo', pos: 'Leader', count: 128, file: '1790941317262-jawyk-JIWOO___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '50% 25%' },
-  { key: 'CARMEN', name: 'Carmen', pos: 'Main Vocal', count: 140, file: '1790941299261-pxqrr-CARMEN___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '30% 25%' },
+  { key: 'JIWOO', name: 'Jiwoo', pos: 'Leader', count: 142, file: '1790941317262-jawyk-JIWOO___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '50% 25%' },
+  { key: 'CARMEN', name: 'Carmen', pos: 'Main Vocal', count: 177, file: '1790941299261-pxqrr-CARMEN___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '30% 25%' },
   { key: 'YUHA', name: 'Yuha', pos: 'Main Vocal · Lead Dancer', count: 127, file: '1790941364347-hhwiy-YUHA___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '60% 20%' },
-  { key: 'STELLA', name: 'Stella', pos: 'Lead Vocal', count: 131, file: '1790941356664-izd35-STELLA___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 18%' },
-  { key: 'JUUN', name: 'Juun', pos: 'Main Dancer · Main Rapper', count: 139, file: '1790941347448-bvlr6-JUUN___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 15%' },
-  { key: 'A-NA', name: 'A-na', pos: 'Lead Rapper · Visual', count: 125, file: '1790941398384-r9iqj-A-NA___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 15%' },
+  { key: 'STELLA', name: 'Stella', pos: 'Lead Vocal', count: 144, file: '1790941356664-izd35-STELLA___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 18%' },
+  { key: 'JUUN', name: 'Juun', pos: 'Main Dancer · Main Rapper', count: 150, file: '1790941347448-bvlr6-JUUN___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 15%' },
+  { key: 'A-NA', name: 'A-na', pos: 'Lead Rapper · Visual', count: 140, file: '1790941398384-r9iqj-A-NA___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 15%' },
   { key: 'IAN', name: 'Ian', pos: 'Main Dancer · Center', count: 129, file: '1790941406679-d1obh-IAN___Potret_individu_pakai_seragam_sekolah_era__FOCUS_.jpg', obj: '50% 15%' },
-  { key: 'YE-ON', name: 'Ye-on', pos: 'Lead Vocal · Maknae', count: 122, file: '1790941446922-hvrvd-YE-ON___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '50% 18%' },
+  { key: 'YE-ON', name: 'Ye-on', pos: 'Lead Vocal · Maknae', count: 131, file: '1790941446922-hvrvd-YE-ON___Potret_individu_konsep_sekolah_buat__FOCUS_.jpg', obj: '50% 18%' },
 ]
 const DUR = [5.2, 6.1, 5.6, 6.5, 5.9, 6.3, 5.4, 6.0]
 const DEL = [-0.4, -1.4, -2.6, -0.8, -1.9, -3.1, -1.1, -2.2]
@@ -195,7 +195,8 @@ export default function Landing() {
   const t = useT()
   const loc = useLocale()
   // Jumlah item per member + total dihitung di database (view member_counts, lihat lib/counts.js)
-  // — angka bawaan di MEMBERS hanya cadangan tampilan awal / saat gagal memuat.
+  // — selama memuat kartu menampilkan '…' (dulu angka bawaan lama tampil lalu berganti);
+  // angka bawaan di MEMBERS hanya cadangan saat gagal memuat (disamakan dengan database 23 Nov 2026).
   const [liveCounts, setLiveCounts] = useState(null)
   // null = memuat (dulu angka cadangan 1159 tampil lalu berganti), false = gagal → angka disembunyikan.
   const [liveTotal, setLiveTotal] = useState(null)
@@ -240,7 +241,7 @@ export default function Landing() {
                 <Wire className="lc-wire2" />
                 {MEMBERS.slice(p, p + 2).map((m, j) => (
                   <div key={m.key} className="lc-cell">
-                    <Kartu m={m} i={p + j} count={liveCounts?.[m.key]} />
+                    <Kartu m={m} i={p + j} count={liveCounts ? liveCounts[m.key] : liveTotal === null ? '…' : undefined} />
                   </div>
                 ))}
               </div>
